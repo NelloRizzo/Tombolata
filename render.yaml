@@ -40,13 +40,20 @@ services:
         value: https://tombolasolidale.onrender.com
 
   # ===== FRONTEND (Static Site) =====
+  # Nota: gli Static Site su Render NON hanno un campo `plan` (sono
+  # gratuiti di default) — non mettere `plan:` qui, altrimenti Render
+  # fallisce con "no such plan for service type web".
   - type: web
     name: tombolasolidale
     runtime: static
     rootDir: frontend
-    plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
+    # SPA fallback: ogni percorso (es. /console) risolve su index.html
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
     envVars:
       - key: NODE_VERSION
         value: 20.11.0

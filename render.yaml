@@ -1,0 +1,55 @@
+# Render Blueprint — deploy continuo (a ogni push su main)
+# Struttura: backend (Web Service Node) + frontend (Static Site React)
+#
+# DOPO IL PRIMO DEPLOY:
+# 1) Il backend riceve l'URL https://tombolasolidale-api.onrender.com
+# 2) Verifica/aggiorna VITE_BACKEND_URL (sotto) con quell'URL — il frontend
+#    lo usa a build-time. Poi fai un nuovo push o "Deploy" dal dashboard.
+# 3) Imposta i valori SEGRETI (MONGODB_URI, JWT_SECRET, ADMIN_PASSWORD)
+#    dal dashboard: Render li chiede al primo deploy in quanto `sync: false`.
+
+services:
+  # ===== BACKEND (API) =====
+  - type: web
+    name: tombolasolidale-api
+    runtime: node
+    env: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: MONGODB_URI
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: tombolata
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRES
+        value: 12h
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: CLIENT_ORIGIN
+        value: https://tombolasolidale.onrender.com
+
+  # ===== FRONTEND (Static Site) =====
+  - type: web
+    name: tombolasolidale
+    runtime: static
+    rootDir: frontend
+    plan: free
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: VITE_BACKEND_URL
+        # URL del backend. Dopo il primo deploy verifica questo valore.
+        value: https://tombolasolidale-api.onrender.com

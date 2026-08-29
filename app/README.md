@@ -87,36 +87,43 @@ npm test               # usa mongodb-memory-server, non serve Atlas
 
 ## Deploy su Render.com
 
-Sono previsti **3 servizi**:
+Sono previsti **2 servizi**, gestiti da un unico **Blueprint** (`render.yaml` nella root del repo):
 
-| Servizio | Tipo | Dove |
-|----------|------|------|
-| MongoDB Atlas | Database (free M0) | atlas.mongodb.com |
-| tombolata-backend | Web Service (Node) | render.com |
-| tombolata-frontend | Static Site (React) | render.com |
+| Servizio | Tipo | Root dir | Publish |
+|----------|------|----------|---------|
+| tombolasolidale-api | Web Service (Node) | `backend` | — |
+| tombolasolidale | Static Site (React) | `frontend` | `dist` |
+
+Il Blueprint si collega al repo GitHub: **ogni push su `main` ridispiega automaticamente entrambi i servizi** (niente click manuali).
 
 ### 1. MongoDB Atlas
-Creare un cluster **M0 (free)**. Creare un database user e ottenere la connection string.
+Creare un cluster **M0 (free)** sul sito Atlas, creare un database user e ottenere la connection string (es. `mongodb+srv://...`).
 
-### 2. Backend (Web Service)
-- **Build Command**: `npm install`
-- **Start Command**: `npm start`
-- **Root Directory**: `backend`
-- Variabili d'ambiente:
-  - `MONGODB_URI` = la connection string Atlas (es. `mongodb+srv://...`)
-  - `MONGODB_DB_NAME` = `tombolata`
-  - `PORT` = `10000`
-  - `JWT_SECRET` = stringa casuale lunga
-  - `ADMIN_USERNAME` / `ADMIN_PASSWORD` = credenziali admin (cambiale subito)
+### 2. Creare il Blueprint su Render
+1. Da app.render.com → **New → Blueprint**.
+2. Connetti il repo GitHub `Tombolata`.
+3. Render rileva `render.yaml` e propone i 2 servizi.
+4. Al primo deploy Render **chiede i valori segreti** (`sync: false`): imposta
+   `MONGODB_URI`, `JWT_SECRET` (stringa casuale lunga) e `ADMIN_PASSWORD`
+   (cambia la password admin di default `admin`).
+5. Avvia il deploy.
 
-Annotati l'URL del backend (es. `https://tombolata-backend.onrender.com`).
+### 3. Verifica l'URL del backend
+Dopo il primo deploy il backend ha l'URL `https://tombolasolidale-api.onrender.com`.
 
-### 3. Frontend (Static Site)
-- **Build Command**: `npm run build`
-- **Publish Directory**: `dist`
-- **Root Directory**: `frontend`
-- Variabile d'ambiente:
-  - `VITE_BACKEND_URL` = URL del backend, es. `https://tombolata-backend.onrender.com`
+- Il frontend usa `VITE_BACKEND_URL` **a build-time** (iniettato da
+  `vite.config.js`). Verifica che il valore in `render.yaml`
+  (attualmente `https://tombolasolidale-api.onrender.com`) corrisponda
+  all'URL reale del backend; se diverso, aggiornalo e fai un nuovo push.
+
+### 4. Dopo
+- Tabellone pubblico: `https://tombolasolidale.onrender.com`
+- Console regia: `https://tombolasolidale.onrender.com/console`
+- Deploy automatico: ogni `git push origin main` ridispiega i servizi.
+
+> **Nota piano free**: i servizi free di Render si "addormentano" dopo
+> ~15 minuti di inattività e si risvegliano al primo accesso (~30-60s di
+> cold start). Va bene per la serata dal vivo, ma non è "always on".
 
 ## Utilizzo
 

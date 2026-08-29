@@ -1,0 +1,26 @@
+{
+  "name": "tombolata-backend",
+  "version": "1.0.0",
+  "description": "Backend per la gestione della tombolata di Natale",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "node test-integration.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^8.5.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^9.2.0"
+  }
+}

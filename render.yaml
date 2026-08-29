@@ -14,7 +14,7 @@ services:
     name: tombolasolidale-api
     runtime: node
     env: node
-    rootDir: backend
+    rootDir: app/backend
     plan: free
     buildCommand: npm install
     startCommand: npm start
@@ -46,9 +46,9 @@ services:
   - type: web
     name: tombolasolidale
     runtime: static
-    rootDir: frontend
+    rootDir: app/frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: dist
+    staticPublishPath: app/frontend/dist
     # SPA fallback: ogni percorso (es. /console) risolve su index.html
     routes:
       - type: rewrite

@@ -48,7 +48,7 @@ services:
     runtime: static
     rootDir: app/frontend
     buildCommand: npm install && npm run build
-    staticPublishPath: app/frontend/dist
+    staticPublishPath: dist
     # SPA fallback: ogni percorso (es. /console) risolve su index.html
     routes:
       - type: rewrite

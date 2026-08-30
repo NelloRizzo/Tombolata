@@ -16,6 +16,7 @@ const effectSchema = new mongoose.Schema(
 
 const videoSchema = new mongoose.Schema(
   {
+    gameId: { type: mongoose.Schema.Types.ObjectId, ref: "Game", default: null },
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     // URL o path del file video (può essere un file caricato o un URL esterno)
@@ -29,5 +30,7 @@ const videoSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+videoSchema.index({ gameId: 1, name: 1 });
 
 export default mongoose.model("Video", videoSchema);

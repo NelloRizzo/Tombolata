@@ -149,6 +149,47 @@ async function run() {
   const checkActive = await req("/api/game/state");
   assert(checkActive.ok && checkActive.data.extractedNumbers.length === 1 && checkActive.data._id !== sched.data._id, "state (senza gameId) è la partita attiva");
 
+  console.log("== TEST PER-GAME CONTENT (trigger/video per partita) ==");
+  // crea un trigger e un video dedicati alla partita sched
+  const perGameTrigger = await req("/api/triggers", "POST", {
+    name: "Trigger Partita",
+    actionType: "live",
+    phase: "finale",
+    gameId: sched.data._id
+  }, adminToken);
+  assert(perGameTrigger.ok && perGameTrigger.data.gameId === sched.data._id, "creazione trigger per partita");
+
+  const perGameVideo = await req("/api/videos", "POST", {
+    name: "Video Partita",
+    source: "https://example.com/v.mp4",
+    gameId: sched.data._id
+  }, adminToken);
+  assert(perGameVideo.ok && perGameVideo.data.gameId === sched.data._id, "creazione video per partita");
+
+  // lista filtrata per la partita: include il trigger/video per-partita
+  const listPerGameTriggers = await req(`/api/triggers?gameId=${sched.data._id}`, "GET", null, adminToken);
+  assert(
+    listPerGameTriggers.ok && listPerGameTriggers.data.some((t) => t._id === perGameTrigger.data._id),
+    "lista trigger filtrata include il trigger per-partita"
+  );
+  const listPerGameVideos = await req(`/api/videos?gameId=${sched.data._id}`, "GET", null, adminToken);
+  assert(
+    listPerGameVideos.ok && listPerGameVideos.data.some((v) => v._id === perGameVideo.data._id),
+    "lista video filtrata include il video per-partita"
+  );
+
+  // lista globale (senza gameId) NON include i contenuti per-partita
+  const globalTriggers = await req("/api/triggers", "GET", null, adminToken);
+  assert(
+    globalTriggers.ok && !globalTriggers.data.some((t) => t._id === perGameTrigger.data._id),
+    "lista globale esclude i trigger per-partita"
+  );
+  const globalVideos = await req("/api/videos", "GET", null, adminToken);
+  assert(
+    globalVideos.ok && !globalVideos.data.some((v) => v._id === perGameVideo.data._id),
+    "lista globale esclude i video per-partita"
+  );
+
   console.log("== TEST VIDEO ==");
   const playRes = await req(`/api/videos/${vid.data._id}/play`, "POST", null, adminToken);
   assert(playRes.ok && playRes.data.player.status === "playing", "avvio video player");

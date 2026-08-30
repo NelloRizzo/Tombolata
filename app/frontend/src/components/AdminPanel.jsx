@@ -269,7 +269,8 @@ function TriggerForm({ gameId, onDone }) {
         body: JSON.stringify({
           ...form,
           targetActor: form.targetActor || null,
-          actionRef: form.actionRef || ""
+          actionRef: form.actionRef || "",
+          gameId: gameId || null
         })
       });
       onDone();
@@ -337,18 +338,19 @@ function TriggerForm({ gameId, onDone }) {
   );
 }
 
-function AdminTriggers({ gameId }) {
+export function AdminTriggers({ gameId }) {
   const [triggers, setTriggers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState(null);
 
   async function load() {
     try {
-      const json = await apiRequest("/api/triggers");
+      const q = gameId ? `?gameId=${gameId}` : "";
+      const json = await apiRequest(`/api/triggers${q}`);
       if (json.ok) setTriggers(json.data);
     } catch (e) { setError(e.message); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [gameId]);
 
   async function remove(id) {
     try {
@@ -379,14 +381,14 @@ function AdminTriggers({ gameId }) {
   );
 }
 
-function VideoForm({ onDone }) {
+function VideoForm({ gameId, onDone }) {
   const [form, setForm] = useState({ name: "", description: "", source: "", aspectRatio: "16:9" });
   const [error, setError] = useState(null);
 
   async function create() {
     setError(null);
     try {
-      await apiRequest("/api/videos", { method: "POST", body: JSON.stringify(form) });
+      await apiRequest("/api/videos", { method: "POST", body: JSON.stringify({ ...form, gameId: gameId || null }) });
       onDone();
     } catch (e) { setError(e.message); }
   }
@@ -402,18 +404,19 @@ function VideoForm({ onDone }) {
   );
 }
 
-function AdminVideos() {
+export function AdminVideos({ gameId }) {
   const [videos, setVideos] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState(null);
 
   async function load() {
     try {
-      const json = await apiRequest("/api/videos");
+      const q = gameId ? `?gameId=${gameId}` : "";
+      const json = await apiRequest(`/api/videos${q}`);
       if (json.ok) setVideos(json.data);
     } catch (e) { setError(e.message); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [gameId]);
 
   async function remove(id) {
     try {
@@ -516,7 +519,7 @@ const SECTIONS = [
   { key: "users", label: "Utenti", render: (ws) => <AdminUsers /> },
   { key: "cast", label: "Cast", render: (ws) => <AdminCast ws={ws} /> },
   { key: "triggers", label: "Trigger", render: (ws) => <AdminTriggers gameId={ws.game?._id} /> },
-  { key: "videos", label: "Video", render: () => <AdminVideos /> },
+  { key: "videos", label: "Video", render: (ws) => <AdminVideos gameId={ws.game?._id} /> },
   { key: "sounds", label: "Suoni", render: () => <AdminSounds /> }
 ];
 

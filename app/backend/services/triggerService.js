@@ -79,6 +79,7 @@ export async function evaluateTriggers(gameId) {
   const candidates = await Trigger.find({
     active: true,
     autoMode: true,
+    gameId: { $in: [null, gameId] },
     $or: [{ phase: narration.phase }, { phase: "always" }]
   }).sort({ order: 1 });
 

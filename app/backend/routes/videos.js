@@ -6,16 +6,25 @@ import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
 
 const router = Router();
 
+// Lista video. ?gameId=X filtra i video di quella partita (incl. i globali senza gameId);
+// senza gameId mostra solo i globali (retro-compatibilità).
 router.get("/", authenticate, async (req, res) => {
   try {
-    const videos = await Video.find({}).sort({ name: 1 });
+    const gid = req.query.gameId;
+    let query = {};
+    if (gid) {
+      query = { $or: [{ gameId: null }, { gameId: gid }] };
+    } else {
+      query = { gameId: null };
+    }
+    const videos = await Video.find(query).sort({ name: 1 });
     res.json({ ok: true, data: videos });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
   }
 });
 
-// Crea video (admin/regista)
+// Crea video (admin/regista). gameId opzionale nel body → video dedicato a quella partita.
 router.post("/", authenticate, requireRoles("admin", "regista"), async (req, res) => {
   try {
     const body = req.body || {};
@@ -23,6 +32,7 @@ router.post("/", authenticate, requireRoles("admin", "regista"), async (req, res
       return res.status(400).json({ ok: false, message: "Nome e sorgente obbligatori" });
     }
     const video = new Video({
+      gameId: body.gameId || null,
       name: body.name,
       description: body.description || "",
       source: body.source,
@@ -45,6 +55,7 @@ router.put("/:id", authenticate, requireRoles("admin", "regista"), async (req, r
     ["name", "description", "source", "effects", "soundOnPlay", "aspectRatio"].forEach((k) => {
       if (body[k] !== undefined) update[k] = body[k];
     });
+    if (body.gameId !== undefined) update.gameId = body.gameId || null;
     if (body.active !== undefined) update.active = body.active;
     const video = await Video.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!video) return res.status(404).json({ ok: false, message: "Video non trovato" });

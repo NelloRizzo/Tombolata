@@ -32,6 +32,7 @@ const triggerSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
+    gameId: { type: mongoose.Schema.Types.ObjectId, ref: "Game", default: null },
     // Narrative phase in which the trigger is active
     phase: {
       type: String,
@@ -65,5 +66,6 @@ const triggerSchema = new mongoose.Schema(
 
 triggerSchema.index({ phase: 1, order: 1 });
 triggerSchema.index({ targetActor: 1 });
+triggerSchema.index({ gameId: 1, phase: 1, order: 1 });
 
 export default mongoose.model("Trigger", triggerSchema);

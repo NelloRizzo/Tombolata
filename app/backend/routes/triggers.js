@@ -13,9 +13,14 @@ const PHASES = ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-ci
 // personaggio che interpreta nella partita attiva)
 router.get("/", authenticate, async (req, res) => {
   try {
+    const gid = req.query.gameId;
     let query = {};
     if (req.user.roles.includes("admin") || req.user.roles.includes("regista")) {
-      query = {};
+      if (gid) {
+        query = { $or: [{ gameId: null }, { gameId: gid }] };
+      } else {
+        query = { gameId: null };
+      }
     } else if (req.user.roles.includes("attore")) {
       const gameId = resolveGameId(req);
       const game = gameId ? await getGameById(gameId) : await getActiveGame();
@@ -45,6 +50,7 @@ router.post("/", authenticate, requireRoles("admin"), async (req, res) => {
     const trigger = new Trigger({
       name: body.name,
       description: body.description || "",
+      gameId: body.gameId || null,
       phase: body.phase || "always",
       conditions: body.conditions || [],
       actionType: body.actionType,
@@ -69,6 +75,7 @@ router.put("/:id", authenticate, requireRoles("admin"), async (req, res) => {
     ["name", "description", "conditions", "actionRef", "targetActor", "order", "forceAfterExtractions"].forEach((k) => {
       if (body[k] !== undefined) update[k] = body[k];
     });
+    if (body.gameId !== undefined) update.gameId = body.gameId || null;
     if (body.actionType !== undefined) {
       if (!ACTIONS.includes(body.actionType)) return res.status(400).json({ ok: false, message: "actionType non valido" });
       update.actionType = body.actionType;

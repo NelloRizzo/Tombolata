@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
+import { AdminTriggers, AdminVideos } from "./AdminPanel.jsx";
 
 function toLocalInput(value) {
   if (!value) return "";
@@ -15,6 +16,7 @@ export default function GameManager({ game }) {
   const [newDesc, setNewDesc] = useState("");
   const [newScheduled, setNewScheduled] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [editScheduled, setEditScheduled] = useState("");
@@ -173,12 +175,24 @@ export default function GameManager({ game }) {
                       <div className="gm-actions">
                         <button className="btn-sm" onClick={() => startEdit(g)}>Modifica</button>
                         <button className="btn-sm btn-ghost" onClick={() => removeGame(g._id, g.name)}>Elimina</button>
+                        <button
+                          className="btn-sm"
+                          onClick={() => setExpandedId((v) => (v === g._id ? null : g._id))}
+                        >
+                          {expandedId === g._id ? "Chiudi contenuti" : "Trigger / Video"}
+                        </button>
                         {!active && (
                           <button className="btn-sm btn-accent" onClick={() => selectGame(g._id)}>
                             {g.status === "scheduled" ? "Attiva" : "Apri"}
                           </button>
                         )}
                       </div>
+                      {expandedId === g._id && (
+                        <div className="gm-expanded">
+                          <AdminTriggers gameId={g._id} />
+                          <AdminVideos gameId={g._id} />
+                        </div>
+                      )}
                     </>
                   )}
                 </div>

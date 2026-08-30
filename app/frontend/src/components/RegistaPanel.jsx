@@ -23,9 +23,10 @@ export default function RegistaPanel({ ws, gameId }) {
 
   async function load() {
     try {
+      const q = ref ? `?gameId=${ref}` : "";
       const [t, v] = await Promise.all([
-        apiRequest("/api/triggers"),
-        apiRequest("/api/videos")
+        apiRequest(`/api/triggers${q}`),
+        apiRequest(`/api/videos${q}`)
       ]);
       if (t.ok) setTriggers(t.data);
       if (v.ok) setVideos(v.data);
@@ -36,7 +37,7 @@ export default function RegistaPanel({ ws, gameId }) {
 
   useEffect(() => {
     load();
-  }, [narration?.phase]);
+  }, [narration?.phase, ref]);
 
   async function fire(id) {
     setError(null);

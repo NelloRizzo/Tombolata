@@ -175,6 +175,7 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: center;
+  padding-bottom: 10%;
   transition: all 0.3s;
   /* Bussolotto non estratto */
   background: url("/nonestratto.png") no-repeat center / contain;
@@ -188,8 +189,9 @@ h3 {
 .cell-num {
   position: relative;
   z-index: 1;
+  margin-bottom: 14%;
   font-family: var(--font-num);
-  font-size: clamp(0.7rem, 3vmin, 1.8rem);
+  font-size: clamp(0.9rem, 4vmin, 2.4rem);
   font-weight: 800;
   line-height: 1;
   color: #2a1a0c;
@@ -457,6 +459,7 @@ h3 {
 }
 .gm-item {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   background: #1d2c52;
@@ -477,6 +480,17 @@ h3 {
 .gm-sub {
   font-size: 0.75rem;
   color: var(--muted);
+}
+.gm-expanded {
+  flex-basis: 100%;
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  align-items: flex-start;
+}
+.gm-expanded > .admin-section {
+  flex: 1 1 0;
+  min-width: 240px;
 }
 
 /* ---------- Board manager ---------- */

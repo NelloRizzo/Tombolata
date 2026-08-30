@@ -48,10 +48,6 @@ async function run() {
   assert(adminLogin.ok, "admin login");
   const adminToken = adminLogin.token;
 
-  // crea un attore
-  const actor = await req("/api/actors", "POST", { name: "TestAttore", description: "test", object: "x" }, adminToken);
-  assert(actor.ok, "creazione attore");
-
   // crea utente drawer
   const createdUser = await req("/api/auth/users", "POST",
     { username: "drawer1", password: "pw", displayName: "Drawer Uno", roles: ["drawer", "video"] }, adminToken);
@@ -83,6 +79,13 @@ async function run() {
   assert(game.ok, "creazione partita (admin)");
 
   const gid = game.data._id;
+  assert(game.data.actors.length === 6, "cast di default (6 personaggi) alla creazione");
+
+  // il cast appartiene alla partita: si aggiunge un personaggio specifico
+  const castActor = await req(`/api/game/${gid}/actors`, "POST",
+    { name: "TestAttore", description: "test", object: "x" }, adminToken);
+  assert(castActor.ok, "aggiunta personaggio al cast della partita");
+
   const board = await req(`/api/game/${gid}/boards`, "POST",
     { playerName: "Marco", boardNumber: 1, rows: [[1,2,3,4,5],[10,20,30,40,50],[11,12,13,14,15]] }, drawerToken);
   assert(board.ok, "aggiunta cartella");
@@ -99,11 +102,15 @@ async function run() {
   const t = triggers.data.find((x) => x._id === triggerId);
   assert(t && t.fired === 1, "trigger attivato 1 volta");
 
-  // attore vede il proprio trigger live
-  const attoreLogin = await req("/api/auth/login", "POST", { username: "attoreX", password: "pw" }).catch(() => null);
-  // crea un attore user
+  // attore vede il proprio trigger live (personaggio associato per partita)
   const actorUser = await req("/api/auth/users", "POST",
-    { username: "attoreX", password: "pw", roles: ["attore"], character: "TestAttore" }, adminToken);
+    { username: "attoreX", password: "pw", roles: ["attore"] }, adminToken);
+  assert(actorUser.ok, "creazione utente attore");
+
+  const assignment = await req(`/api/game/${gid}/assignments`, "POST",
+    { userId: actorUser.data._id, character: "TestAttore" }, adminToken);
+  assert(assignment.ok, "associazione attore→personaggio per la partita");
+
   const attoreLogin2 = await req("/api/auth/login", "POST", { username: "attoreX", password: "pw" });
   assert(attoreLogin2.ok, "login attore");
   const attoreTriggers = await req("/api/triggers", "GET", null, attoreLogin2.token);

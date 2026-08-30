@@ -5,15 +5,13 @@ const ROLES = ["admin", "regista", "video", "fonico", "drawer", "attore", "spett
 
 function AdminUsers() {
   const [users, setUsers] = useState([]);
-  const [actors, setActors] = useState([]);
-  const [form, setForm] = useState({ username: "", password: "", displayName: "", roles: ["spettatore"], character: "" });
+  const [form, setForm] = useState({ username: "", password: "", displayName: "", roles: ["spettatore"] });
   const [error, setError] = useState(null);
 
   async function load() {
     try {
-      const [u, a] = await Promise.all([apiRequest("/api/auth/users"), apiRequest("/api/actors")]);
+      const u = await apiRequest("/api/auth/users");
       if (u.ok) setUsers(u.data);
-      if (a.ok) setActors(a.data);
     } catch (e) {
       setError(e.message);
     }
@@ -32,9 +30,9 @@ function AdminUsers() {
     try {
       await apiRequest("/api/auth/users", {
         method: "POST",
-        body: JSON.stringify({ ...form, character: form.character || null })
+        body: JSON.stringify({ ...form })
       });
-      setForm({ username: "", password: "", displayName: "", roles: ["spettatore"], character: "" });
+      setForm({ username: "", password: "", displayName: "", roles: ["spettatore"] });
       load();
     } catch (e) {
       setError(e.message);
@@ -57,10 +55,6 @@ function AdminUsers() {
         <input placeholder="Username" value={form.username} onChange={(e) => setForm({ ...form, username: e.target.value })} />
         <input placeholder="Password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} />
         <input placeholder="Nome visualizzato" value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
-        <select value={form.character || ""} onChange={(e) => setForm({ ...form, character: e.target.value })}>
-          <option value="">Nessun personaggio</option>
-          {actors.map((a) => <option key={a._id} value={a.name}>{a.name}</option>)}
-        </select>
         <div className="role-checkboxes">
           {ROLES.map((r) => (
             <label key={r} className="role-check">
@@ -77,7 +71,7 @@ function AdminUsers() {
           <div className="tab-item" key={u._id}>
             <div className="tab-item-info">
               <span className="tab-name">{u.username}</span>
-              <span className="tab-sub">{u.displayName} · {u.roles.join(", ")} {u.character ? `· ${u.character}` : ""}</span>
+              <span className="tab-sub">{u.displayName} · {u.roles.join(", ")}</span>
             </div>
             <button className="btn-sm btn-ghost" onClick={() => remove(u._id)}>Rimuovi</button>
           </div>
@@ -87,52 +81,129 @@ function AdminUsers() {
   );
 }
 
-function AdminActors() {
+function AdminCast({ ws }) {
+  const gameId = ws.game?._id;
   const [actors, setActors] = useState([]);
-  const [form, setForm] = useState({ name: "", description: "", object: "" });
+  const [assignments, setAssignments] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [actorForm, setActorForm] = useState({ name: "", description: "", object: "" });
+  const [selUser, setSelUser] = useState("");
+  const [selCharacter, setSelCharacter] = useState("");
   const [error, setError] = useState(null);
 
   async function load() {
     try {
-      const json = await apiRequest("/api/actors");
-      if (json.ok) setActors(json.data);
+      const [cast, assigns, us] = await Promise.all([
+        apiRequest(`/api/game/${gameId}/actors`),
+        apiRequest(`/api/game/${gameId}/assignments`),
+        apiRequest("/api/auth/users")
+      ]);
+      if (cast.ok) setActors(cast.data.actors);
+      if (assigns.ok) setAssignments(assigns.data);
+      if (us.ok) setUsers(us.data);
     } catch (e) { setError(e.message); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { if (gameId) { setError(null); load(); } }, [gameId]);
 
-  async function create() {
+  if (!gameId) {
+    return (
+      <div className="admin-section">
+        <p className="empty">Nessuna partita attiva. Il cast appartiene alla partita:
+          crea una partita (Regia → Partite) e poi gestisci qui i personaggi.</p>
+      </div>
+    );
+  }
+
+  async function createActor() {
     setError(null);
     try {
-      await apiRequest("/api/actors", { method: "POST", body: JSON.stringify(form) });
-      setForm({ name: "", description: "", object: "" });
+      await apiRequest(`/api/game/${gameId}/actors`, { method: "POST", body: JSON.stringify(actorForm) });
+      setActorForm({ name: "", description: "", object: "" });
       load();
     } catch (e) { setError(e.message); }
   }
 
-  async function remove(id) {
+  async function removeActor(index) {
     try {
-      await apiRequest(`/api/actors/${id}`, { method: "DELETE" });
+      await apiRequest(`/api/game/${gameId}/actors/${index}`, { method: "DELETE" });
       load();
     } catch (e) { setError(e.message); }
   }
+
+  async function assign() {
+    setError(null);
+    try {
+      await apiRequest(`/api/game/${gameId}/assignments`, {
+        method: "POST",
+        body: JSON.stringify({ userId: selUser, character: selCharacter })
+      });
+      setSelUser("");
+      setSelCharacter("");
+      load();
+    } catch (e) { setError(e.message); }
+  }
+
+  async function unassign(userId) {
+    try {
+      await apiRequest(`/api/game/${gameId}/assignments/${userId}`, { method: "DELETE" });
+      load();
+    } catch (e) { setError(e.message); }
+  }
+
+  const activeActors = actors.filter((a) => a.active !== false);
+  const userName = (id) => users.find((u) => u._id === id)?.username || id;
 
   return (
     <div className="admin-section">
       {error && <div className="error-text">{error}</div>}
+
       <div className="admin-form">
-        <input placeholder="Nome personaggio (es. Totonno)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input placeholder="Descrizione" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-        <input placeholder="Oggetto personale" value={form.object} onChange={(e) => setForm({ ...form, object: e.target.value })} />
-        <button className="btn-sm btn-accent" onClick={create}>Crea attore</button>
+        <input placeholder="Nome personaggio (es. Totonno)" value={actorForm.name}
+          onChange={(e) => setActorForm({ ...actorForm, name: e.target.value })} />
+        <input placeholder="Descrizione" value={actorForm.description}
+          onChange={(e) => setActorForm({ ...actorForm, description: e.target.value })} />
+        <input placeholder="Oggetto personale" value={actorForm.object}
+          onChange={(e) => setActorForm({ ...actorForm, object: e.target.value })} />
+        <button className="btn-sm btn-accent" onClick={createActor}>Aggiungi al cast</button>
       </div>
+
       <div className="tab-list">
-        {actors.map((a) => (
-          <div className="tab-item" key={a._id}>
+        {actors.length === 0 && <p className="empty">Il cast di questa partita è vuoto.</p>}
+        {actors.map((a, i) => (
+          <div className="tab-item" key={a.name}>
             <div className="tab-item-info">
-              <span className="tab-name">{a.name}</span>
-              <span className="tab-sub">{a.object && `oggetto: ${a.object}`}</span>
+              <span className="tab-name">{a.name} {a.active === false ? "(inattivo)" : ""}</span>
+              <span className="tab-sub">{a.object ? `oggetto: ${a.object}` : a.description}</span>
             </div>
-            <button className="btn-sm btn-ghost" onClick={() => remove(a._id)}>Rimuovi</button>
+            <button className="btn-sm btn-ghost" onClick={() => removeActor(i)}>Rimuovi</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="cast-assign-head">
+        <h3>Chi interpreta chi</h3>
+        <div className="admin-form">
+          <select value={selUser} onChange={(e) => setSelUser(e.target.value)}>
+            <option value="">Utente...</option>
+            {users.map((u) => <option key={u._id} value={u._id}>{u.username}</option>)}
+          </select>
+          <select value={selCharacter} onChange={(e) => setSelCharacter(e.target.value)}>
+            <option value="">Personaggio...</option>
+            {activeActors.map((a) => <option key={a.name} value={a.name}>{a.name}</option>)}
+          </select>
+          <button className="btn-sm btn-accent" onClick={assign}>Associa</button>
+        </div>
+      </div>
+
+      <div className="tab-list">
+        {assignments.length === 0 && <p className="empty">Nessuna associazione: gli attori non hanno ancora un personaggio per questa partita.</p>}
+        {assignments.map((as) => (
+          <div className="tab-item" key={as.userId}>
+            <div className="tab-item-info">
+              <span className="tab-name">{userName(as.userId)}</span>
+              <span className="tab-sub">{as.character}</span>
+            </div>
+            <button className="btn-sm btn-ghost" onClick={() => unassign(as.userId)}>Non associa</button>
           </div>
         ))}
       </div>
@@ -140,7 +211,7 @@ function AdminActors() {
   );
 }
 
-function TriggerForm({ onDone }) {
+function TriggerForm({ gameId, onDone }) {
   const [actors, setActors] = useState([]);
   const [form, setForm] = useState({
     name: "",
@@ -157,11 +228,12 @@ function TriggerForm({ onDone }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (!gameId) return;
     (async () => {
-      const json = await apiRequest("/api/actors").catch(() => ({ ok: false }));
-      if (json.ok) setActors(json.data);
+      const json = await apiRequest(`/api/game/${gameId}/actors`).catch(() => ({ ok: false }));
+      if (json.ok) setActors(json.data.actors);
     })();
-  }, []);
+  }, [gameId]);
 
   const cond = form.conditions[0];
 
@@ -227,7 +299,7 @@ function TriggerForm({ onDone }) {
       {form.actionType === "live" && (
         <select value={form.targetActor} onChange={(e) => setForm({ ...form, targetActor: e.target.value })}>
           <option value="">Personaggio...</option>
-          {actors.map((a) => <option key={a._id} value={a.name}>{a.name}</option>)}
+          {actors.map((a) => <option key={a.name} value={a.name}>{a.name}</option>)}
         </select>
       )}
 
@@ -264,7 +336,7 @@ function TriggerForm({ onDone }) {
   );
 }
 
-function AdminTriggers() {
+function AdminTriggers({ gameId }) {
   const [triggers, setTriggers] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState(null);
@@ -290,7 +362,7 @@ function AdminTriggers() {
       <button className="btn-sm btn-accent" onClick={() => setShowForm((v) => !v)}>
         {showForm ? "Chiudi" : "+ Nuovo trigger"}
       </button>
-      {showForm && <TriggerForm onDone={() => { setShowForm(false); load(); }} />}
+      {showForm && <TriggerForm gameId={gameId} onDone={() => { setShowForm(false); load(); }} />}
       <div className="tab-list">
         {triggers.map((t) => (
           <div className="tab-item" key={t._id}>
@@ -440,14 +512,14 @@ function AdminSounds() {
 }
 
 const SECTIONS = [
-  { key: "users", label: "Utenti", component: AdminUsers },
-  { key: "actors", label: "Attori", component: AdminActors },
-  { key: "triggers", label: "Trigger", component: AdminTriggers },
-  { key: "videos", label: "Video", component: AdminVideos },
-  { key: "sounds", label: "Suoni", component: AdminSounds }
+  { key: "users", label: "Utenti", render: (ws) => <AdminUsers /> },
+  { key: "cast", label: "Cast", render: (ws) => <AdminCast ws={ws} /> },
+  { key: "triggers", label: "Trigger", render: (ws) => <AdminTriggers gameId={ws.game?._id} /> },
+  { key: "videos", label: "Video", render: () => <AdminVideos /> },
+  { key: "sounds", label: "Suoni", render: () => <AdminSounds /> }
 ];
 
-export default function AdminPanel() {
+export default function AdminPanel({ ws }) {
   const [section, setSection] = useState("users");
 
   return (
@@ -461,8 +533,7 @@ export default function AdminPanel() {
       </nav>
       {SECTIONS.map((s) => {
         if (s.key !== section) return null;
-        const Comp = s.component;
-        return <Comp key={s.key} />;
+        return <div key={s.key}>{s.render(ws)}</div>;
       })}
     </div>
   );

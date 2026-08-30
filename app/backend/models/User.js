@@ -10,8 +10,6 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "regista", "video", "fonico", "drawer", "spettatore", "attore"],
       default: ["spettatore"]
     },
-    // Solo per ruolo "attore": personaggio interpretato (da personaggi.md)
-    character: { type: String, default: null },
     active: { type: Boolean, default: true }
   },
   { timestamps: true }

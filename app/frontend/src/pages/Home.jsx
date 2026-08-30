@@ -72,11 +72,12 @@ export default function Home() {
       </div>
 
       <header className="home-hero">
-        <h1 className="home-title">Tombolata di Natale</h1>
-        <p className="home-subtitle">il segreto di Natale</p>
+        <h1 className="home-title">Programma delle serate</h1>
+        <p className="home-subtitle">Gestione Tombola</p>
         <p className="home-intro">
-          Serata di tombola con estrazioni dal vivo, vincite progressive e sorprese.
-          Qui trovi il programma delle partite in corso, quelle in programma e quelle già fissate per il futuro.
+          Qui trovi il programma delle serate e delle partite in gestione:
+          le partite aperte, quelle in programma e quelle già fissate per il futuro,
+          ciascuna con il proprio nome e la propria descrizione.
         </p>
         {active.length > 0 && (
           <Link to="/board" className="home-open-board">Vai al tabellone in corso</Link>

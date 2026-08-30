@@ -20,8 +20,7 @@ router.post("/login", async (req, res) => {
       id: user._id.toString(),
       username: user.username,
       displayName: user.displayName,
-      roles: user.roles,
-      character: user.character
+      roles: user.roles
     });
     res.json({
       ok: true,
@@ -30,8 +29,7 @@ router.post("/login", async (req, res) => {
         id: user._id.toString(),
         username: user.username,
         displayName: user.displayName,
-        roles: user.roles,
-        character: user.character
+        roles: user.roles
       }
     });
   } catch (error) {
@@ -57,7 +55,7 @@ router.get("/users", authenticate, requireRoles("admin"), async (req, res) => {
 // Crea utente (solo admin)
 router.post("/users", authenticate, requireRoles("admin"), async (req, res) => {
   try {
-    const { username, password, displayName, roles, character, active } = req.body || {};
+    const { username, password, displayName, roles, active } = req.body || {};
     if (!username || !password) {
       return res.status(400).json({ ok: false, message: "Username e password richiesti" });
     }
@@ -69,7 +67,6 @@ router.post("/users", authenticate, requireRoles("admin"), async (req, res) => {
       passwordHash: hashPassword(password),
       displayName: displayName || username,
       roles: roles && roles.length ? roles : ["spettatore"],
-      character: character || null,
       active: active !== false
     });
     await user.save();
@@ -84,12 +81,11 @@ router.post("/users", authenticate, requireRoles("admin"), async (req, res) => {
 // Aggiorna utente (solo admin)
 router.put("/users/:id", authenticate, requireRoles("admin"), async (req, res) => {
   try {
-    const { password, displayName, roles, character, active } = req.body || {};
+    const { password, displayName, roles, active } = req.body || {};
     const update = {};
     if (password) update.passwordHash = hashPassword(password);
     if (displayName !== undefined) update.displayName = displayName;
     if (roles !== undefined) update.roles = roles;
-    if (character !== undefined) update.character = character;
     if (active !== undefined) update.active = active;
     const user = await User.findByIdAndUpdate(req.params.id, update, { new: true }).select("-passwordHash");
     if (!user) return res.status(404).json({ ok: false, message: "Utente non trovato" });

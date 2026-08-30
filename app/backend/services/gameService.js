@@ -1,4 +1,5 @@
 import Game from "../models/Game.js";
+import { DEFAULT_ACTORS } from "./defaultCast.js";
 
 const WIN_DEFS = [
   { type: "ambo", count: 2 },
@@ -15,6 +16,8 @@ export async function startNewGame({ name, description, scheduledAt } = {}) {
     name: name || "Tombolata",
     description: description || "",
     scheduledAt: scheduled ? new Date(scheduledAt) : null,
+    actors: DEFAULT_ACTORS.map((a) => ({ ...a })),
+    assignments: [],
     extractedNumbers: [],
     currentNumber: null,
     extractionCount: 0,
@@ -208,4 +211,94 @@ export async function getGameState() {
   const game = await getActiveGame();
   if (!game) return null;
   return game.toObject();
+}
+
+// ===== Cast della partita =====
+
+export async function getCast(gameId) {
+  const game = await Game.findById(gameId);
+  if (!game) throw new Error("Partita non trovata");
+  return { actors: game.actors, assignments: game.assignments };
+}
+
+export async function addActorToGame(gameId, data) {
+  const game = await Game.findById(gameId);
+  if (!game) throw new Error("Partita non trovata");
+  const name = (data?.name || "").trim();
+  if (!name) throw new Error("Nome personaggio obbligatorio");
+  if (game.actors.some((a) => a.name.toLowerCase() === name.toLowerCase())) {
+    throw new Error("Personaggio già presente nel cast");
+  }
+  game.actors.push({
+    name,
+    description: data?.description || "",
+    object: data?.object || "",
+    active: data?.active !== false
+  });
+  await game.save();
+  return game;
+}
+
+export async function updateGameActor(gameId, index, patch = {}) {
+  const game = await Game.findById(gameId);
+  if (!game) throw new Error("Partita non trovata");
+  const actor = game.actors[index];
+  if (!actor) throw new Error("Personaggio non trovato");
+  if (patch.name !== undefined) actor.name = patch.name.trim() || actor.name;
+  if (patch.description !== undefined) actor.description = patch.description;
+  if (patch.object !== undefined) actor.object = patch.object;
+  if (patch.active !== undefined) actor.active = patch.active;
+  await game.save();
+  return game;
+}
+
+export async function removeGameActor(gameId, index) {
+  const game = await Game.findById(gameId);
+  if (!game) throw new Error("Partita non trovata");
+  const actor = game.actors[index];
+  if (!actor) throw new Error("Personaggio non trovato");
+  const removedName = actor.name;
+  game.actors.splice(index, 1);
+  game.assignments = game.assignments.filter((a) => a.character !== removedName);
+  await game.save();
+  return game;
+}
+
+// ===== Associazione utente ↔ personaggio della partita =====
+
+export async function assignCharacterToGame(gameId, userId, character) {
+  const game = await Game.findById(gameId);
+  if (!game) throw new Error("Partita non trovata");
+  if (!userId) throw new Error("Utente obbligatorio");
+  const name = (character || "").trim();
+  if (!name) throw new Error("Personaggio obbligatorio");
+  if (!game.actors.some((a) => a.name.toLowerCase() === name.toLowerCase())) {
+    throw new Error("Personaggio non presente nel cast della partita");
+  }
+  const existing = game.assignments.find((a) => String(a.userId) === String(userId));
+  if (existing) {
+    existing.character = name;
+  } else {
+    game.assignments.push({ userId, character: name });
+  }
+  game.assignments = game.assignments.filter(
+    (a) => String(a.userId) === String(userId) || a.character.toLowerCase() !== name.toLowerCase()
+  );
+  await game.save();
+  return game;
+}
+
+export async function removeAssignmentFromGame(gameId, userId) {
+  const game = await Game.findById(gameId);
+  if (!game) throw new Error("Partita non trovata");
+  game.assignments = game.assignments.filter((a) => String(a.userId) !== String(userId));
+  await game.save();
+  return game;
+}
+
+export async function getCharacterForUser(gameId, userId) {
+  const game = await Game.findById(gameId).select("assignments");
+  if (!game) return null;
+  const assignment = game.assignments.find((a) => String(a.userId) === String(userId));
+  return assignment ? assignment.character : null;
 }

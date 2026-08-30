@@ -4,6 +4,13 @@ import {
   getActiveGame,
   getAllGames,
   getGameProgram,
+  getCast,
+  addActorToGame,
+  updateGameActor,
+  removeGameActor,
+  assignCharacterToGame,
+  removeAssignmentFromGame,
+  getCharacterForUser,
   extractNumber,
   resetGame,
   deleteGame,
@@ -68,6 +75,88 @@ router.get("/program", async (req, res) => {
     res.json({ ok: true, data: program });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// Personaggio dell'utente autenticato nella partita attiva.
+router.get("/my-cast", authenticate, async (req, res) => {
+  try {
+    const game = await getActiveGame();
+    const character = game ? await getCharacterForUser(game._id, req.user.id) : null;
+    res.json({ ok: true, data: { gameId: game?._id || null, character } });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// ===== Cast della partita =====
+router.get("/:id/actors", authenticate, requireRoles("admin", "regista"), async (req, res) => {
+  try {
+    const cast = await getCast(req.params.id);
+    res.json({ ok: true, data: cast });
+  } catch (error) {
+    res.status(404).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/:id/actors", authenticate, requireRoles("admin"), async (req, res) => {
+  try {
+    const game = await addActorToGame(req.params.id, req.body);
+    broadcastToClients(req.app.get("wss"), "game:update", game);
+    res.status(201).json({ ok: true, data: game });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.put("/:id/actors/:index", authenticate, requireRoles("admin"), async (req, res) => {
+  try {
+    const game = await updateGameActor(req.params.id, parseInt(req.params.index), req.body);
+    broadcastToClients(req.app.get("wss"), "game:update", game);
+    res.json({ ok: true, data: game });
+  } catch (error) {
+    res.status(404).json({ ok: false, message: error.message });
+  }
+});
+
+router.delete("/:id/actors/:index", authenticate, requireRoles("admin"), async (req, res) => {
+  try {
+    const game = await removeGameActor(req.params.id, parseInt(req.params.index));
+    broadcastToClients(req.app.get("wss"), "game:update", game);
+    res.json({ ok: true, data: game });
+  } catch (error) {
+    res.status(404).json({ ok: false, message: error.message });
+  }
+});
+
+// ===== Associazione utente ↔ personaggio per la partita =====
+router.get("/:id/assignments", authenticate, requireRoles("admin"), async (req, res) => {
+  try {
+    const cast = await getCast(req.params.id);
+    res.json({ ok: true, data: cast.assignments });
+  } catch (error) {
+    res.status(404).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/:id/assignments", authenticate, requireRoles("admin"), async (req, res) => {
+  try {
+    const { userId, character } = req.body || {};
+    const game = await assignCharacterToGame(req.params.id, userId, character);
+    broadcastToClients(req.app.get("wss"), "game:update", game);
+    res.status(201).json({ ok: true, data: game });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.delete("/:id/assignments/:userId", authenticate, requireRoles("admin"), async (req, res) => {
+  try {
+    const game = await removeAssignmentFromGame(req.params.id, req.params.userId);
+    broadcastToClients(req.app.get("wss"), "game:update", game);
+    res.json({ ok: true, data: game });
+  } catch (error) {
+    res.status(404).json({ ok: false, message: error.message });
   }
 });
 

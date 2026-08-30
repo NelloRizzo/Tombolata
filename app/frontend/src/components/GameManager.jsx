@@ -106,7 +106,7 @@ export default function GameManager({ game }) {
                   <div className="gm-item-info">
                     <span className="gm-name">{g.name}</span>
                     <span className="gm-sub">
-                      {g.boards.length} cartelle · {g.extractedNumbers.length} estratti
+                      {g.boards.length} cartelle · {g.extractedNumbers.length} estratti · {g.actors ? g.actors.length : 0} attori
                       {sub ? " · " + sub : ""}
                     </span>
                   </div>

@@ -1,21 +1,21 @@
 import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext.jsx";
 import { apiRequest } from "../api.js";
 
 export default function AttorePanel({ ws }) {
-  const { user } = useAuth();
   const { firedTriggers } = ws;
   const [triggers, setTriggers] = useState([]);
+  const [myCharacter, setMyCharacter] = useState(null);
   const [done, setDone] = useState({});
   const [error, setError] = useState(null);
 
-  // Copie locali segnate come eseguite (per sessione)
-  const character = user?.character;
-
   async function load() {
     try {
-      const json = await apiRequest("/api/triggers");
-      if (json.ok) setTriggers(json.data);
+      const [role, cues] = await Promise.all([
+        apiRequest("/api/game/my-cast"),
+        apiRequest("/api/triggers")
+      ]);
+      if (role.ok) setMyCharacter(role.data.character);
+      if (cues.ok) setTriggers(cues.data);
     } catch (e) {
       setError(e.message);
     }
@@ -23,14 +23,14 @@ export default function AttorePanel({ ws }) {
 
   useEffect(() => {
     load();
-  }, [character]);
+  }, [ws.game?._id]);
 
   return (
     <div className="attore-panel">
       <div className="panel-block">
         <h2>Cue per il tuo personaggio</h2>
-        {character ? <p className="empty">Personaggio: <strong>{character}</strong></p>
-          : <p className="empty">Nessun personaggio assegnato al tuo account.</p>}
+        {myCharacter ? <p className="empty">Personaggio: <strong>{myCharacter}</strong></p>
+          : <p className="empty">Nessun personaggio associato alla partita attiva.</p>}
 
         {error && <div className="error-text">{error}</div>}
 

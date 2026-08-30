@@ -2,19 +2,24 @@ import { Router } from "express";
 import Trigger from "../models/Trigger.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
 import { fireManual, evaluateTriggers, getNarrationState, setPhase } from "../services/triggerService.js";
+import { getActiveGame, getCharacterForUser } from "../services/gameService.js";
 
 const router = Router();
 const ACTIONS = ["video", "live", "sound", "effect"];
 const PHASES = ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-cinquina", "finale", "always"];
 
-// Lista trigger (admin vede tutto, attore vede solo i propri e soltanto i 'live' per il suo personaggio)
+// Lista trigger (admin/regista vede tutto, attore vede solo i propri 'live' per il
+// personaggio che interpreta nella partita attiva)
 router.get("/", authenticate, async (req, res) => {
   try {
     let query = {};
     if (req.user.roles.includes("admin") || req.user.roles.includes("regista")) {
       query = {};
     } else if (req.user.roles.includes("attore")) {
-      query = { targetActor: req.user.character, actionType: "live" };
+      const game = await getActiveGame();
+      const character = game ? await getCharacterForUser(game._id, req.user.id) : null;
+      if (!character) return res.json({ ok: true, data: [] });
+      query = { targetActor: character, actionType: "live" };
     } else {
       return res.status(403).json({ ok: false, message: "Permessi insufficienti" });
     }

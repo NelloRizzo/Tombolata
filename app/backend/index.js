@@ -6,7 +6,6 @@ import dotenv from "dotenv";
 import { connectDB, getDbStatus } from "./services/db.js";
 import gameRoutes from "./routes/game.js";
 import authRoutes from "./routes/auth.js";
-import actorRoutes from "./routes/actors.js";
 import triggerRoutes from "./routes/triggers.js";
 import videoRoutes from "./routes/videos.js";
 import soundRoutes from "./routes/sounds.js";
@@ -36,7 +35,6 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
-app.use("/api/actors", actorRoutes);
 app.use("/api/game", gameRoutes);
 app.use("/api/triggers", triggerRoutes);
 app.use("/api/videos", videoRoutes);

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
+import GameManager from "./GameManager.jsx";
 
 const ROLES = ["admin", "regista", "video", "fonico", "drawer", "attore", "spettatore"];
 

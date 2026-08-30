@@ -2,7 +2,8 @@ import { Router } from "express";
 import Trigger from "../models/Trigger.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
 import { fireManual, evaluateTriggers, getNarrationState, setPhase } from "../services/triggerService.js";
-import { getActiveGame, getCharacterForUser } from "../services/gameService.js";
+import { getActiveGame, getGameById, getCharacterForUser } from "../services/gameService.js";
+import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
 
 const router = Router();
 const ACTIONS = ["video", "live", "sound", "effect"];
@@ -16,7 +17,8 @@ router.get("/", authenticate, async (req, res) => {
     if (req.user.roles.includes("admin") || req.user.roles.includes("regista")) {
       query = {};
     } else if (req.user.roles.includes("attore")) {
-      const game = await getActiveGame();
+      const gameId = resolveGameId(req);
+      const game = gameId ? await getGameById(gameId) : await getActiveGame();
       const character = game ? await getCharacterForUser(game._id, req.user.id) : null;
       if (!character) return res.json({ ok: true, data: [] });
       query = { targetActor: character, actionType: "live" };
@@ -97,19 +99,14 @@ router.delete("/:id", authenticate, requireRoles("admin"), async (req, res) => {
 // Attivazione manuale da parte del regista
 router.post("/:id/fire", authenticate, requireRoles("regista", "admin"), async (req, res) => {
   try {
-    const event = await fireManual(req.params.id);
+    const gameId = resolveGameId(req);
+    const event = await fireManual(req.params.id, gameId);
     const wss = req.app.get("wss");
     if (wss) {
-      const msg = JSON.stringify({ type: "trigger:fired", payload: [event] });
-      wss.clients.forEach((client) => {
-        if (client.readyState === 1) client.send(msg);
-      });
+      broadcastToClients(wss, "trigger:fired", [event], gameId);
       if (event.actionType === "video" || event.actionType === "effect") {
-        const narration = await getNarrationState();
-        const msgN = JSON.stringify({ type: "narration:update", payload: narration });
-        wss.clients.forEach((client) => {
-          if (client.readyState === 1) client.send(msgN);
-        });
+        const narration = await getNarrationState(gameId);
+        broadcastToClients(wss, "narration:update", narration, gameId);
       }
     }
     res.json({ ok: true, data: event });
@@ -121,7 +118,7 @@ router.post("/:id/fire", authenticate, requireRoles("regista", "admin"), async (
 // Test manuale della valutazione trigger (senza attivare)
 router.post("/evaluate", authenticate, requireRoles("regista", "admin"), async (req, res) => {
   try {
-    const fired = await evaluateTriggers();
+    const fired = await evaluateTriggers(resolveGameId(req));
     res.json({ ok: true, data: fired });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -131,7 +128,7 @@ router.post("/evaluate", authenticate, requireRoles("regista", "admin"), async (
 // Stato della narrazione (per tutti gli autenticati)
 router.get("/narration", authenticate, async (req, res) => {
   try {
-    const narration = await getNarrationState();
+    const narration = await getNarrationState(resolveGameId(req));
     res.json({ ok: true, data: narration });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -145,7 +142,7 @@ router.post("/phase", authenticate, requireRoles("regista", "admin"), async (req
     if (!phase || !PHASES.includes(phase)) {
       return res.status(400).json({ ok: false, message: "Fase non valida" });
     }
-    const narration = await setPhase(phase);
+    const narration = await setPhase(phase, resolveGameId(req));
     res.json({ ok: true, data: narration });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });

@@ -1,5 +1,8 @@
+import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useCurrentGame } from "../context/GameContext.jsx";
+import { apiRequest } from "../api.js";
 
 const ROLE_SEZIONI = [
   { key: "admin", label: "Gestione", icon: "⚙️" },
@@ -10,6 +13,43 @@ const ROLE_SEZIONI = [
   { key: "attore", label: "Attore", icon: "🎭" },
   { key: "spettatore", label: "Tabellone", icon: "🖥️" }
 ];
+
+// Selezione della partita corrente: le azioni della dashboard e il tabellone
+// pubblico di questo browser si riferiscono alla partita scelta.
+function GameSelector() {
+  const { currentGameId, setCurrentGame } = useCurrentGame();
+  const [games, setGames] = useState([]);
+
+  useEffect(() => {
+    apiRequest("/api/game/history")
+      .then((json) => {
+        if (json.ok) setGames(json.data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const currentName = games.find((g) => String(g._id) === String(currentGameId))?.name;
+
+  return (
+    <label className="game-selector" title="Partita corrente della dashboard">
+      <span className="gs-label">{currentName || (currentGameId ? "Partita selezionata" : "Partita auto")}</span>
+      <select
+        value={currentGameId || ""}
+        onChange={(e) => setCurrentGame(e.target.value || null)}
+      >
+        <option value="">✓ Partita attiva (automatica)</option>
+        {games
+          .filter((g) => g.status !== "finished")
+          .map((g) => (
+            <option key={g._id} value={g._id}>
+              {g.name}
+              {g.status === "scheduled" ? " (programmata)" : ""}
+            </option>
+          ))}
+      </select>
+    </label>
+  );
+}
 
 export default function Navbar() {
   const { user, hasRole, logout } = useAuth();
@@ -60,6 +100,7 @@ export default function Navbar() {
       </nav>
 
       <div className="navbar-actions">
+        <GameSelector />
         {user ? (
           <>
             <span className="navbar-user" title={user.displayName || user.username}>

@@ -1,4 +1,4 @@
-export default function NumberGrid({ extracted = [] }) {
+export default function NumberGrid({ extracted = [], fill = false }) {
   const groups = [];
   for (let g = 0; g < 9; g++) {
     const start = g * 10 + 1;
@@ -10,7 +10,7 @@ export default function NumberGrid({ extracted = [] }) {
   const extractedSet = new Set(extracted);
 
   return (
-    <div className="number-grid">
+    <div className={`number-grid ${fill ? "fill" : ""}`}>
       {groups.map((group, gi) => (
         <div className="grid-group" key={gi}>
           {group.map((num) => (

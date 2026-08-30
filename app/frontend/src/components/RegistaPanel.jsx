@@ -12,11 +12,14 @@ const PHASES = [
   { value: "live", label: "Live" }
 ];
 
-export default function RegistaPanel({ ws }) {
+export default function RegistaPanel({ ws, gameId }) {
   const { game, narration, firedTriggers } = ws;
   const [triggers, setTriggers] = useState([]);
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
+
+  const ref = gameId || game?._id || null;
+  const bodyRef = (extra = {}) => JSON.stringify({ ...extra, ...(ref ? { gameId: ref } : {}) });
 
   async function load() {
     try {
@@ -38,7 +41,7 @@ export default function RegistaPanel({ ws }) {
   async function fire(id) {
     setError(null);
     try {
-      await apiRequest(`/api/triggers/${id}/fire`, { method: "POST" });
+      await apiRequest(`/api/triggers/${id}/fire`, { method: "POST", body: bodyRef() });
     } catch (e) {
       setError(e.message);
     }
@@ -49,7 +52,7 @@ export default function RegistaPanel({ ws }) {
     try {
       await apiRequest("/api/triggers/phase", {
         method: "POST",
-        body: JSON.stringify({ phase })
+        body: bodyRef({ phase })
       });
     } catch (e) {
       setError(e.message);
@@ -59,7 +62,7 @@ export default function RegistaPanel({ ws }) {
   async function playVideo(id) {
     setError(null);
     try {
-      await apiRequest(`/api/videos/${id}/play`, { method: "POST" });
+      await apiRequest(`/api/videos/${id}/play`, { method: "POST", body: ref ? JSON.stringify({ gameId: ref }) : undefined });
     } catch (e) {
       setError(e.message);
     }

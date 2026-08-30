@@ -1,7 +1,9 @@
 import { Router } from "express";
 import {
   startNewGame,
+  updateGame,
   getActiveGame,
+  getGameById,
   getAllGames,
   getGameProgram,
   getCast,
@@ -21,6 +23,7 @@ import {
 } from "../services/gameService.js";
 import { evaluateTriggers, setPhase, getNarrationState } from "../services/triggerService.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
+import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
 
 const PHASE_BY_WIN = {
   ambo: "post-ambo",
@@ -32,20 +35,9 @@ const WIN_RANK = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
 
 const router = Router();
 
-function broadcastToClients(wss, type, payload) {
-  const message = JSON.stringify({ type, payload });
-  if (wss) {
-    wss.clients.forEach((client) => {
-      if (client.readyState === 1) {
-        client.send(message);
-      }
-    });
-  }
-}
-
 router.get("/state", async (req, res) => {
   try {
-    const state = await getGameState();
+    const state = await getGameState(resolveGameId(req));
     res.json({ ok: true, data: state });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -78,10 +70,11 @@ router.get("/program", async (req, res) => {
   }
 });
 
-// Personaggio dell'utente autenticato nella partita attiva.
+// Personaggio dell'utente autenticato nella partita selezionata (o attiva).
 router.get("/my-cast", authenticate, async (req, res) => {
   try {
-    const game = await getActiveGame();
+    const gameId = resolveGameId(req);
+    const game = gameId ? await getGameById(gameId) : await getActiveGame();
     const character = game ? await getCharacterForUser(game._id, req.user.id) : null;
     res.json({ ok: true, data: { gameId: game?._id || null, character } });
   } catch (error) {
@@ -102,7 +95,7 @@ router.get("/:id/actors", authenticate, requireRoles("admin", "regista"), async 
 router.post("/:id/actors", authenticate, requireRoles("admin"), async (req, res) => {
   try {
     const game = await addActorToGame(req.params.id, req.body);
-    broadcastToClients(req.app.get("wss"), "game:update", game);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.status(201).json({ ok: true, data: game });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
@@ -112,7 +105,7 @@ router.post("/:id/actors", authenticate, requireRoles("admin"), async (req, res)
 router.put("/:id/actors/:index", authenticate, requireRoles("admin"), async (req, res) => {
   try {
     const game = await updateGameActor(req.params.id, parseInt(req.params.index), req.body);
-    broadcastToClients(req.app.get("wss"), "game:update", game);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.json({ ok: true, data: game });
   } catch (error) {
     res.status(404).json({ ok: false, message: error.message });
@@ -122,7 +115,7 @@ router.put("/:id/actors/:index", authenticate, requireRoles("admin"), async (req
 router.delete("/:id/actors/:index", authenticate, requireRoles("admin"), async (req, res) => {
   try {
     const game = await removeGameActor(req.params.id, parseInt(req.params.index));
-    broadcastToClients(req.app.get("wss"), "game:update", game);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.json({ ok: true, data: game });
   } catch (error) {
     res.status(404).json({ ok: false, message: error.message });
@@ -143,7 +136,7 @@ router.post("/:id/assignments", authenticate, requireRoles("admin"), async (req,
   try {
     const { userId, character } = req.body || {};
     const game = await assignCharacterToGame(req.params.id, userId, character);
-    broadcastToClients(req.app.get("wss"), "game:update", game);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.status(201).json({ ok: true, data: game });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
@@ -153,7 +146,7 @@ router.post("/:id/assignments", authenticate, requireRoles("admin"), async (req,
 router.delete("/:id/assignments/:userId", authenticate, requireRoles("admin"), async (req, res) => {
   try {
     const game = await removeAssignmentFromGame(req.params.id, req.params.userId);
-    broadcastToClients(req.app.get("wss"), "game:update", game);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.json({ ok: true, data: game });
   } catch (error) {
     res.status(404).json({ ok: false, message: error.message });
@@ -162,10 +155,11 @@ router.delete("/:id/assignments/:userId", authenticate, requireRoles("admin"), a
 
 router.post("/extract", authenticate, requireRoles("drawer", "regista", "admin"), async (req, res) => {
   try {
-    const { game, newWins } = await extractNumber();
-    broadcastToClients(req.app.get("wss"), "game:update", game);
+    const gameId = resolveGameId(req);
+    const { game, newWins } = await extractNumber(gameId);
+    broadcastToClients(req.app.get("wss"), "game:update", game, gameId);
     if (newWins && newWins.length > 0) {
-      broadcastToClients(req.app.get("wss"), "game:win", newWins);
+      broadcastToClients(req.app.get("wss"), "game:win", newWins, gameId);
       // Avanza la fase narrativa in base alla vincita più alta appena ottenuta
       let highest = null;
       for (const w of newWins) {
@@ -173,18 +167,18 @@ router.post("/extract", authenticate, requireRoles("drawer", "regista", "admin")
       }
       const phaseKey = PHASE_BY_WIN[highest];
       if (phaseKey) {
-        const narration = await setPhase(phaseKey);
-        broadcastToClients(req.app.get("wss"), "narration:update", narration);
+        const narration = await setPhase(phaseKey, gameId);
+        broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
       }
     }
     // Valuta i trigger automatici dopo ogni estrazione
     try {
-      const fired = await evaluateTriggers();
+      const fired = await evaluateTriggers(gameId);
       if (fired.length > 0) {
-        broadcastToClients(req.app.get("wss"), "trigger:fired", fired);
+        broadcastToClients(req.app.get("wss"), "trigger:fired", fired, gameId);
         if (fired.some((e) => e.actionType === "video")) {
-          const btnarration = await getNarrationState();
-          broadcastToClients(req.app.get("wss"), "narration:update", btnarration);
+          const btnarration = await getNarrationState(gameId);
+          broadcastToClients(req.app.get("wss"), "narration:update", btnarration, gameId);
         }
       }
     } catch (triggerErr) {
@@ -200,7 +194,7 @@ router.post("/:id/boards", authenticate, requireRoles("drawer", "regista", "admi
   try {
     const { playerName, boardNumber, rows } = req.body || {};
     const game = await addBoard(req.params.id, playerName, rows, boardNumber);
-    broadcastToClients(req.app.get("wss"), "game:update", game);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.status(201).json({ ok: true, data: game });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
@@ -210,7 +204,7 @@ router.post("/:id/boards", authenticate, requireRoles("drawer", "regista", "admi
 router.delete("/:id/boards/:boardIndex", authenticate, requireRoles("drawer", "regista", "admin"), async (req, res) => {
   try {
     const game = await removeBoard(req.params.id, parseInt(req.params.boardIndex));
-    broadcastToClients(req.app.get("wss"), "game:update", game);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.json({ ok: true, data: game });
   } catch (error) {
     res.status(404).json({ ok: false, message: error.message });
@@ -230,6 +224,16 @@ router.post("/:id/select", authenticate, requireRoles("regista", "admin"), async
   try {
     const game = await setActiveGame(req.params.id);
     broadcastToClients(req.app.get("wss"), "game:selected", game);
+    res.json({ ok: true, data: game });
+  } catch (error) {
+    res.status(404).json({ ok: false, message: error.message });
+  }
+});
+
+router.put("/:id", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+  try {
+    const game = await updateGame(req.params.id, req.body);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.json({ ok: true, data: game });
   } catch (error) {
     res.status(404).json({ ok: false, message: error.message });

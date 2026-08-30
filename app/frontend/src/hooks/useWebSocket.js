@@ -20,7 +20,7 @@ export function apiUrl(path) {
   return `${clean}${path}`;
 }
 
-export function useWebSocket() {
+export function useWebSocket(gameId = null) {
   const [connected, setConnected] = useState(false);
   const wsRef = useRef(null);
   const listenersRef = useRef({});
@@ -37,7 +37,8 @@ export function useWebSocket() {
 
   useEffect(() => {
     const connect = () => {
-      const ws = new WebSocket(wsUrl());
+      const query = gameId ? `?gameId=${encodeURIComponent(gameId)}` : "";
+      const ws = new WebSocket(wsUrl() + query);
       wsRef.current = ws;
 
       ws.onopen = () => {
@@ -68,7 +69,7 @@ export function useWebSocket() {
     return () => {
       if (wsRef.current) wsRef.current.close();
     };
-  }, []);
+  }, [gameId]);
 
   const emit = (type, payload) => {
     const handlers = listenersRef.current[type] || [];

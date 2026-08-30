@@ -2,8 +2,11 @@ import mongoose from "mongoose";
 
 const narrationSchema = new mongoose.Schema(
   {
-    // Singleton doc (fixed key -> single shared state)
+    // Singleton doc (fixed key -> single shared state). Con più partite ogni
+    // partita ha la propria narrazione: key = "main" (legacy) o "game:<gameId>".
     key: { type: String, default: "main", unique: true },
+    // Partita a cui appartiene la narrazione (null/assente = legacy globale).
+    gameId: { type: String, default: null },
     // Current narrative phase
     phase: {
       type: String,

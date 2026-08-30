@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 
-export default function VideoPanel({ ws }) {
+export default function VideoPanel({ ws, gameId }) {
   const { narration } = ws;
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
+
+  const ref = gameId || ws.game?._id || null;
+  const withRef = { method: "POST", body: ref ? JSON.stringify({ gameId: ref }) : undefined };
 
   async function load() {
     try {
@@ -22,7 +25,7 @@ export default function VideoPanel({ ws }) {
   async function play(id) {
     setError(null);
     try {
-      await apiRequest(`/api/videos/${id}/play`, { method: "POST" });
+      await apiRequest(`/api/videos/${id}/play`, withRef);
     } catch (e) {
       setError(e.message);
     }
@@ -31,7 +34,7 @@ export default function VideoPanel({ ws }) {
   async function control(action) {
     setError(null);
     try {
-      await apiRequest(`/api/videos/${action}`, { method: "POST" });
+      await apiRequest(`/api/videos/${action}`, withRef);
     } catch (e) {
       setError(e.message);
     }

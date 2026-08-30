@@ -6,17 +6,22 @@ import BoardManager from "./BoardManager.jsx";
 import WinNotification from "./WinNotification.jsx";
 import { playExtract, playWin, playTombola } from "../utils/audio.js";
 
-export default function DrawerPanel({ ws }) {
+export default function DrawerPanel({ ws, gameId }) {
   const { game, lastWin, clearLastWin } = ws;
   const [extracting, setExtracting] = useState(false);
   const [error, setError] = useState(null);
+
+  const ref = gameId || game?._id || null;
 
   async function extract() {
     if (!game) return;
     setExtracting(true);
     setError(null);
     try {
-      const json = await apiRequest("/api/game/extract", { method: "POST" });
+      await apiRequest("/api/game/extract", {
+        method: "POST",
+        body: ref ? JSON.stringify({ gameId: ref }) : undefined
+      });
       playExtract();
     } catch (e) {
       setError(e.message);

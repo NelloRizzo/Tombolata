@@ -1,18 +1,10 @@
 import { Router } from "express";
 import Video from "../models/Video.js";
-import Narration from "../models/Narration.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
+import { getNarrationForGame } from "../services/triggerService.js";
+import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
 
 const router = Router();
-
-function broadcastNarration(req, narration) {
-  const wss = req.app.get("wss");
-  if (!wss) return;
-  const msg = JSON.stringify({ type: "narration:update", payload: narration });
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) client.send(msg);
-  });
-}
 
 router.get("/", authenticate, async (req, res) => {
   try {
@@ -77,11 +69,8 @@ router.post("/:id/play", authenticate, requireRoles("admin", "regista", "video")
     const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ ok: false, message: "Video non trovato" });
 
-    let narration = await Narration.findOne({ key: "main" });
-    if (!narration) {
-      narration = new Narration({ key: "main" });
-      await narration.save();
-    }
+    const gameId = resolveGameId(req);
+    const narration = await getNarrationForGame(gameId);
     narration.player = {
       status: "playing",
       videoId: video._id.toString(),
@@ -91,7 +80,7 @@ router.post("/:id/play", authenticate, requireRoles("admin", "regista", "video")
     };
     narration.overlayActive = true;
     await narration.save();
-    broadcastNarration(req, narration);
+    await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
     res.json({ ok: true, data: narration });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -101,15 +90,12 @@ router.post("/:id/play", authenticate, requireRoles("admin", "regista", "video")
 // Stop del player video (regista/video)
 router.post("/stop", authenticate, requireRoles("admin", "regista", "video"), async (req, res) => {
   try {
-    let narration = await Narration.findOne({ key: "main" });
-    if (!narration) {
-      narration = new Narration({ key: "main" });
-      await narration.save();
-    }
+    const gameId = resolveGameId(req);
+    const narration = await getNarrationForGame(gameId);
     narration.player = { status: "idle", videoId: null, videoName: null, startedAt: null, clockMs: 0 };
     narration.overlayActive = false;
     await narration.save();
-    broadcastNarration(req, narration);
+    await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
     res.json({ ok: true, data: narration });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -119,11 +105,12 @@ router.post("/stop", authenticate, requireRoles("admin", "regista", "video"), as
 // Pausa/ripresa player
 router.post("/pause", authenticate, requireRoles("admin", "regista", "video"), async (req, res) => {
   try {
-    const narration = await Narration.findOne({ key: "main" });
-    if (narration && narration.player.status === "playing") {
+    const gameId = resolveGameId(req);
+    const narration = await getNarrationForGame(gameId);
+    if (narration.player.status === "playing") {
       narration.player.status = "paused";
       await narration.save();
-      broadcastNarration(req, narration);
+      await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
     }
     res.json({ ok: true, data: narration });
   } catch (error) {
@@ -133,11 +120,12 @@ router.post("/pause", authenticate, requireRoles("admin", "regista", "video"), a
 
 router.post("/resume", authenticate, requireRoles("admin", "regista", "video"), async (req, res) => {
   try {
-    const narration = await Narration.findOne({ key: "main" });
-    if (narration && narration.player.status === "paused") {
+    const gameId = resolveGameId(req);
+    const narration = await getNarrationForGame(gameId);
+    if (narration.player.status === "paused") {
       narration.player.status = "playing";
       await narration.save();
-      broadcastNarration(req, narration);
+      await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
     }
     res.json({ ok: true, data: narration });
   } catch (error) {

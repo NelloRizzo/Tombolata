@@ -41,6 +41,19 @@ export async function setActiveGame(id) {
   return game;
 }
 
+export async function updateGame(id, patch = {}) {
+  const game = await Game.findById(id);
+  if (!game) throw new Error("Partita non trovata");
+  if (patch.name !== undefined) game.name = (patch.name || "").trim() || game.name;
+  if (patch.description !== undefined) game.description = patch.description || "";
+  if (patch.scheduledAt !== undefined) {
+    game.scheduledAt = patch.scheduledAt ? new Date(patch.scheduledAt) : null;
+    if (!patch.scheduledAt && game.status === "scheduled") game.status = "active";
+  }
+  await game.save();
+  return game;
+}
+
 export async function getActiveGame() {
   return Game.findOne({ status: "active" }).sort({ startedAt: -1 });
 }
@@ -144,8 +157,9 @@ export async function removeBoard(gameId, boardIndex) {
   return game;
 }
 
-export async function extractNumber() {
-  const game = await getActiveGame();
+export async function extractNumber(gameId) {
+  const target = gameId || (await getActiveGame())?._id;
+  const game = target ? await Game.findById(target) : null;
   if (!game) throw new Error("Nessuna partita attiva. Creane una prima di estrarre.");
 
   if (game.extractedNumbers.length >= 90) {
@@ -207,8 +221,13 @@ export async function deleteGame(id) {
   return { message: "Partita eliminata" };
 }
 
-export async function getGameState() {
-  const game = await getActiveGame();
+export async function getGameById(id) {
+  if (!id) return null;
+  return Game.findById(id);
+}
+
+export async function getGameState(gameId) {
+  const game = gameId ? await getGameById(gameId) : await getActiveGame();
   if (!game) return null;
   return game.toObject();
 }

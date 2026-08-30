@@ -1,6 +1,7 @@
 import { Router } from "express";
 import Sound from "../models/Sound.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
+import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
 
 const router = Router();
 
@@ -67,19 +68,14 @@ router.delete("/:id", authenticate, requireRoles("admin", "regista", "fonico"), 
   }
 });
 
-// Avvia un suono: trasmette l'evento a tutti i client connessi (che lo riproducono localmente)
+// Avvia un suono: trasmette l'evento ai client connessi alla stessa partita
+// (che lo riproducono localmente)
 router.post("/:id/play", authenticate, requireRoles("admin", "regista", "fonico"), async (req, res) => {
   try {
     const sound = await Sound.findById(req.params.id);
     if (!sound) return res.status(404).json({ ok: false, message: "Suono non trovato" });
 
-    const wss = req.app.get("wss");
-    if (wss) {
-      const msg = JSON.stringify({ type: "sound:play", payload: sound });
-      wss.clients.forEach((client) => {
-        if (client.readyState === 1) client.send(msg);
-      });
-    }
+    await broadcastToClients(req.app.get("wss"), "sound:play", sound, resolveGameId(req));
     res.json({ ok: true, data: sound });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });

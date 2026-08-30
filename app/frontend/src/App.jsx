@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
+import { CurrentGameProvider } from "./context/GameContext.jsx";
 import Home from "./pages/Home.jsx";
 import Board from "./pages/Board.jsx";
 import Monitor from "./pages/Monitor.jsx";
@@ -22,22 +23,24 @@ function ManagementLayout() {
 export default function App() {
   return (
     <AuthProvider>
-      <Routes>
-        {/* A tutto schermo, senza navbar */}
-        <Route path="/" element={<Home />} />
-        <Route path="/board" element={<Board />} />
-        <Route path="/monitor" element={<Monitor />} />
+      <CurrentGameProvider>
+        <Routes>
+          {/* A tutto schermo, senza navbar */}
+          <Route path="/" element={<Home />} />
+          <Route path="/board" element={<Board />} />
+          <Route path="/monitor" element={<Monitor />} />
 
-        {/* Con navbar */}
-        <Route element={<ManagementLayout />}>
-          <Route path="/login" element={<Login />} />
-          <Route element={<ProtectedRoute />}>
-            <Route path="/console" element={<ConsoleHome />} />
+          {/* Con navbar */}
+          <Route element={<ManagementLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/console" element={<ConsoleHome />} />
+            </Route>
           </Route>
-        </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </CurrentGameProvider>
     </AuthProvider>
   );
 }

@@ -1,12 +1,23 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 
+function toLocalInput(value) {
+  if (!value) return "";
+  const d = new Date(value);
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export default function GameManager({ game }) {
   const [history, setHistory] = useState([]);
-  const [showHistory, setShowHistory] = useState(false);
+  const [showHistory, setShowHistory] = useState(true);
   const [newName, setNewName] = useState("");
   const [newDesc, setNewDesc] = useState("");
   const [newScheduled, setNewScheduled] = useState("");
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editScheduled, setEditScheduled] = useState("");
   const [error, setError] = useState(null);
 
   async function refresh() {
@@ -36,7 +47,6 @@ export default function GameManager({ game }) {
       setNewName("");
       setNewDesc("");
       setNewScheduled("");
-      setShowHistory(false);
       refresh();
     } catch (e) {
       setError(e.message);
@@ -53,10 +63,47 @@ export default function GameManager({ game }) {
     }
   }
 
+  function startEdit(g) {
+    setEditingId(g._id);
+    setEditName(g.name || "");
+    setEditDesc(g.description || "");
+    setEditScheduled(toLocalInput(g.scheduledAt));
+  }
+
+  async function saveEdit(id) {
+    setError(null);
+    try {
+      await apiRequest(`/api/game/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          name: editName.trim(),
+          description: editDesc.trim(),
+          scheduledAt: editScheduled ? new Date(editScheduled).toISOString() : null
+        })
+      });
+      setEditingId(null);
+      refresh();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function removeGame(id, name) {
+    if (!window.confirm(`Eliminare la partita "${name}"?`)) return;
+    setError(null);
+    try {
+      await apiRequest(`/api/game/${id}`, { method: "DELETE" });
+      if (editingId === id) setEditingId(null);
+      refresh();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
   return (
     <div className="game-manager">
       <button className="btn-sm" onClick={() => setShowHistory((v) => !v)}>
-        Partite
+        {showHistory ? "Chiudi partite" : "Partite"}
       </button>
 
       {showHistory && (
@@ -83,7 +130,7 @@ export default function GameManager({ game }) {
               />
             </label>
             <button className="btn-sm btn-accent" onClick={createGame}>
-              Nuova
+              Nuova partita
             </button>
           </div>
 
@@ -93,6 +140,7 @@ export default function GameManager({ game }) {
             {history.length === 0 && <p className="empty">Nessuna partita</p>}
             {history.map((g) => {
               const active = game && g._id === game._id;
+              const submitting = editingId === g._id;
               const sub = [
                 g.scheduledAt
                   ? new Date(g.scheduledAt).toLocaleString("it-IT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
@@ -103,17 +151,35 @@ export default function GameManager({ game }) {
               ].filter(Boolean).join(" · ");
               return (
                 <div key={g._id} className={`gm-item ${active ? "active" : ""}`}>
-                  <div className="gm-item-info">
-                    <span className="gm-name">{g.name}</span>
-                    <span className="gm-sub">
-                      {g.boards.length} cartelle · {g.extractedNumbers.length} estratti · {g.actors ? g.actors.length : 0} attori
-                      {sub ? " · " + sub : ""}
-                    </span>
-                  </div>
-                  {!active && (
-                    <button className="btn-sm" onClick={() => selectGame(g._id)}>
-                      {g.status === "scheduled" ? "Attiva" : "Apri"}
-                    </button>
+                  {submitting ? (
+                    <div className="gm-edit">
+                      <input value={editName} onChange={(e) => setEditName(e.target.value)} placeholder="Nome" />
+                      <input value={editDesc} onChange={(e) => setEditDesc(e.target.value)} placeholder="Descrizione" />
+                      <input type="datetime-local" value={editScheduled} onChange={(e) => setEditScheduled(e.target.value)} />
+                      <div className="gm-edit-actions">
+                        <button className="btn-sm btn-accent" onClick={() => saveEdit(g._id)}>Salva</button>
+                        <button className="btn-sm" onClick={() => setEditingId(null)}>Annulla</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="gm-item-info">
+                        <span className="gm-name">{g.name}</span>
+                        <span className="gm-sub">
+                          {g.boards.length} cartelle · {g.extractedNumbers.length} estratti · {g.actors ? g.actors.length : 0} attori
+                          {sub ? " · " + sub : ""}
+                        </span>
+                      </div>
+                      <div className="gm-actions">
+                        <button className="btn-sm" onClick={() => startEdit(g)}>Modifica</button>
+                        <button className="btn-sm btn-ghost" onClick={() => removeGame(g._id, g.name)}>Elimina</button>
+                        {!active && (
+                          <button className="btn-sm btn-accent" onClick={() => selectGame(g._id)}>
+                            {g.status === "scheduled" ? "Attiva" : "Apri"}
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
               );

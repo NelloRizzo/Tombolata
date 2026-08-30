@@ -48,17 +48,19 @@ h3 {
 
 /* ---------- Board (public) ---------- */
 .board-page {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 16px;
+  padding: 10px 16px 8px;
+  overflow: hidden;
 }
 
 .board-header {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 16px;
+  padding: 4px 16px 8px;
 }
 .board-title {
   font-size: 2rem;
@@ -73,23 +75,29 @@ h3 {
 }
 
 .board-main {
-  display: flex;
   flex: 1;
+  display: flex;
   gap: 24px;
-  align-items: flex-start;
+  align-items: stretch;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .board-left {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
 }
 
 .board-right {
   width: 280px;
   flex-shrink: 0;
+  display: flex;
+  min-height: 0;
 }
 
 /* ---------- Last number ---------- */
@@ -97,15 +105,15 @@ h3 {
   text-align: center;
 }
 .last-number {
-  font-size: 6rem;
+  font-size: 4rem;
   font-weight: 800;
-  width: 180px;
-  height: 180px;
+  width: 130px;
+  height: 130px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 24px;
+  border-radius: 30%;
   background: var(--card);
   color: var(--gold);
   border: 3px solid var(--gold);
@@ -132,40 +140,68 @@ h3 {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
+}
+.number-grid.fill {
+  flex: 1;
+  min-height: 0;
+  justify-content: space-between;
 }
 .grid-group {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
-  gap: 8px;
+  grid-template-rows: 1fr;
+  gap: 6px;
+}
+.number-grid.fill .grid-group {
+  flex: 1 1 0;
+  min-height: 0;
 }
 .grid-cell {
-  aspect-ratio: 1 / 1;
+  position: relative;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  font-size: 1.35rem;
+  border-radius: 36% 36% 24% 24% / 60% 60% 40% 40%;
+  font-size: clamp(0.7rem, 3vmin, 2.1rem);
   font-weight: 700;
   transition: all 0.3s;
 
   /* Non estratto: cilindretto spento (grigio) */
-  background: linear-gradient(150deg, #4a505c, #2e333d 70%);
-  color: #9aa1ac;
-  border: 2px solid #1d2129;
-  box-shadow: inset 0 3px 6px rgba(0, 0, 0, 0.55), inset 0 -2px 4px rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, #59606c 0%, #3d434c 45%, #262b33 100%);
+  color: #aeb6c2;
+  border: 2px solid #1c2027;
+  box-shadow:
+    inset 0 4px 6px rgba(255, 255, 255, 0.12),
+    inset 0 -6px 10px rgba(0, 0, 0, 0.55);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6), 0 -1px 1px rgba(255, 255, 255, 0.08);
+}
+.grid-cell::before {
+  content: "";
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 0;
+  height: 38%;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 38% 36%, rgba(226, 232, 240, 0.6), rgba(226, 232, 240, 0) 68%);
 }
 .grid-cell.extracted {
   /* Estratto: legno con bordo rosso e numero scolpito */
-  background: linear-gradient(160deg, #ffe6b0 0%, #e2b570 40%, #a66b32 100%);
+  background: linear-gradient(180deg, #ffe9b8 0%, #e0b268 40%, #b07a3a 70%, #7c4e20 100%);
   color: #4a2c12;
   border: 3px solid var(--red);
   box-shadow:
-    0 0 14px rgba(198, 40, 40, 0.55),
-    inset 0 2px 3px rgba(255, 255, 255, 0.5),
-    inset 0 -3px 5px rgba(74, 44, 18, 0.45);
-  text-shadow: 0 1px 0 rgba(255, 244, 205, 0.4), 0 -1px 1px rgba(74, 44, 18, 0.45);
+    0 0 12px rgba(198, 40, 40, 0.5),
+    inset 0 3px 4px rgba(255, 246, 214, 0.55),
+    inset 0 -5px 8px rgba(74, 44, 18, 0.5);
+  text-shadow: 0 1px 0 rgba(255, 244, 205, 0.45), 0 -1px 1px rgba(74, 44, 18, 0.5);
   font-weight: 800;
+}
+.grid-cell.extracted::before {
+  background: radial-gradient(ellipse at 36% 34%, rgba(255, 250, 230, 0.9), rgba(255, 250, 230, 0) 70%);
 }
 
 /* ---------- Extracted numbers list ---------- */
@@ -176,6 +212,10 @@ h3 {
   max-height: 80vh;
   display: flex;
   flex-direction: column;
+}
+.board-right .extracted-numbers {
+  flex: 1;
+  min-height: 0;
 }
 .extracted-numbers h2 {
   font-size: 1.1rem;
@@ -948,6 +988,33 @@ h3 {
   align-items: center;
   gap: 12px;
   margin-left: auto;
+}
+.game-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--card);
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+.game-selector select {
+  background: transparent;
+  border: none;
+  color: var(--gold);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 220px;
+}
+.game-selector select option {
+  background: var(--card);
+  color: var(--text);
+}
+.gs-label {
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
 }
 .navbar-user {
   color: var(--muted);

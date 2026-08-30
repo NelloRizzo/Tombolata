@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 
-export default function FonicoPanel({ ws }) {
+export default function FonicoPanel({ ws, gameId }) {
   const { game } = ws;
   const [sounds, setSounds] = useState([]);
   const [error, setError] = useState(null);
   const [playingId, setPlayingId] = useState(null);
+
+  const ref = gameId || game?._id || null;
 
   async function load() {
     try {
@@ -23,7 +25,10 @@ export default function FonicoPanel({ ws }) {
   async function triggerSound(id) {
     setError(null);
     try {
-      const json = await apiRequest(`/api/sounds/${id}/play`, { method: "POST" }).catch(() => null);
+      const json = await apiRequest(`/api/sounds/${id}/play`, {
+        method: "POST",
+        body: ref ? JSON.stringify({ gameId: ref }) : undefined
+      }).catch(() => null);
       setPlayingId(id);
       setTimeout(() => setPlayingId(null), 2000);
       if (!json) {

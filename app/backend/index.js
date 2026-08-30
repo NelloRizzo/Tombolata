@@ -12,6 +12,7 @@ import soundRoutes from "./routes/sounds.js";
 import { getGameState } from "./services/gameService.js";
 import { getNarrationState } from "./services/triggerService.js";
 import { bootstrap } from "./services/bootstrap.js";
+import { broadcastToClients } from "./services/broadcast.js";
 
 dotenv.config();
 
@@ -44,27 +45,27 @@ const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws" });
 app.set("wss", wss);
 
+// Export mantenuto per compatibilità: invia l'evento a tutti.
 function broadcast(type, payload) {
-  const message = JSON.stringify({ type, payload });
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) {
-      client.send(message);
-    }
-  });
+  return broadcastToClients(wss, type, payload, null);
 }
 
 wss.on("connection", async (ws) => {
-  console.log("Nuovo client connesso via WebSocket");
+  // Canale per partita: il client si connette con ?gameId=xxx e riceve solo
+  // gli eventi della propria partita (null = partita attiva, legacy).
+  const query = (ws.url || "").split("?")[1] || "";
+  ws.gameId = new URLSearchParams(query).get("gameId") || null;
+  console.log(`Nuovo client connesso via WebSocket (gameId: ${ws.gameId || "auto"})`);
 
   try {
-    const state = await getGameState();
+    const state = await getGameState(ws.gameId);
     ws.send(JSON.stringify({ type: "game:state", payload: state }));
   } catch (error) {
     console.error("Errore nell'inviare lo stato iniziale:", error.message);
   }
 
   try {
-    const narration = await getNarrationState();
+    const narration = await getNarrationState(ws.gameId);
     ws.send(JSON.stringify({ type: "narration:state", payload: narration }));
   } catch (error) {
     console.error("Errore nell'inviare lo stato narrazione:", error.message);

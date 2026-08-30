@@ -1,6 +1,18 @@
 import Trigger from "../models/Trigger.js";
 import Narration from "../models/Narration.js";
-import { getActiveGame } from "./gameService.js";
+import { getGameState } from "./gameService.js";
+
+// Risolve la narrazione della partita: se viene fornito gameId usa un
+// documento dedicato (key "game:<gameId>"), altrimenti il doc legacy "main".
+export async function getNarrationForGame(gameId) {
+  const key = gameId ? `game:${gameId}` : "main";
+  let narration = await Narration.findOne({ key });
+  if (!narration) {
+    narration = new Narration({ key, gameId: gameId || null });
+    await narration.save();
+  }
+  return narration;
+}
 
 // Valuta una singola condizione contro lo stato di gioco
 function evalCondition(cond, state) {
@@ -44,17 +56,8 @@ function evalTrigger(trigger, state) {
   return trigger.conditions.every((g) => evalGroup(g, state));
 }
 
-async function getNarration() {
-  let narration = await Narration.findOne({ key: "main" });
-  if (!narration) {
-    narration = new Narration({ key: "main" });
-    await narration.save();
-  }
-  return narration;
-}
-
-export async function buildGameState() {
-  const game = await getActiveGame();
+export async function buildGameState(gameId) {
+  const game = await getGameState(gameId);
   if (!game) return null;
   const last = game.extractedNumbers[game.extractedNumbers.length - 1] ?? null;
   return {
@@ -68,9 +71,9 @@ export async function buildGameState() {
 }
 
 // Valuta e attiva i trigger automatici per la fase corrente
-export async function evaluateTriggers() {
-  const narration = await getNarration();
-  const state = await buildGameState();
+export async function evaluateTriggers(gameId) {
+  const narration = await getNarrationForGame(gameId);
+  const state = await buildGameState(gameId);
   if (!state) return [];
 
   const candidates = await Trigger.find({
@@ -83,7 +86,7 @@ export async function evaluateTriggers() {
   for (const trigger of candidates) {
     if (trigger.fired > 0) continue; // un trigger si attiva una volta per fase
     if (evalTrigger(trigger, state)) {
-      await fireTrigger(trigger, { source: "auto" });
+      await fireTrigger(trigger, { source: "auto" }, gameId);
       fired.push(trigger);
     }
   }
@@ -91,18 +94,18 @@ export async function evaluateTriggers() {
 }
 
 // Attivazione manuale da parte del regista
-export async function fireManual(triggerId) {
+export async function fireManual(triggerId, gameId) {
   const trigger = await Trigger.findById(triggerId);
   if (!trigger) throw new Error("Trigger non trovato");
-  await fireTrigger(trigger, { source: "manual" });
+  await fireTrigger(trigger, { source: "manual" }, gameId);
   return trigger;
 }
 
-export async function fireTrigger(trigger, meta = {}) {
+export async function fireTrigger(trigger, meta = {}, gameId) {
   trigger.fired += 1;
   trigger.lastFiredAt = new Date();
 
-  const narration = await getNarration();
+  const narration = await getNarrationForGame(gameId);
   const event = {
     id: trigger._id.toString(),
     name: trigger.name,
@@ -133,13 +136,13 @@ export async function fireTrigger(trigger, meta = {}) {
   return event;
 }
 
-export async function setPhase(phase) {
-  const narration = await getNarration();
+export async function setPhase(phase, gameId) {
+  const narration = await getNarrationForGame(gameId);
   narration.phase = phase;
   await narration.save();
   return narration;
 }
 
-export async function getNarrationState() {
-  return getNarration();
+export async function getNarrationState(gameId) {
+  return getNarrationForGame(gameId);
 }

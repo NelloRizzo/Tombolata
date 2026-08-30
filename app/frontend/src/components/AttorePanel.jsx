@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 
-export default function AttorePanel({ ws }) {
+export default function AttorePanel({ ws, gameId }) {
   const { firedTriggers } = ws;
   const [triggers, setTriggers] = useState([]);
   const [myCharacter, setMyCharacter] = useState(null);
   const [done, setDone] = useState({});
   const [error, setError] = useState(null);
 
+  const ref = gameId || ws.game?._id || null;
+  const query = ref ? `?gameId=${encodeURIComponent(ref)}` : "";
+
   async function load() {
     try {
       const [role, cues] = await Promise.all([
-        apiRequest("/api/game/my-cast"),
-        apiRequest("/api/triggers")
+        apiRequest(`/api/game/my-cast${query}`),
+        apiRequest(`/api/triggers${query}`)
       ]);
       if (role.ok) setMyCharacter(role.data.character);
       if (cues.ok) setTriggers(cues.data);
@@ -23,7 +26,7 @@ export default function AttorePanel({ ws }) {
 
   useEffect(() => {
     load();
-  }, [ws.game?._id]);
+  }, [ws.game?._id, gameId]);
 
   return (
     <div className="attore-panel">

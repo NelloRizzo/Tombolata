@@ -131,6 +131,24 @@ async function run() {
   const activated = await req(`/api/game/${sched.data._id}/select`, "POST", null, adminToken);
   assert(activated.ok && activated.data.status === "active", "attivazione partita programmata");
 
+  console.log("== TEST MULTI-PARTITA (gameId) ==");
+  const altro = await req("/api/game/start", "POST", { name: "Partita Corrente" }, adminToken);
+  assert(altro.ok && altro.data.status === "active", "creazione altra partita attiva");
+
+  // estrazione sulla partita scelta (gameId) senza toccare quella attiva
+  const spec = await req("/api/game/extract", "POST", { gameId: sched.data._id }, adminToken);
+  assert(spec.ok && spec.data.extractedNumbers.length === 1, "estrazione sulla partita scelta (gameId)");
+
+  const checkExplicit = await req(`/api/game/state?gameId=${sched.data._id}`);
+  assert(checkExplicit.ok && checkExplicit.data.extractedNumbers.length === 1, "state?gameId mostra la partita scelta");
+
+  // senza gameId l'estrazione va sulla partita attiva (una diversa da sched)
+  const auto = await req("/api/game/extract", "POST", null, adminToken);
+  assert(auto.ok && auto.data.extractedNumbers.length === 1 && auto.data._id !== sched.data._id, "estrazione senza gameId sulla partita attiva");
+
+  const checkActive = await req("/api/game/state");
+  assert(checkActive.ok && checkActive.data.extractedNumbers.length === 1 && checkActive.data._id !== sched.data._id, "state (senza gameId) è la partita attiva");
+
   console.log("== TEST VIDEO ==");
   const playRes = await req(`/api/videos/${vid.data._id}/play`, "POST", null, adminToken);
   assert(playRes.ok && playRes.data.player.status === "playing", "avvio video player");

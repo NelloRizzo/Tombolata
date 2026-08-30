@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
 import DrawerPanel from "../components/DrawerPanel.jsx";
 import RegistaPanel from "../components/RegistaPanel.jsx";
@@ -25,7 +26,8 @@ const ROLE_ORDER = ["admin", "regista", "video", "fonico", "drawer", "attore", "
 
 export default function ConsoleHome() {
   const { user, hasRole } = useAuth();
-  const ws = useGameState();
+  const { currentGameId } = useCurrentGame();
+  const ws = useGameState(currentGameId);
   const [searchParams, setSearchParams] = useSearchParams();
   // Manteniamo un fallback interno per il caso di nessuna query string.
   const [fallbackTab, setFallbackTab] = useState(null);
@@ -63,11 +65,11 @@ export default function ConsoleHome() {
 
       <main className="console-main">
         {activeTab === "admin" && <AdminPanel ws={ws} />}
-        {activeTab === "regista" && <RegistaPanel ws={ws} />}
-        {activeTab === "video" && <VideoPanel ws={ws} />}
-        {activeTab === "fonico" && <FonicoPanel ws={ws} />}
-        {activeTab === "drawer" && <DrawerPanel ws={ws} />}
-        {activeTab === "attore" && <AttorePanel ws={ws} />}
+        {activeTab === "regista" && <RegistaPanel ws={ws} gameId={currentGameId} />}
+        {activeTab === "video" && <VideoPanel ws={ws} gameId={currentGameId} />}
+        {activeTab === "fonico" && <FonicoPanel ws={ws} gameId={currentGameId} />}
+        {activeTab === "drawer" && <DrawerPanel ws={ws} gameId={currentGameId} />}
+        {activeTab === "attore" && <AttorePanel ws={ws} gameId={currentGameId} />}
         {activeTab === "spettatore" && <SpettatorePanel ws={ws} />}
       </main>
 

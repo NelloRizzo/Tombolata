@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Link } from "react-router-dom";
+
 import { useWebSocket } from "../hooks/useWebSocket.js";
 import NumberGrid from "./NumberGrid.jsx";
 import ExtractedNumbers from "./ExtractedNumbers.jsx";
@@ -92,16 +92,7 @@ export default function BoardView({ showChrome = true, gameId = null }) {
         </div>
       </main>
 
-      {showChrome && (
-        <div className="board-links">
-          <Link to="/" className="board-monitor-link">Programma</Link>
-          <Link to="/monitor" className="board-monitor-link" title="Apri il tabellone a schermo intero">
-            Schermo intero
-          </Link>
-        </div>
-      )}
-
-      {lastWin && <WinNotification win={lastWin} />}
+      {showChrome && lastWin && <WinNotification win={lastWin} />}
 
       <PublicBoardPopup narration={narration} />
     </div>

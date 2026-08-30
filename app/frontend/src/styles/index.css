@@ -195,9 +195,11 @@ h3 {
 }
 /* Numero scolpito dentro la faccia superiore */
 .cell-num {
-  position: relative;
+  position: absolute;
+  top: 27%;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 1;
-  margin-top: 21%;
   font-size: clamp(0.6rem, 2.6vmin, 1.6rem);
   font-weight: 800;
   line-height: 1;

@@ -4,10 +4,17 @@ import ExtractedNumbers from "./ExtractedNumbers.jsx";
 export default function SpettatorePanel({ ws }) {
   const { game, narration, firedTriggers } = ws;
 
+  function openPublicBoard() {
+    window.open("/board", "_blank", "noopener,noreferrer");
+  }
+
   return (
     <div className="spettatore-panel">
       <div className="panel-block">
         <h2>Tabellone pubblico</h2>
+        <button className="btn-sm btn-accent" onClick={openPublicBoard}>
+          Apri tabellone pubblico in nuova finestra
+        </button>
         <p className="empty">
           Partita: <strong>{game?.name || "-"}</strong> · Fase: {narration?.phase || "-"}
         </p>

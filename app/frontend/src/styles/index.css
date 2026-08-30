@@ -177,11 +177,11 @@ h3 {
   justify-content: center;
   transition: all 0.3s;
   /* Bussolotto non estratto */
-  background: url("/nonestratto.png") no-repeat center / 100% 100%;
+  background: url("/nonestratto.png") no-repeat center / contain;
 }
 .grid-cell.extracted {
   /* Bussolotto estratto */
-  background: url("/estratto.png") no-repeat center / 100% 100%;
+  background: url("/estratto.png") no-repeat center / contain;
   filter: drop-shadow(0 0 6px rgba(155, 28, 28, 0.4));
 }
 /* Numero stampato sopra il bussolotto */

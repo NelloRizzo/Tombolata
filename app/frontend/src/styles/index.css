@@ -97,7 +97,14 @@ h3 {
   width: 280px;
   flex-shrink: 0;
   display: flex;
+  flex-direction: column;
+  gap: 10px;
   min-height: 0;
+}
+.board-right .last-number {
+  width: 108px;
+  height: 108px;
+  font-size: 3.2rem;
 }
 
 /* ---------- Last number ---------- */
@@ -135,7 +142,7 @@ h3 {
   font-size: 0.9rem;
 }
 
-/* ---------- Number grid (cilindretti di legno) ---------- */
+/* ---------- Number grid (cilindretti di legno in prospettiva) ---------- */
 .number-grid {
   width: 100%;
   display: flex;
@@ -160,48 +167,57 @@ h3 {
 .grid-cell {
   position: relative;
   height: 100%;
+  min-height: 34px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  border-radius: 36% 36% 24% 24% / 60% 60% 40% 40%;
-  font-size: clamp(0.7rem, 3vmin, 2.1rem);
-  font-weight: 700;
+  overflow: hidden;
+  border-radius: 6px 6px 40% 40%;
+  background: linear-gradient(180deg, #2b2f38, #16191f 70%);
+  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.5);
   transition: all 0.3s;
-
-  /* Non estratto: cilindretto spento (grigio) */
-  background: linear-gradient(180deg, #59606c 0%, #3d434c 45%, #262b33 100%);
-  color: #aeb6c2;
-  border: 2px solid #1c2027;
-  box-shadow:
-    inset 0 4px 6px rgba(255, 255, 255, 0.12),
-    inset 0 -6px 10px rgba(0, 0, 0, 0.55);
-  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6), 0 -1px 1px rgba(255, 255, 255, 0.08);
 }
+/* Faccia superiore (ellisse in prospettiva) con l'anello colorato */
 .grid-cell::before {
   content: "";
   position: absolute;
-  left: 4%;
-  right: 4%;
+  left: 3%;
+  right: 3%;
   top: 0;
-  height: 38%;
+  height: 62%;
   border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(ellipse at 38% 36%, rgba(226, 232, 240, 0.6), rgba(226, 232, 240, 0) 68%);
+  border: 3px solid #575d68;
+  background: linear-gradient(180deg, #5f6570, #3b414b);
+  box-shadow:
+    inset 0 2px 5px rgba(255, 255, 255, 0.18),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.55),
+    0 2px 5px rgba(0, 0, 0, 0.4);
+}
+/* Numero scolpito dentro la faccia superiore */
+.cell-num {
+  position: relative;
+  z-index: 1;
+  margin-top: 21%;
+  font-size: clamp(0.6rem, 2.6vmin, 1.6rem);
+  font-weight: 800;
+  line-height: 1;
+  color: #6f7680;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5), 0 -1px 0 rgba(255, 255, 255, 0.08);
 }
 .grid-cell.extracted {
-  /* Estratto: legno con bordo rosso e numero scolpito */
-  background: linear-gradient(180deg, #ffe9b8 0%, #e0b268 40%, #b07a3a 70%, #7c4e20 100%);
-  color: #4a2c12;
-  border: 3px solid var(--red);
-  box-shadow:
-    0 0 12px rgba(198, 40, 40, 0.5),
-    inset 0 3px 4px rgba(255, 246, 214, 0.55),
-    inset 0 -5px 8px rgba(74, 44, 18, 0.5);
-  text-shadow: 0 1px 0 rgba(255, 244, 205, 0.45), 0 -1px 1px rgba(74, 44, 18, 0.5);
-  font-weight: 800;
+  background: linear-gradient(180deg, #5a3a14, #2c1a06 75%);
 }
 .grid-cell.extracted::before {
-  background: radial-gradient(ellipse at 36% 34%, rgba(255, 250, 230, 0.9), rgba(255, 250, 230, 0) 70%);
+  border-color: var(--red);
+  background: linear-gradient(180deg, #ffe9b8 0%, #e5b06a 65%, #b5813f 100%);
+  box-shadow:
+    inset 0 2px 4px rgba(255, 250, 230, 0.55),
+    inset 0 -4px 7px rgba(90, 52, 16, 0.6),
+    0 0 12px rgba(198, 40, 40, 0.5);
+}
+.grid-cell.extracted .cell-num {
+  color: #4a2c12;
+  text-shadow: 0 1px 0 rgba(255, 244, 205, 0.45), 0 -1px 1px rgba(74, 44, 18, 0.5);
 }
 
 /* ---------- Extracted numbers list ---------- */

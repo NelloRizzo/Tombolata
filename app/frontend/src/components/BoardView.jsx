@@ -81,10 +81,10 @@ export default function BoardView({ showChrome = true, gameId = null }) {
 
       <main className="board-main">
         <div className="board-left">
-          <LastNumber number={game?.currentNumber} />
           <NumberGrid extracted={game?.extractedNumbers || []} fill />
         </div>
         <div className="board-right">
+          <LastNumber number={game?.currentNumber} />
           <ExtractedNumbers
             numbers={game?.extractedNumbers || []}
             last={game?.currentNumber}

@@ -18,7 +18,7 @@ export default function NumberGrid({ extracted = [], fill = false }) {
               key={num}
               className={`grid-cell ${extractedSet.has(num) ? "extracted" : ""}`}
             >
-              {num}
+              <span className="cell-num">{num}</span>
             </div>
           ))}
         </div>

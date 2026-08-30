@@ -109,6 +109,21 @@ async function run() {
   const attoreTriggers = await req("/api/triggers", "GET", null, attoreLogin2.token);
   assert(attoreTriggers.ok && attoreTriggers.data.length >= 1, "attore vede i propri trigger live");
 
+  console.log("== TEST PROGRAMMA ==");
+  const sched = await req("/api/game/start", "POST", {
+    name: "Partita di Pasqua",
+    description: "Seconda serata benefica",
+    scheduledAt: "2030-06-15T20:00:00.000Z"
+  }, adminToken);
+  assert(sched.ok && sched.data.status === "scheduled", "creazione partita programmata (scheduled)");
+
+  const program = await req("/api/game/program");
+  assert(program.ok, "endpoint pubblico /program");
+  assert(program.data.future.some((g) => g._id === sched.data._id), "partita programmata visibile in future");
+
+  const activated = await req(`/api/game/${sched.data._id}/select`, "POST", null, adminToken);
+  assert(activated.ok && activated.data.status === "active", "attivazione partita programmata");
+
   console.log("== TEST VIDEO ==");
   const playRes = await req(`/api/videos/${vid.data._id}/play`, "POST", null, adminToken);
   assert(playRes.ok && playRes.data.player.status === "playing", "avvio video player");

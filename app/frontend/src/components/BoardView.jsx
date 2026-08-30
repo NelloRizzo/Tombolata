@@ -78,9 +78,12 @@ export default function BoardView({ showChrome = true }) {
       </main>
 
       {showChrome && (
-        <Link to="/monitor" className="board-monitor-link" title="Apri il tabellone a schermo intero">
-          ⛶ Schermo intero
-        </Link>
+        <div className="board-links">
+          <Link to="/" className="board-monitor-link">Programma</Link>
+          <Link to="/monitor" className="board-monitor-link" title="Apri il tabellone a schermo intero">
+            Schermo intero
+          </Link>
+        </div>
       )}
 
       {lastWin && <WinNotification win={lastWin} />}

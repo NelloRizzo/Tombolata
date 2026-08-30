@@ -8,10 +8,13 @@ const WIN_DEFS = [
   { type: "tombola", count: 15 }
 ];
 
-export async function startNewGame(name) {
+export async function startNewGame({ name, description, scheduledAt } = {}) {
+  const scheduled = Boolean(scheduledAt);
   const game = new Game({
-    status: "active",
+    status: scheduled ? "scheduled" : "active",
     name: name || "Tombolata",
+    description: description || "",
+    scheduledAt: scheduled ? new Date(scheduledAt) : null,
     extractedNumbers: [],
     currentNumber: null,
     extractionCount: 0,
@@ -25,7 +28,7 @@ export async function startNewGame(name) {
 }
 
 export async function setActiveGame(id) {
-  await Game.updateMany({}, { $set: { status: "finished" } });
+  await Game.updateMany({ status: "active" }, { $set: { status: "finished", finishedAt: new Date() } });
   const game = await Game.findByIdAndUpdate(
     id,
     { status: "active", finishedAt: null },
@@ -41,6 +44,28 @@ export async function getActiveGame() {
 
 export async function getAllGames(limit = 100) {
   return Game.find({}).sort({ startedAt: -1 }).limit(limit);
+}
+
+// Programma pubblico per la home:
+// - active: la partita aperta in questo momento
+// - upcoming: le partite programmate per oggi (o senza data)
+// - future: le partite programmate per date successive
+export async function getGameProgram() {
+  const games = await Game.find({ status: { $in: ["active", "scheduled"] } })
+    .sort({ scheduledAt: 1, startedAt: -1 });
+
+  const now = new Date();
+  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  const active = games.filter((g) => g.status === "active");
+  const upcoming = games.filter(
+    (g) => g.status === "scheduled" && (!g.scheduledAt || g.scheduledAt <= endOfToday)
+  );
+  const future = games.filter(
+    (g) => g.status === "scheduled" && g.scheduledAt && g.scheduledAt > endOfToday
+  );
+
+  return { active, upcoming, future };
 }
 
 function allBoardNumbers(board) {

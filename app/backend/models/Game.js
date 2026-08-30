@@ -21,8 +21,10 @@ const winEventSchema = new mongoose.Schema({
 }, { _id: false });
 
 const gameSchema = new mongoose.Schema({
-  status: { type: String, enum: ["active", "finished"], default: "active" },
+  status: { type: String, enum: ["scheduled", "active", "finished"], default: "active" },
   name: { type: String, default: "Tombolata" },
+  description: { type: String, default: "" },
+  scheduledAt: { type: Date, default: null },
   extractedNumbers: { type: [Number], default: [] },
   currentNumber: { type: Number, default: null },
   extractionCount: { type: Number, default: 0 },

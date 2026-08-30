@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
+import Home from "./pages/Home.jsx";
 import Board from "./pages/Board.jsx";
 import Monitor from "./pages/Monitor.jsx";
 import Login from "./pages/Login.jsx";
@@ -23,7 +24,8 @@ export default function App() {
     <AuthProvider>
       <Routes>
         {/* A tutto schermo, senza navbar */}
-        <Route path="/" element={<Board />} />
+        <Route path="/" element={<Home />} />
+        <Route path="/board" element={<Board />} />
         <Route path="/monitor" element={<Monitor />} />
 
         {/* Con navbar */}

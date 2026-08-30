@@ -3,6 +3,7 @@ import {
   startNewGame,
   getActiveGame,
   getAllGames,
+  getGameProgram,
   extractNumber,
   resetGame,
   deleteGame,
@@ -46,9 +47,25 @@ router.get("/state", async (req, res) => {
 
 router.post("/start", authenticate, requireRoles("regista", "admin"), async (req, res) => {
   try {
-    const game = await startNewGame(req.body?.name);
-    broadcastToClients(req.app.get("wss"), "game:new", game);
+    const game = await startNewGame({
+      name: req.body?.name,
+      description: req.body?.description,
+      scheduledAt: req.body?.scheduledAt
+    });
+    if (game.status === "active") {
+      broadcastToClients(req.app.get("wss"), "game:new", game);
+    }
     res.status(201).json({ ok: true, data: game });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// Programma pubblico (home): partite aperte, prossime e programmate in futuro.
+router.get("/program", async (req, res) => {
+  try {
+    const program = await getGameProgram();
+    res.json({ ok: true, data: program });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
   }

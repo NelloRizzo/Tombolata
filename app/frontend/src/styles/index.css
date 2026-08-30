@@ -173,74 +173,29 @@ h3 {
   height: 100%;
   min-height: 34px;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  overflow: hidden;
-  border-radius: 6px 6px 40% 40%;
-  /* Corpo non estratto: legno scuro con trama (venature) */
-  background:
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0 10px, rgba(0, 0, 0, 0.16) 10px 11px, rgba(255, 255, 255, 0.03) 11px 14px, rgba(0, 0, 0, 0) 14px 24px),
-    linear-gradient(180deg, #5a3d24 0%, #422d18 55%, #2a1b0c 100%);
-  box-shadow: inset 0 -4px 8px rgba(0, 0, 0, 0.5);
   transition: all 0.3s;
+  /* Bussolotto non estratto */
+  background: url("/nonestratto.png") no-repeat center / 100% 100%;
 }
-/* Faccia superiore (ellisse in prospettiva) con l'anello colorato */
-.grid-cell::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: 58%;
-  border-radius: 50% 50% 8px 8px;
-  /* Bordo non estratto: stesso colore del corpo (legno scuro) */
-  border: 3px solid #3a2716;
-  /* Faccia non estratta: legno spento, trama leggera */
-  background:
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0 9px, rgba(0, 0, 0, 0.1) 9px 10px, rgba(0, 0, 0, 0) 10px 20px),
-    linear-gradient(180deg, #7d5b3a 0%, #5b3d22 100%);
-  box-shadow:
-    inset 0 2px 5px rgba(255, 255, 255, 0.12),
-    inset 0 -3px 6px rgba(0, 0, 0, 0.5),
-    0 2px 5px rgba(0, 0, 0, 0.4);
+.grid-cell.extracted {
+  /* Bussolotto estratto */
+  background: url("/estratto.png") no-repeat center / 100% 100%;
+  filter: drop-shadow(0 0 6px rgba(155, 28, 28, 0.4));
 }
-/* Numero non estratto: legno scuro (come il bordo) */
+/* Numero stampato sopra il bussolotto */
 .cell-num {
-  position: absolute;
-  top: 22%;
-  left: 50%;
-  transform: translateX(-50%);
+  position: relative;
   z-index: 1;
   font-family: var(--font-num);
-  font-size: clamp(0.6rem, 2.6vmin, 1.6rem);
+  font-size: clamp(0.7rem, 3vmin, 1.8rem);
   font-weight: 800;
   line-height: 1;
   color: #2a1a0c;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.08), 0 -1px 0 rgba(0, 0, 0, 0.6);
-}
-.grid-cell.extracted {
-  /* Corpo estratto: legno vivo, trama sottile */
-  background:
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0 10px, rgba(0, 0, 0, 0.1) 10px 11px, rgba(255, 255, 255, 0.05) 11px 14px, rgba(0, 0, 0, 0) 14px 24px),
-    linear-gradient(180deg, #bd8a4c 0%, #9b6731 55%, #784a17 100%);
-  box-shadow:
-    inset 0 -4px 8px rgba(0, 0, 0, 0.5),
-    0 0 12px rgba(155, 28, 28, 0.45);
-}
-.grid-cell.extracted::before {
-  /* Bordo estratto: rosso scuro */
-  border-color: #9b1c1c;
-  /* Faccia estratta: legno chiaro */
-  background:
-    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0) 0 9px, rgba(120, 72, 24, 0.08) 9px 10px, rgba(0, 0, 0, 0) 10px 20px),
-    linear-gradient(180deg, #f6e2b0 0%, #eccf90 55%, #d8ad66 100%);
-  box-shadow:
-    inset 0 2px 4px rgba(255, 250, 230, 0.5),
-    inset 0 -3px 6px rgba(90, 52, 16, 0.45),
-    0 0 10px rgba(155, 28, 28, 0.45);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.1), 0 -1px 0 rgba(0, 0, 0, 0.65);
 }
 .grid-cell.extracted .cell-num {
-  /* Numero estratto: rosso scuro (come il bordo) */
   color: #7a1313;
   text-shadow: 0 1px 0 rgba(255, 244, 205, 0.45), 0 -1px 1px rgba(122, 19, 19, 0.5);
 }

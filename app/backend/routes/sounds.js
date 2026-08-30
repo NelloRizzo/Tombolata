@@ -7,7 +7,14 @@ const router = Router();
 
 router.get("/", authenticate, async (req, res) => {
   try {
-    const sounds = await Sound.find({}).sort({ category: 1, name: 1 });
+    const gid = req.query.gameId;
+    let query = {};
+    if (gid) {
+      query = { $or: [{ gameId: null }, { gameId: gid }] };
+    } else {
+      query = { gameId: null };
+    }
+    const sounds = await Sound.find(query).sort({ category: 1, name: 1 });
     res.json({ ok: true, data: sounds });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -25,6 +32,7 @@ router.post("/", authenticate, requireRoles("admin", "regista", "fonico"), async
     const sound = new Sound({
       name: body.name,
       description: body.description || "",
+      gameId: body.gameId || null,
       kind: body.kind,
       fileUrl: body.fileUrl || null,
       synth: body.synth || {},
@@ -46,6 +54,7 @@ router.put("/:id", authenticate, requireRoles("admin", "regista", "fonico"), asy
     ["name", "description", "fileUrl", "synth", "notes", "category"].forEach((k) => {
       if (body[k] !== undefined) update[k] = body[k];
     });
+    if (body.gameId !== undefined) update.gameId = body.gameId || null;
     if (body.kind !== undefined) {
       if (!["synth", "file"].includes(body.kind)) return res.status(400).json({ ok: false, message: "kind non valido" });
       update.kind = body.kind;

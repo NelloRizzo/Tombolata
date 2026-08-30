@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.js";
 import triggerRoutes from "./routes/triggers.js";
 import videoRoutes from "./routes/videos.js";
 import soundRoutes from "./routes/sounds.js";
+import uploadRoutes from "./routes/upload.js";
 import { getGameState } from "./services/gameService.js";
 import { getNarrationState } from "./services/triggerService.js";
 import { bootstrap } from "./services/bootstrap.js";
@@ -20,7 +21,7 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "30mb" }));
 
 app.get("/", (req, res) => {
   res.json({
@@ -40,6 +41,7 @@ app.use("/api/game", gameRoutes);
 app.use("/api/triggers", triggerRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/sounds", soundRoutes);
+app.use("/api/upload", uploadRoutes);
 
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws" });

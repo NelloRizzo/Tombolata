@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const soundSchema = new mongoose.Schema(
   {
+    gameId: { type: mongoose.Schema.Types.ObjectId, ref: "Game", default: null },
     name: { type: String, required: true, trim: true },
     description: { type: String, default: "" },
     // Tipo di suono: sintetizzato via Web Audio o file
@@ -22,5 +23,7 @@ const soundSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+soundSchema.index({ gameId: 1, category: 1, name: 1 });
 
 export default mongoose.model("Sound", soundSchema);

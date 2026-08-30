@@ -38,6 +38,12 @@ services:
         sync: false
       - key: CLIENT_ORIGIN
         value: https://tombolasolidale.onrender.com
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
 
   # ===== FRONTEND (Static Site) =====
   # Nota: gli Static Site su Render NON hanno un campo `plan` (sono

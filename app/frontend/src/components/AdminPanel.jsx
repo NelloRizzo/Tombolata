@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import GameManager from "./GameManager.jsx";
+import MediaUpload from "./MediaUpload.jsx";
 
 const ROLES = ["admin", "regista", "video", "fonico", "drawer", "attore", "spettatore"];
 
@@ -398,6 +399,11 @@ function VideoForm({ gameId, onDone }) {
       {error && <div className="error-text">{error}</div>}
       <input placeholder="Nome video" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
       <input placeholder="URL / file sorgente" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} />
+      <MediaUpload
+        label="Carica video (Cloudinary)"
+        resourceType="video"
+        onUploaded={(url) => setForm((f) => ({ ...f, source: url }))}
+      />
       <input placeholder="Descrizione" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
       <button className="btn-sm btn-accent" onClick={create}>Aggiungi video</button>
     </div>
@@ -447,14 +453,20 @@ export function AdminVideos({ gameId }) {
   );
 }
 
-function SoundForm({ onDone }) {
-  const [form, setForm] = useState({ name: "", category: "generico", kind: "synth", synth: { type: "sine", frequency: 440, duration: 1, gain: 0.3 } });
+function SoundForm({ onDone, gameId }) {
+  const [form, setForm] = useState({ name: "", category: "generico", kind: "synth", fileUrl: "", synth: { type: "sine", frequency: 440, duration: 1, gain: 0.3 } });
   const [error, setError] = useState(null);
 
   async function create() {
     setError(null);
     try {
-      await apiRequest("/api/sounds", { method: "POST", body: JSON.stringify(form) });
+      const payload = {
+        ...form,
+        name: form.name,
+        fileUrl: form.kind === "file" ? form.fileUrl : null,
+        gameId: gameId || null
+      };
+      await apiRequest("/api/sounds", { method: "POST", body: JSON.stringify(payload) });
       onDone();
     } catch (e) { setError(e.message); }
   }
@@ -464,27 +476,47 @@ function SoundForm({ onDone }) {
       {error && <div className="error-text">{error}</div>}
       <input placeholder="Nome suono" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
       <input placeholder="Categoria" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
-      <label>Frequenza (Hz)</label>
-      <input type="number" value={form.synth.frequency} onChange={(e) => setForm({ ...form, synth: { ...form.synth, frequency: parseInt(e.target.value) } })} />
-      <label>Durata (s)</label>
-      <input type="number" step="0.1" value={form.synth.duration} onChange={(e) => setForm({ ...form, synth: { ...form.synth, duration: parseFloat(e.target.value) } })} />
+      <div className="sound-kind-row">
+        <button className={`btn-sm ${form.kind === "synth" ? "btn-accent" : ""}`} onClick={() => setForm({ ...form, kind: "synth" })}>Sintetizzato</button>
+        <button className={`btn-sm ${form.kind === "file" ? "btn-accent" : ""}`} onClick={() => setForm({ ...form, kind: "file" })}>File audio</button>
+      </div>
+      {form.kind === "file" ? (
+        <>
+          <input placeholder="URL file audio (Cloudinary)" value={form.fileUrl} onChange={(e) => setForm({ ...form, fileUrl: e.target.value })} />
+          <MediaUpload
+            label="Carica audio (Cloudinary)"
+            resourceType="video"
+            mediaType="sounds"
+            gameId={gameId}
+            onUploaded={(url) => setForm((f) => ({ ...f, kind: "file", fileUrl: url }))}
+          />
+        </>
+      ) : (
+        <>
+          <label>Frequenza (Hz)</label>
+          <input type="number" value={form.synth.frequency} onChange={(e) => setForm({ ...form, synth: { ...form.synth, frequency: parseInt(e.target.value) } })} />
+          <label>Durata (s)</label>
+          <input type="number" step="0.1" value={form.synth.duration} onChange={(e) => setForm({ ...form, synth: { ...form.synth, duration: parseFloat(e.target.value) } })} />
+        </>
+      )}
       <button className="btn-sm btn-accent" onClick={create}>Aggiungi suono</button>
     </div>
   );
 }
 
-function AdminSounds() {
+export function AdminSounds({ gameId }) {
   const [sounds, setSounds] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState(null);
 
   async function load() {
     try {
-      const json = await apiRequest("/api/sounds");
+      const q = gameId ? `?gameId=${gameId}` : "";
+      const json = await apiRequest(`/api/sounds${q}`);
       if (json.ok) setSounds(json.data);
     } catch (e) { setError(e.message); }
   }
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [gameId]);
 
   async function remove(id) {
     try {
@@ -499,7 +531,7 @@ function AdminSounds() {
       <button className="btn-sm btn-accent" onClick={() => setShowForm((v) => !v)}>
         {showForm ? "Chiudi" : "+ Nuovo suono"}
       </button>
-      {showForm && <SoundForm onDone={() => { setShowForm(false); load(); }} />}
+      {showForm && <SoundForm gameId={gameId} onDone={() => { setShowForm(false); load(); }} />}
       <div className="tab-list">
         {sounds.map((s) => (
           <div className="tab-item" key={s._id}>
@@ -520,7 +552,7 @@ const SECTIONS = [
   { key: "cast", label: "Cast", render: (ws) => <AdminCast ws={ws} /> },
   { key: "triggers", label: "Trigger", render: (ws) => <AdminTriggers gameId={ws.game?._id} /> },
   { key: "videos", label: "Video", render: (ws) => <AdminVideos gameId={ws.game?._id} /> },
-  { key: "sounds", label: "Suoni", render: () => <AdminSounds /> }
+  { key: "sounds", label: "Suoni", render: (ws) => <AdminSounds gameId={ws.game?._id} /> }
 ];
 
 export default function AdminPanel({ ws }) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
-import { AdminTriggers, AdminVideos } from "./AdminPanel.jsx";
+import { AdminTriggers, AdminVideos, AdminSounds } from "./AdminPanel.jsx";
 
 function toLocalInput(value) {
   if (!value) return "";
@@ -191,6 +191,7 @@ export default function GameManager({ game }) {
                         <div className="gm-expanded">
                           <AdminTriggers gameId={g._id} />
                           <AdminVideos gameId={g._id} />
+                          <AdminSounds gameId={g._id} />
                         </div>
                       )}
                     </>

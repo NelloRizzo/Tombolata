@@ -76,8 +76,8 @@ export default function DirectorPanel({ ws, gameId }) {
       <div className="panel-block">
         <div className="panel-title">
           <h2>Partite</h2>
-          <GameManager game={game} />
         </div>
+        <GameManager game={game} />
       </div>
 
       <div className="panel-grid">

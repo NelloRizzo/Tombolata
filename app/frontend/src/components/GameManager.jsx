@@ -104,9 +104,11 @@ export default function GameManager({ game }) {
 
   return (
     <div className="game-manager">
-      <button className="btn-sm" onClick={() => setShowHistory((v) => !v)}>
-        {showHistory ? "Chiudi partite" : "Partite"}
-      </button>
+      <div className="gm-toolbar">
+        <button className="btn-sm" onClick={() => setShowHistory((v) => !v)}>
+          {showHistory ? "Chiudi tutte" : "Espandi tutte"}
+        </button>
+      </div>
 
       {showHistory && (
         <div className="game-manager-panel">

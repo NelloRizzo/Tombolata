@@ -184,20 +184,28 @@ h3 {
   background: url("/estratto.png") no-repeat center / contain;
   filter: drop-shadow(0 0 6px rgba(155, 28, 28, 0.4));
 }
-/* Numero stampato al centro del bussolotto */
+/* Numero scolpito nel legno, al centro del bussolotto */
 .cell-num {
   position: relative;
   z-index: 1;
   font-family: var(--font-num);
   font-size: clamp(0.9rem, 4vmin, 2.4rem);
-  font-weight: 800;
+  font-weight: 900;
   line-height: 1;
-  color: #2a1a0c;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.1), 0 -1px 0 rgba(0, 0, 0, 0.65);
+  color: #241307;
+  text-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.8),
+    0 -2px 3px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 226, 168, 0.45),
+    0 2px 2px rgba(0, 0, 0, 0.5);
 }
 .grid-cell.extracted .cell-num {
-  color: #7a1313;
-  text-shadow: 0 1px 0 rgba(255, 244, 205, 0.45), 0 -1px 1px rgba(122, 19, 19, 0.5);
+  color: #641010;
+  text-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.8),
+    0 -2px 3px rgba(0, 0, 0, 0.35),
+    0 1px 0 rgba(255, 214, 132, 0.5),
+    0 2px 2px rgba(0, 0, 0, 0.5);
 }
 
 /* ---------- Extracted numbers list ---------- */
@@ -387,6 +395,11 @@ h3 {
 /* ---------- Game manager ---------- */
 .game-manager {
   position: relative;
+}
+.gm-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 .btn-sm {
   background: #2a2a4a;
@@ -1062,6 +1075,12 @@ h3 {
 }
 .board-page.board-fullscreen .board-main {
   min-height: 100vh;
+}
+/* Bussolotti quadrati al massimo della dimensione sul monitor */
+.board-page.board-fullscreen .board-left .number-grid.fill {
+  flex: none;
+  width: min(100%, calc((100dvh - 48px) * 10 / 9));
+  aspect-ratio: 10 / 9;
 }
 
 /* Link discreti sul tabellone pubblico (programma + schermo intero) */

@@ -9,19 +9,19 @@ const router = Router();
 const ACTIONS = ["video", "live", "sound", "effect"];
 const PHASES = ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-cinquina", "finale", "always"];
 
-// Lista trigger (admin/regista vede tutto, attore vede solo i propri 'live' per il
+// Lista trigger (admin/director vede tutto, actor vede solo i propri 'live' per il
 // personaggio che interpreta nella partita attiva)
 router.get("/", authenticate, async (req, res) => {
   try {
     const gid = req.query.gameId;
     let query = {};
-    if (req.user.roles.includes("admin") || req.user.roles.includes("regista")) {
+    if (req.user.roles.includes("admin") || req.user.roles.includes("director")) {
       if (gid) {
         query = { $or: [{ gameId: null }, { gameId: gid }] };
       } else {
         query = { gameId: null };
       }
-    } else if (req.user.roles.includes("attore")) {
+    } else if (req.user.roles.includes("actor")) {
       const gameId = resolveGameId(req);
       const game = gameId ? await getGameById(gameId) : await getActiveGame();
       const character = game ? await getCharacterForUser(game._id, req.user.id) : null;
@@ -103,8 +103,8 @@ router.delete("/:id", authenticate, requireRoles("admin"), async (req, res) => {
   }
 });
 
-// Attivazione manuale da parte del regista
-router.post("/:id/fire", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+// Attivazione manuale da parte del director
+router.post("/:id/fire", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const gameId = resolveGameId(req);
     const event = await fireManual(req.params.id, gameId);
@@ -123,7 +123,7 @@ router.post("/:id/fire", authenticate, requireRoles("regista", "admin"), async (
 });
 
 // Test manuale della valutazione trigger (senza attivare)
-router.post("/evaluate", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+router.post("/evaluate", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const fired = await evaluateTriggers(resolveGameId(req));
     res.json({ ok: true, data: fired });
@@ -142,8 +142,8 @@ router.get("/narration", authenticate, async (req, res) => {
   }
 });
 
-// Imposta la fase (regista)
-router.post("/phase", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+// Imposta la fase (director)
+router.post("/phase", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const { phase } = req.body || {};
     if (!phase || !PHASES.includes(phase)) {

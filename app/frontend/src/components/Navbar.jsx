@@ -6,12 +6,11 @@ import { apiRequest } from "../api.js";
 
 const ROLE_SEZIONI = [
   { key: "admin", label: "Gestione", icon: "⚙️" },
-  { key: "regista", label: "Regia", icon: "🎬" },
+  { key: "director", label: "Regia", icon: "🎬" },
   { key: "drawer", label: "Estrazione", icon: "🎰" },
   { key: "video", label: "Video", icon: "📽️" },
-  { key: "fonico", label: "Audio", icon: "🎧" },
-  { key: "attore", label: "Attore", icon: "🎭" },
-  { key: "spettatore", label: "Tabellone", icon: "🖥️" }
+  { key: "audio", label: "Audio", icon: "🎧" },
+  { key: "actor", label: "Attore", icon: "🎭" }
 ];
 
 // Selezione della partita corrente: le azioni della dashboard e il tabellone
@@ -89,7 +88,10 @@ export default function Navbar() {
               </NavLink>
             ))
           ) : (
-            <span className="nav-empty">Nessuna sezione disponibile</span>
+            <Link to="/console" className="nav-link">
+              <span className="nav-icon">🖥️</span>
+              <span className="nav-label">Tabellone</span>
+            </Link>
           )
         ) : (
           <Link to="/console" className="nav-link">

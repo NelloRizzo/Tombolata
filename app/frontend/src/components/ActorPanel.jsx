@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 
-export default function AttorePanel({ ws, gameId }) {
+export default function ActorPanel({ ws, gameId }) {
   const { firedTriggers } = ws;
   const [triggers, setTriggers] = useState([]);
   const [myCharacter, setMyCharacter] = useState(null);
@@ -29,7 +29,7 @@ export default function AttorePanel({ ws, gameId }) {
   }, [ws.game?._id, gameId]);
 
   return (
-    <div className="attore-panel">
+    <div className="actor-panel">
       <div className="panel-block">
         <h2>Cue per il tuo personaggio</h2>
         {myCharacter ? <p className="empty">Personaggio: <strong>{myCharacter}</strong></p>

@@ -4,25 +4,24 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
 import DrawerPanel from "../components/DrawerPanel.jsx";
-import RegistaPanel from "../components/RegistaPanel.jsx";
+import DirectorPanel from "../components/DirectorPanel.jsx";
 import VideoPanel from "../components/VideoPanel.jsx";
-import FonicoPanel from "../components/FonicoPanel.jsx";
-import AttorePanel from "../components/AttorePanel.jsx";
-import SpettatorePanel from "../components/SpettatorePanel.jsx";
+import AudioPanel from "../components/AudioPanel.jsx";
+import ActorPanel from "../components/ActorPanel.jsx";
+import SpectatorPanel from "../components/SpectatorPanel.jsx";
 import AdminPanel from "../components/AdminPanel.jsx";
 import PublicBoardPopup from "../components/PublicBoardPopup.jsx";
 
 const ROLE_LABELS = {
   admin: "Gestione",
-  regista: "Regia",
+  director: "Regia",
   video: "Video",
-  fonico: "Fonico",
+  audio: "Audio",
   drawer: "Estrazione",
-  attore: "Attore",
-  spettatore: "Tabellone"
+  actor: "Attore"
 };
 
-const ROLE_ORDER = ["admin", "regista", "video", "fonico", "drawer", "attore", "spettatore"];
+const ROLE_ORDER = ["admin", "director", "video", "audio", "drawer", "actor"];
 
 export default function ConsoleHome() {
   const { user, hasRole } = useAuth();
@@ -37,7 +36,18 @@ export default function ConsoleHome() {
   if (myRoles.length === 0) {
     return (
       <div className="console-page">
-        <p>Account senza ruoli attivi. Contatta l'amministratore.</p>
+        <header className="console-header">
+          <div className="console-title">
+            <h1>Postazione Tabellone</h1>
+            <span className="user-welcome">
+              Benvenuto, {user.displayName || user.username}
+            </span>
+          </div>
+        </header>
+        <main className="console-main">
+          <SpectatorPanel ws={ws} />
+        </main>
+        <PublicBoardPopup narration={ws.narration} />
       </div>
     );
   }
@@ -65,12 +75,11 @@ export default function ConsoleHome() {
 
       <main className="console-main">
         {activeTab === "admin" && <AdminPanel ws={ws} />}
-        {activeTab === "regista" && <RegistaPanel ws={ws} gameId={currentGameId} />}
+        {activeTab === "director" && <DirectorPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "video" && <VideoPanel ws={ws} gameId={currentGameId} />}
-        {activeTab === "fonico" && <FonicoPanel ws={ws} gameId={currentGameId} />}
+        {activeTab === "audio" && <AudioPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "drawer" && <DrawerPanel ws={ws} gameId={currentGameId} />}
-        {activeTab === "attore" && <AttorePanel ws={ws} gameId={currentGameId} />}
-        {activeTab === "spettatore" && <SpettatorePanel ws={ws} />}
+        {activeTab === "actor" && <ActorPanel ws={ws} gameId={currentGameId} />}
       </main>
 
       <PublicBoardPopup narration={ws.narration} />

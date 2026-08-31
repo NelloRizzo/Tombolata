@@ -66,7 +66,7 @@ router.post("/users", authenticate, requireRoles("admin"), async (req, res) => {
       username,
       passwordHash: hashPassword(password),
       displayName: displayName || username,
-      roles: roles && roles.length ? roles : ["spettatore"],
+      roles: roles && roles.length ? roles : [],
       active: active !== false
     });
     await user.save();

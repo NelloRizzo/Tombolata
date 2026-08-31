@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 
-export default function FonicoPanel({ ws, gameId }) {
+export default function AudioPanel({ ws, gameId }) {
   const { game } = ws;
   const [sounds, setSounds] = useState([]);
   const [error, setError] = useState(null);
@@ -41,7 +41,7 @@ export default function FonicoPanel({ ws, gameId }) {
   }
 
   return (
-    <div className="fonico-panel">
+    <div className="audio-panel">
       {error && <div className="error-banner">{error}</div>}
       <div className="panel-block">
         <h2>Console audio</h2>

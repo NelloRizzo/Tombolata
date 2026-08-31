@@ -62,12 +62,12 @@ async function run() {
   const vid = await req("/api/videos", "POST", { name: "Ritrovamento", source: "https://example.com/v.mp4" }, adminToken);
   assert(vid.ok, "creazione video");
 
-  // crea un trigger "count >= 3" actionType live per TestAttore
+  // crea un trigger "count >= 3" actionType live per TestActor
   const trigger = await req("/api/triggers", "POST", {
     name: "CueTest",
     phase: "always",
     actionType: "live",
-    targetActor: "TestAttore",
+    targetActor: "TestActor",
     conditions: [{ operator: "and", conditions: [{ type: "count", value: 3 }] }],
     autoMode: true
   }, adminToken);
@@ -83,7 +83,7 @@ async function run() {
 
   // il cast appartiene alla partita: si aggiunge un personaggio specifico
   const castActor = await req(`/api/game/${gid}/actors`, "POST",
-    { name: "TestAttore", description: "test", object: "x" }, adminToken);
+    { name: "TestActor", description: "test", object: "x" }, adminToken);
   assert(castActor.ok, "aggiunta personaggio al cast della partita");
 
   const board = await req(`/api/game/${gid}/boards`, "POST",
@@ -104,17 +104,17 @@ async function run() {
 
   // attore vede il proprio trigger live (personaggio associato per partita)
   const actorUser = await req("/api/auth/users", "POST",
-    { username: "attoreX", password: "pw", roles: ["attore"] }, adminToken);
+    { username: "actorX", password: "pw", roles: ["actor"] }, adminToken);
   assert(actorUser.ok, "creazione utente attore");
 
   const assignment = await req(`/api/game/${gid}/assignments`, "POST",
-    { userId: actorUser.data._id, character: "TestAttore" }, adminToken);
+    { userId: actorUser.data._id, character: "TestActor" }, adminToken);
   assert(assignment.ok, "associazione attore→personaggio per la partita");
 
-  const attoreLogin2 = await req("/api/auth/login", "POST", { username: "attoreX", password: "pw" });
-  assert(attoreLogin2.ok, "login attore");
-  const attoreTriggers = await req("/api/triggers", "GET", null, attoreLogin2.token);
-  assert(attoreTriggers.ok && attoreTriggers.data.length >= 1, "attore vede i propri trigger live");
+  const actorLogin = await req("/api/auth/login", "POST", { username: "actorX", password: "pw" });
+  assert(actorLogin.ok, "login attore");
+  const actorTriggers = await req("/api/triggers", "GET", null, actorLogin.token);
+  assert(actorTriggers.ok && actorTriggers.data.length >= 1, "attore vede i propri trigger live");
 
   console.log("== TEST PROGRAMMA ==");
   const sched = await req("/api/game/start", "POST", {
@@ -198,12 +198,12 @@ async function run() {
   assert(stopRes.ok && stopRes.data.player.status === "idle", "stop video player");
 
   console.log("== TEST PERMESSI ==");
-  // uno spettatore non puo estrarre
+  // un utente senza ruoli non puo estrarre
   const spett = await req("/api/auth/users", "POST",
-    { username: "spett", password: "pw", roles: ["spettatore"] }, adminToken);
-  const spettLogin = await req("/api/auth/login", "POST", { username: "spett", password: "pw" });
+    { username: "utentesemplice", password: "pw", roles: [] }, adminToken);
+  const spettLogin = await req("/api/auth/login", "POST", { username: "utentesemplice", password: "pw" });
   const forbidden = await req("/api/game/extract", "POST", null, spettLogin.token);
-  assert(!forbidden.ok, "spettatore NON puo estrarre (403)");
+  assert(!forbidden.ok, "utente senza ruoli NON puo estrarre (403)");
 
   child.kill();
   await mongod.stop();

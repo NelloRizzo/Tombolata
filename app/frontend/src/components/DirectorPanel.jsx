@@ -12,7 +12,7 @@ const PHASES = [
   { value: "live", label: "Live" }
 ];
 
-export default function RegistaPanel({ ws, gameId }) {
+export default function DirectorPanel({ ws, gameId }) {
   const { game, narration, firedTriggers } = ws;
   const [triggers, setTriggers] = useState([]);
   const [videos, setVideos] = useState([]);
@@ -70,7 +70,7 @@ export default function RegistaPanel({ ws, gameId }) {
   }
 
   return (
-    <div className="regista-panel">
+    <div className="director-panel">
       {error && <div className="error-banner">{error}</div>}
 
       <div className="panel-block">

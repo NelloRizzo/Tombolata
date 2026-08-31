@@ -1,7 +1,7 @@
 import NumberGrid from "./NumberGrid.jsx";
 import ExtractedNumbers from "./ExtractedNumbers.jsx";
 
-export default function SpettatorePanel({ ws }) {
+export default function SpectatorPanel({ ws }) {
   const { game, narration, firedTriggers } = ws;
 
   function openPublicBoard() {
@@ -9,7 +9,7 @@ export default function SpettatorePanel({ ws }) {
   }
 
   return (
-    <div className="spettatore-panel">
+    <div className="spectator-panel">
       <div className="panel-block">
         <h2>Tabellone pubblico</h2>
         <button className="btn-sm btn-accent" onClick={openPublicBoard}>

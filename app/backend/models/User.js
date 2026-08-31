@@ -7,8 +7,8 @@ const userSchema = new mongoose.Schema(
     displayName: { type: String, default: "" },
     roles: {
       type: [String],
-      enum: ["admin", "regista", "video", "fonico", "drawer", "spettatore", "attore"],
-      default: ["spettatore"]
+      enum: ["admin", "director", "video", "audio", "drawer", "actor"],
+      default: []
     },
     active: { type: Boolean, default: true }
   },

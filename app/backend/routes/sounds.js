@@ -21,8 +21,8 @@ router.get("/", authenticate, async (req, res) => {
   }
 });
 
-// Crea suono (admin/regista/fonico)
-router.post("/", authenticate, requireRoles("admin", "regista", "fonico"), async (req, res) => {
+// Crea suono (admin/director/audio)
+router.post("/", authenticate, requireRoles("admin", "director", "audio"), async (req, res) => {
   try {
     const body = req.body || {};
     if (!body.name) return res.status(400).json({ ok: false, message: "Nome obbligatorio" });
@@ -47,7 +47,7 @@ router.post("/", authenticate, requireRoles("admin", "regista", "fonico"), async
   }
 });
 
-router.put("/:id", authenticate, requireRoles("admin", "regista", "fonico"), async (req, res) => {
+router.put("/:id", authenticate, requireRoles("admin", "director", "audio"), async (req, res) => {
   try {
     const body = req.body || {};
     const update = {};
@@ -68,7 +68,7 @@ router.put("/:id", authenticate, requireRoles("admin", "regista", "fonico"), asy
   }
 });
 
-router.delete("/:id", authenticate, requireRoles("admin", "regista", "fonico"), async (req, res) => {
+router.delete("/:id", authenticate, requireRoles("admin", "director", "audio"), async (req, res) => {
   try {
     await Sound.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
@@ -79,7 +79,7 @@ router.delete("/:id", authenticate, requireRoles("admin", "regista", "fonico"), 
 
 // Avvia un suono: trasmette l'evento ai client connessi alla stessa partita
 // (che lo riproducono localmente)
-router.post("/:id/play", authenticate, requireRoles("admin", "regista", "fonico"), async (req, res) => {
+router.post("/:id/play", authenticate, requireRoles("admin", "director", "audio"), async (req, res) => {
   try {
     const sound = await Sound.findById(req.params.id);
     if (!sound) return res.status(404).json({ ok: false, message: "Suono non trovato" });

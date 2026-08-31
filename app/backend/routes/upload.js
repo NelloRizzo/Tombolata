@@ -14,7 +14,7 @@ router.get("/config", authenticate, async (req, res) => {
 //     mediaType: "videos"|"sounds", gameId?: "<id partita>" }
 // I file finiscono in: tombola/<gameId>/<mediaType>  (oppure tombola/<mediaType>)
 // Restituisce { secure_url, public_id, resource_type, ... }
-router.post("/", authenticate, requireRoles("admin", "regista", "video", "fonico"), async (req, res) => {
+router.post("/", authenticate, requireRoles("admin", "director", "video", "audio"), async (req, res) => {
   try {
     if (!isCloudinaryConfigured()) {
       return res.status(500).json({ ok: false, message: "Cloudinary non configurato nel backend" });

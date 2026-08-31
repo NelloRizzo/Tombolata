@@ -44,7 +44,7 @@ router.get("/state", async (req, res) => {
   }
 });
 
-router.post("/start", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+router.post("/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const game = await startNewGame({
       name: req.body?.name,
@@ -83,7 +83,7 @@ router.get("/my-cast", authenticate, async (req, res) => {
 });
 
 // ===== Cast della partita =====
-router.get("/:id/actors", authenticate, requireRoles("admin", "regista"), async (req, res) => {
+router.get("/:id/actors", authenticate, requireRoles("admin", "director"), async (req, res) => {
   try {
     const cast = await getCast(req.params.id);
     res.json({ ok: true, data: cast });
@@ -153,7 +153,7 @@ router.delete("/:id/assignments/:userId", authenticate, requireRoles("admin"), a
   }
 });
 
-router.post("/extract", authenticate, requireRoles("drawer", "regista", "admin"), async (req, res) => {
+router.post("/extract", authenticate, requireRoles("drawer", "director", "admin"), async (req, res) => {
   try {
     const gameId = resolveGameId(req);
     const { game, newWins } = await extractNumber(gameId);
@@ -190,7 +190,7 @@ router.post("/extract", authenticate, requireRoles("drawer", "regista", "admin")
   }
 });
 
-router.post("/:id/boards", authenticate, requireRoles("drawer", "regista", "admin"), async (req, res) => {
+router.post("/:id/boards", authenticate, requireRoles("drawer", "director", "admin"), async (req, res) => {
   try {
     const { playerName, boardNumber, rows } = req.body || {};
     const game = await addBoard(req.params.id, playerName, rows, boardNumber);
@@ -201,7 +201,7 @@ router.post("/:id/boards", authenticate, requireRoles("drawer", "regista", "admi
   }
 });
 
-router.delete("/:id/boards/:boardIndex", authenticate, requireRoles("drawer", "regista", "admin"), async (req, res) => {
+router.delete("/:id/boards/:boardIndex", authenticate, requireRoles("drawer", "director", "admin"), async (req, res) => {
   try {
     const game = await removeBoard(req.params.id, parseInt(req.params.boardIndex));
     broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
@@ -211,7 +211,7 @@ router.delete("/:id/boards/:boardIndex", authenticate, requireRoles("drawer", "r
   }
 });
 
-router.post("/:id/finish", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+router.post("/:id/finish", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const game = await resetGame(req.params.id);
     res.json({ ok: true, data: game });
@@ -220,7 +220,7 @@ router.post("/:id/finish", authenticate, requireRoles("regista", "admin"), async
   }
 });
 
-router.post("/:id/select", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+router.post("/:id/select", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const game = await setActiveGame(req.params.id);
     broadcastToClients(req.app.get("wss"), "game:selected", game);
@@ -230,7 +230,7 @@ router.post("/:id/select", authenticate, requireRoles("regista", "admin"), async
   }
 });
 
-router.put("/:id", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+router.put("/:id", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const game = await updateGame(req.params.id, req.body);
     broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
@@ -240,7 +240,7 @@ router.put("/:id", authenticate, requireRoles("regista", "admin"), async (req, r
   }
 });
 
-router.delete("/:id", authenticate, requireRoles("regista", "admin"), async (req, res) => {
+router.delete("/:id", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const result = await deleteGame(req.params.id);
     res.json({ ok: true, ...result });

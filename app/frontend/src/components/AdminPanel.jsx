@@ -3,11 +3,11 @@ import { apiRequest } from "../api.js";
 import GameManager from "./GameManager.jsx";
 import MediaUpload from "./MediaUpload.jsx";
 
-const ROLES = ["admin", "regista", "video", "fonico", "drawer", "attore", "spettatore"];
+const ROLES = ["admin", "director", "video", "audio", "drawer", "actor"];
 
 function AdminUsers() {
   const [users, setUsers] = useState([]);
-  const [form, setForm] = useState({ username: "", password: "", displayName: "", roles: ["spettatore"] });
+  const [form, setForm] = useState({ username: "", password: "", displayName: "", roles: [] });
   const [error, setError] = useState(null);
 
   async function load() {
@@ -34,7 +34,7 @@ function AdminUsers() {
         method: "POST",
         body: JSON.stringify({ ...form })
       });
-      setForm({ username: "", password: "", displayName: "", roles: ["spettatore"] });
+      setForm({ username: "", password: "", displayName: "", roles: [] });
       load();
     } catch (e) {
       setError(e.message);

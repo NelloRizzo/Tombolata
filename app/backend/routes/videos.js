@@ -24,8 +24,8 @@ router.get("/", authenticate, async (req, res) => {
   }
 });
 
-// Crea video (admin/regista). gameId opzionale nel body → video dedicato a quella partita.
-router.post("/", authenticate, requireRoles("admin", "regista"), async (req, res) => {
+// Crea video (admin/director). gameId opzionale nel body → video dedicato a quella partita.
+router.post("/", authenticate, requireRoles("admin", "director"), async (req, res) => {
   try {
     const body = req.body || {};
     if (!body.name || !body.source) {
@@ -48,7 +48,7 @@ router.post("/", authenticate, requireRoles("admin", "regista"), async (req, res
   }
 });
 
-router.put("/:id", authenticate, requireRoles("admin", "regista"), async (req, res) => {
+router.put("/:id", authenticate, requireRoles("admin", "director"), async (req, res) => {
   try {
     const body = req.body || {};
     const update = {};
@@ -65,7 +65,7 @@ router.put("/:id", authenticate, requireRoles("admin", "regista"), async (req, r
   }
 });
 
-router.delete("/:id", authenticate, requireRoles("admin", "regista"), async (req, res) => {
+router.delete("/:id", authenticate, requireRoles("admin", "director"), async (req, res) => {
   try {
     await Video.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
@@ -74,8 +74,8 @@ router.delete("/:id", authenticate, requireRoles("admin", "regista"), async (req
   }
 });
 
-// Avvia un video (regista/video) e aggiorna lo stato del player
-router.post("/:id/play", authenticate, requireRoles("admin", "regista", "video"), async (req, res) => {
+// Avvia un video (director/video) e aggiorna lo stato del player
+router.post("/:id/play", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
   try {
     const video = await Video.findById(req.params.id);
     if (!video) return res.status(404).json({ ok: false, message: "Video non trovato" });
@@ -98,8 +98,8 @@ router.post("/:id/play", authenticate, requireRoles("admin", "regista", "video")
   }
 });
 
-// Stop del player video (regista/video)
-router.post("/stop", authenticate, requireRoles("admin", "regista", "video"), async (req, res) => {
+// Stop del player video (director/video)
+router.post("/stop", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
   try {
     const gameId = resolveGameId(req);
     const narration = await getNarrationForGame(gameId);
@@ -114,7 +114,7 @@ router.post("/stop", authenticate, requireRoles("admin", "regista", "video"), as
 });
 
 // Pausa/ripresa player
-router.post("/pause", authenticate, requireRoles("admin", "regista", "video"), async (req, res) => {
+router.post("/pause", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
   try {
     const gameId = resolveGameId(req);
     const narration = await getNarrationForGame(gameId);
@@ -129,7 +129,7 @@ router.post("/pause", authenticate, requireRoles("admin", "regista", "video"), a
   }
 });
 
-router.post("/resume", authenticate, requireRoles("admin", "regista", "video"), async (req, res) => {
+router.post("/resume", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
   try {
     const gameId = resolveGameId(req);
     const narration = await getNarrationForGame(gameId);

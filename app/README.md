@@ -26,14 +26,13 @@ app/
 | Ruolo | Dashboard / permessi |
 |-------|----------------------|
 | **admin** | Gestione completa: utenti, attori, trigger, video, suoni |
-| **regista** | Fase narrativa, trigger manuali, avvio video, partite |
+| **director** | Fase narrativa, trigger manuali, avvio video, partite |
 | **video** | Controllo riproduzione player (play/pausa/stop) |
-| **fonico** | Console audio (catalogo + riproduzione) |
+| **audio** | Console audio (catalogo + riproduzione) |
 | **drawer** | Estrazione numeri + gestione cartelle |
-| **attore** | Cue personali per il proprio personaggio |
-| **spettatore** | Tabellone e vincite (sola lettura) |
+| **actor** | Cue personali per il proprio personaggio |
 
-Un utente può appartenere a più ruoli: accede a `https://.../console` e naviga tra le sue postazioni.
+Un utente può appartenere a più ruoli: accede a `https://.../console` e naviga tra le sue postazioni. Chi non ha ruoli operativi vede comunque la postazione **Tabellone** (sola lettura) in console.
 
 ## Trigger — condizioni disponibili
 

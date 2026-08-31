@@ -175,7 +175,6 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-bottom: 10%;
   transition: all 0.3s;
   /* Bussolotto non estratto */
   background: url("/nonestratto.png") no-repeat center / contain;
@@ -185,11 +184,10 @@ h3 {
   background: url("/estratto.png") no-repeat center / contain;
   filter: drop-shadow(0 0 6px rgba(155, 28, 28, 0.4));
 }
-/* Numero stampato sopra il bussolotto */
+/* Numero stampato al centro del bussolotto */
 .cell-num {
   position: relative;
   z-index: 1;
-  margin-bottom: 14%;
   font-family: var(--font-num);
   font-size: clamp(0.9rem, 4vmin, 2.4rem);
   font-weight: 800;
@@ -413,18 +411,14 @@ h3 {
   background: transparent;
 }
 .game-manager-panel {
-  position: absolute;
-  right: 0;
-  top: 36px;
-  width: 340px;
+  margin-top: 12px;
+  width: 100%;
   background: var(--card);
   border: 1px solid #3a3a5a;
   border-radius: 12px;
   padding: 16px;
-  z-index: 100;
   max-height: 70vh;
   overflow-y: auto;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
 }
 .gm-new {
   display: flex;

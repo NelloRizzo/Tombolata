@@ -5,6 +5,7 @@ import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 import { connectDB, getDbStatus } from "./services/db.js";
 import gameRoutes from "./routes/game.js";
+import cardRoutes from "./routes/cards.js";
 import authRoutes from "./routes/auth.js";
 import triggerRoutes from "./routes/triggers.js";
 import videoRoutes from "./routes/videos.js";
@@ -38,6 +39,7 @@ app.get("/health", (req, res) => {
 
 app.use("/api/auth", authRoutes);
 app.use("/api/game", gameRoutes);
+app.use("/api/cards", cardRoutes);
 app.use("/api/triggers", triggerRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/sounds", soundRoutes);

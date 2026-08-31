@@ -90,6 +90,37 @@ async function run() {
     { playerName: "Marco", boardNumber: 1, rows: [[1,2,3,4,5],[10,20,30,40,50],[11,12,13,14,15]] }, drawerToken);
   assert(board.ok, "aggiunta cartella");
 
+  // archivio globale di cartelle: import .cards (slegate dalle partite)
+  const cardXml = (name, nums) =>
+    `<Card><Name>${name}</Name><Cells>${nums.map((n) => `<a:int>${n}</a:int>`).join("")}</Cells></Card>`;
+  const xmlCards =
+    `<Card i:type="ArrayOfCard" xmlns="x">` +
+    cardXml("Tombolata 2025 [ S. 1] &lt;n. 1&gt;", [5,23,63,71,82,16,27,34,73,86,35,42,55,74,88]) +
+    cardXml("Primo Giro n. 42", [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]) +
+    cardXml("Bad card", [1,2,3,4,5,6,7,8,9,10,11,12,13,14,91]) +
+    `</Card>`;
+  const imp = await req("/api/cards/import", "POST", { xml: xmlCards }, drawerToken);
+  assert(imp.ok, "import cartelle nell'archivio (slegate dalle partite)");
+  assert(imp.summary.imported === 2 && imp.summary.skipped === 1, "importate 2 / saltate 1");
+  const archive = await req("/api/cards", "GET", null, drawerToken);
+  assert(archive.ok && archive.data.length === 2, "archivio contiene le cartelle importate");
+  const cardA = archive.data[0];
+  assert(cardA.title === "Tombolata 2025" && cardA.setNumber === 1 && cardA.cardNumber === 1, "cartella in set: titolo + set + numero");
+  const cardB = archive.data[1];
+  assert(cardB.title === "Primo Giro" && cardB.cardNumber === 42 && cardB.setNumber === null, "cartella singola: solo numero");
+
+  // messa in gioco: dall'archivio alla partita
+  const play = await req(`/api/game/${gid}/boards/from-cards`, "POST",
+    { cardIds: [cardA._id] }, drawerToken);
+  assert(play.ok && play.summary.added === 1, "messa in gioco cartella selezionata");
+  assert(play.data.boards.length === 2, "2 cartelle in partita (1 manuale + 1 dall'archivio)");
+  const play2 = await req(`/api/game/${gid}/boards/from-cards`, "POST",
+    { cardIds: [cardA._id, cardB._id] }, drawerToken);
+  assert(play2.ok && play2.summary.added === 1 && play2.summary.skipped === 1, "no duplicati, aggiunta solo cartella mancante");
+  assert(play2.data.boards.length === 3, "3 cartelle in partita");
+  const playAll = await req(`/api/game/${gid}/boards/from-cards`, "POST", { all: true }, drawerToken);
+  assert(playAll.ok && playAll.summary.skipped === 2, "ri-selezione 'tutte': nessuna nuova aggiunta");
+
   // estrai 4 volte: al terzo estrattto il trigger count=3 deve essersi attivato
   let triggered = false;
   for (let i = 0; i < 4; i++) {

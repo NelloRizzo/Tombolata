@@ -1,5 +1,7 @@
 import Game from "../models/Game.js";
+import Card from "../models/Card.js";
 import { DEFAULT_ACTORS } from "./defaultCast.js";
+import { cardLabel } from "./tombolataCardsXml.js";
 
 const WIN_DEFS = [
   { type: "ambo", count: 2 },
@@ -157,6 +159,56 @@ export async function removeBoard(gameId, boardIndex) {
   return game;
 }
 
+// Mette in gioco cartelle dell'archivio globale (slegate dalle partite):
+// le copia nelle boards della partita con riferimento cardId, evitando
+// di aggiungere due volte la stessa cartella.
+// - cardIds: lista di id da giocare
+// - all: true → tutte le cartelle dell'archivio
+export async function addBoardsFromCards(gameId, { cardIds, all } = {}) {
+  const game = await Game.findById(gameId);
+  if (!game) throw new Error("Partita non trovata");
+
+  let cards = [];
+  if (all) {
+    cards = await Card.find({}).sort({ boardNumber: 1 });
+  } else if (Array.isArray(cardIds) && cardIds.length > 0) {
+    cards = await Card.find({ _id: { $in: cardIds } }).sort({ boardNumber: 1 });
+  } else {
+    throw new Error("Seleziona almeno una cartella dall'archivio");
+  }
+
+  const inGame = new Set(
+    game.boards.map((b) => (b.cardId ? String(b.cardId) : null)).filter(Boolean)
+  );
+  const toAdd = [];
+  let alreadyInGame = 0;
+  for (const c of cards) {
+    if (inGame.has(String(c._id))) {
+      alreadyInGame++;
+      continue;
+    }
+    toAdd.push({
+      cardId: c._id,
+      playerName: "",
+      title: c.title,
+      setNumber: c.setNumber,
+      cardNumber: c.cardNumber,
+      boardNumber: c.boardNumber,
+      rows: c.rows
+    });
+  }
+
+  if (toAdd.length > 0) {
+    game.boards.push(...toAdd);
+    await game.save();
+  }
+
+  return {
+    game,
+    summary: { requested: cards.length, added: toAdd.length, skipped: alreadyInGame }
+  };
+}
+
 export async function extractNumber(gameId) {
   const target = gameId || (await getActiveGame())?._id;
   const game = target ? await Game.findById(target) : null;
@@ -186,7 +238,7 @@ export async function extractNumber(gameId) {
       const numbers = checkBoardWin(board, game.extractedNumbers, type) || allBoardNumbers(board);
       const win = {
         type,
-        playerName: board.playerName,
+        playerName: board.playerName || cardLabel(board),
         boardIndex: bi,
         numbers,
         timestamp: new Date()

@@ -184,10 +184,12 @@ h3 {
   background: url("/estratto.png") no-repeat center / contain;
   filter: drop-shadow(0 0 6px rgba(155, 28, 28, 0.4));
 }
-/* Numero scolpito nel legno, al centro del bussolotto */
+/* Numero scolpito nel legno: il centro ottico del bussolotto è leggermente
+   sopra il centro della cella, quindi il numero viene corretto verso l'alto */
 .cell-num {
   position: relative;
   z-index: 1;
+  bottom: 7%;
   font-family: var(--font-num);
   font-size: clamp(0.9rem, 4vmin, 2.4rem);
   font-weight: 900;
@@ -381,13 +383,6 @@ h3 {
   font-size: 0.9rem;
 }
 
-.console-boards {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 16px;
-}
-
 .console-grid {
   display: flex;
   gap: 24px;
@@ -397,6 +392,13 @@ h3 {
 }
 .console-grid .extracted-numbers {
   width: 260px;
+}
+/* Nella postazione Estrazione i bussolotti sono grandi come nel tabellone:
+   griglia quadrata dimensionata sull'altezza libera del viewport. */
+.drawer-panel .console-grid .number-grid.fill {
+  flex: none;
+  width: min(100%, calc((100dvh - 272px) * 10 / 9));
+  aspect-ratio: 10 / 9;
 }
 
 /* ---------- Game manager ---------- */
@@ -523,6 +525,20 @@ h3 {
   font-size: 1.2rem;
   color: var(--gold);
 }
+.bm-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.import-ok {
+  background: rgba(39, 174, 96, 0.15);
+  color: #7ee2a8;
+  border: 1px solid rgba(39, 174, 96, 0.4);
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 0.85rem;
+}
 .board-form {
   background: #0f1a33;
   border: 1px solid #3a3a5a;
@@ -611,11 +627,73 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--card);
-  border: 1px solid #3a3a5a;
+  background: #0f1a33;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
+}
+
+/* ---------- Archivio cartelle (inventario) ---------- */
+.ci-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.ci-regex {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.ci-regex input {
+  background: #0f1a33;
+  border: 1px solid #3a3a5a;
+  color: var(--text);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  min-width: 220px;
+}
+.ci-select-all {
+  display: flex;
+  gap: 8px;
+}
+.ci-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ci-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #1d2c52;
+  border-radius: 10px;
+  padding: 10px;
+}
+.ci-item input[type="checkbox"] {
+  margin-top: 6px;
+  transform: scale(1.15);
+  accent-color: var(--red);
+}
+.ci-body {
+  flex: 1;
+  min-width: 0;
+}
+.ci-label {
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.ci-board .bm-board-row {
+  margin-bottom: 2px;
+}
+.ci-board .bm-board-row span {
+  width: 26px;
+  height: 26px;
+  font-size: 0.75rem;
 }
 
 

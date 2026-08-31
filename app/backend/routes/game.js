@@ -19,7 +19,8 @@ import {
   getGameState,
   setActiveGame,
   addBoard,
-  removeBoard
+  removeBoard,
+  addBoardsFromCards
 } from "../services/gameService.js";
 import { evaluateTriggers, setPhase, getNarrationState } from "../services/triggerService.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
@@ -196,6 +197,17 @@ router.post("/:id/boards", authenticate, requireRoles("drawer", "director", "adm
     const game = await addBoard(req.params.id, playerName, rows, boardNumber);
     broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.status(201).json({ ok: true, data: game });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/:id/boards/from-cards", authenticate, requireRoles("drawer", "director", "admin"), async (req, res) => {
+  try {
+    const { cardIds, all } = req.body || {};
+    const { game, summary } = await addBoardsFromCards(req.params.id, { cardIds, all });
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
+    res.json({ ok: true, data: game, summary });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }

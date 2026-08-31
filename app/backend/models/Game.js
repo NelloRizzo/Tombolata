@@ -1,8 +1,12 @@
 import mongoose from "mongoose";
 
 const boardSchema = new mongoose.Schema({
-  playerName: { type: String, required: true },
+  playerName: { type: String, default: "" },
   boardNumber: { type: Number, default: null },
+  cardId: { type: mongoose.Schema.Types.ObjectId, ref: "Card", default: null },
+  title: { type: String, default: "" },
+  setNumber: { type: Number, default: null },
+  cardNumber: { type: Number, default: null },
   rows: {
     type: [[Number]],
     validate: {

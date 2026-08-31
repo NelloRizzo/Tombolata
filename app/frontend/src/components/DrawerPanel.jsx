@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { apiRequest } from "../api.js";
 import NumberGrid from "./NumberGrid.jsx";
 import ExtractedNumbers from "./ExtractedNumbers.jsx";
@@ -57,20 +56,9 @@ export default function DrawerPanel({ ws, gameId }) {
       </section>
 
       <section className="console-grid">
-        <NumberGrid extracted={game?.extractedNumbers || []} />
+        <NumberGrid extracted={game?.extractedNumbers || []} fill />
         <ExtractedNumbers numbers={game?.extractedNumbers || []} last={game?.currentNumber} />
       </section>
-
-      {game && (
-        <section className="console-boards">
-          <Link to="/boards" className="btn-sm btn-accent">
-            Gestione cartelle →
-          </Link>
-          <span className="console-stats">
-            Cartelle in gioco: {game.boards?.length || 0}
-          </span>
-        </section>
-      )}
 
       {lastWin && (
         <WinNotification win={lastWin} onClose={clearLastWin} playing={onWinSound} />

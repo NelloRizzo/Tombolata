@@ -1,6 +1,15 @@
 import { useState } from "react";
 import { apiRequest } from "../api.js";
 
+// Etichetta strutturata della cartella (titolo · set · numero)
+function boardParts(board) {
+  const parts = [];
+  if (board.title) parts.push(board.title);
+  if (board.setNumber != null) parts.push(`S.${board.setNumber}`);
+  if (board.cardNumber != null) parts.push(`n.${board.cardNumber}`);
+  return parts;
+}
+
 function BoardForm({ onAdd, onCancel }) {
   const [playerName, setPlayerName] = useState("");
   const [boardNumber, setBoardNumber] = useState("");
@@ -153,9 +162,11 @@ export default function BoardManager({ game }) {
     <div className="board-manager">
       <div className="bm-header">
         <h2>Cartelle in gioco ({game.boards?.length || 0})</h2>
-        <button className="btn-sm btn-accent" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Chiudi" : "Aggiungi cartella"}
-        </button>
+        <div className="bm-actions">
+          <button className="btn-sm btn-accent" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? "Chiudi" : "Aggiungi cartella"}
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-text">{error}</div>}
@@ -167,7 +178,9 @@ export default function BoardManager({ game }) {
         {game.boards?.map((board, i) => (
           <div className="bm-item" key={i}>
             <div className="bm-item-head">
-              <span className="bm-player">{board.playerName}</span>
+              <span className="bm-player">
+                {board.playerName || boardParts(board).join(" · ") || "Cartella"}
+              </span>
               {board.boardNumber ? (
                 <span className="bm-number">Cartella n. {board.boardNumber}</span>
               ) : null}

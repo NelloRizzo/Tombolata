@@ -1,9 +1,11 @@
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
+import CardInventory from "../components/CardInventory.jsx";
 import BoardManager from "../components/BoardManager.jsx";
 
-// Pagina a parte per la gestione delle cartelle.
-// Sinconizzata via WebSocket con la partita attiva (o quella selezionata in console).
+// Pagina cartelle: archivio globale (import + selezione "messa in gioco")
+// e cartelle in gioco per la partita corrente (o quella selezionata in console).
+// Sinconizzata via WebSocket con la partita attiva/selezionata.
 export default function BoardsPage() {
   const { currentGameId } = useCurrentGame();
   const ws = useGameState(currentGameId);
@@ -22,7 +24,10 @@ export default function BoardsPage() {
 
       <main className="console-main">
         {game ? (
-          <BoardManager game={game} />
+          <>
+            <CardInventory game={game} />
+            <BoardManager game={game} />
+          </>
         ) : (
           <p className="empty">Caricamento partita...</p>
         )}

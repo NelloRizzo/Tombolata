@@ -18,7 +18,14 @@ export default function DirectorPanel({ ws, gameId }) {
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
 
-  const WIN_PHASES = ["post-ambo", "post-terno", "post-quaterna", "post-cinquina", "finale"];
+  const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
+  const PHASE_BY_WIN = {
+    ambo: "post-ambo",
+    terno: "post-terno",
+    quaterna: "post-quaterna",
+    cinquina: "post-cinquina",
+    tombola: "finale"
+  };
 
   const ref = gameId || game?._id || null;
   const bodyRef = (extra = {}) => JSON.stringify({ ...extra, ...(ref ? { gameId: ref } : {}) });
@@ -62,15 +69,25 @@ export default function DirectorPanel({ ws, gameId }) {
     }
   }
 
-  // Avanza alla fase di vincita successiva (post-ambo → … → finale).
-  // Se la fase corrente non è una fase di vincita, porta alla prima (post-ambo).
-  async function nextWinPhase() {
-    const current = narration?.phase;
-    const next =
-      current && WIN_PHASES.includes(current)
-        ? WIN_PHASES[WIN_PHASES.indexOf(current) + 1] || WIN_PHASES[WIN_PHASES.length - 1]
-        : WIN_PHASES[0];
-    await setPhase(next);
+  // Ultima vincita reclamata finora (ultima presente in game.wonTypes, che è
+  // mantenuto in ordine cronologico).
+  const lastClaimed = (game?.wonTypes?.length ? game.wonTypes[game.wonTypes.length - 1] : null)
+    ? game.wonTypes[game.wonTypes.length - 1]
+    : null;
+
+  // Segnala la vincita successiva (ambo → terno → quaterna → cinquina → tombola)
+  // e porta la narrazione alla fase che le corrisponde (post-ambo → … → finale).
+  // "Reclama" = il direttore conferma la vincita raggiunta in sala; il passaggio
+  // di fase avviene automaticamente subito dopo.
+  async function claimWin() {
+    setError(null);
+    const won = new Set(game?.wonTypes || []);
+    const next = WIN_ORDER.find((w) => !won.has(w));
+    if (!next) {
+      setError("Tutte le vincite sono già state reclamate");
+      return;
+    }
+    await setPhase(PHASE_BY_WIN[next]);
   }
 
   async function playVideo(id) {
@@ -97,10 +114,13 @@ export default function DirectorPanel({ ws, gameId }) {
         <div className="panel-block">
           <h2>Fase narrativa</h2>
           <div className="phase-advance">
-            <button className="btn-sm btn-accent" onClick={nextWinPhase} title="Porta alla fase di vincita successiva (post-ambo → post-terno → … → finale)">
-              Avanzia fase vincite ▸
+            <button className="btn-sm btn-accent" onClick={claimWin} title="Reclama la vincita successiva (ambo → terno → quaterna → cinquina → tombola) e passa automaticamente alla fase corrispondente">
+              Reclama Vincita
             </button>
             <span className="phase-current">Corrente: {narration?.phase || "-"}</span>
+          </div>
+          <div className="phase-claimed">
+            Ultima vincita reclamata: {lastClaimed ? <strong>{lastClaimed}</strong> : <em>nessuna</em>}
           </div>
           <div className="phase-buttons">
             {PHASES.map((p) => (

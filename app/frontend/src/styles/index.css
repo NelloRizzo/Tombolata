@@ -658,6 +658,15 @@ h3 {
   color: var(--muted);
   font-size: 0.85rem;
 }
+.phase-claimed {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-bottom: 10px;
+}
+.phase-claimed strong {
+  color: var(--gold);
+  text-transform: capitalize;
+}
 
 /* ---------- Archivio cartelle (inventario) ---------- */
 .ci-toolbar {

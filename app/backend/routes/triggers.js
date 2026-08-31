@@ -150,6 +150,8 @@ router.post("/phase", authenticate, requireRoles("director", "admin"), async (re
       return res.status(400).json({ ok: false, message: "Fase non valida" });
     }
     const narration = await setPhase(phase, resolveGameId(req));
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "narration:update", narration, resolveGameId(req));
     res.json({ ok: true, data: narration });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });

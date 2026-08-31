@@ -20,7 +20,8 @@ import {
   setActiveGame,
   addBoard,
   removeBoard,
-  addBoardsFromCards
+  addBoardsFromCards,
+  claimWin
 } from "../services/gameService.js";
 import { evaluateTriggers, setPhase, getNarrationState } from "../services/triggerService.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
@@ -186,6 +187,23 @@ router.post("/extract", authenticate, requireRoles("drawer", "director", "admin"
       console.error("Errore valutazione trigger:", triggerErr.message);
     }
     res.json({ ok: true, data: game, newWins });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+// Reclama una vincita per la partita (ambo → … → tombola) e, se non già fatto,
+// porta la narrazione alla fase corrispondente.
+router.post("/:id/claim-win", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const { winType } = req.body || {};
+    const { game, phase } = await claimWin(req.params.id, winType);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
+    if (phase) {
+      const narration = await setPhase(phase, req.params.id);
+      broadcastToClients(req.app.get("wss"), "narration:update", narration, req.params.id);
+    }
+    res.json({ ok: true, data: game, phase });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }

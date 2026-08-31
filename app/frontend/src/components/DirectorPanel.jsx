@@ -18,15 +18,6 @@ export default function DirectorPanel({ ws, gameId }) {
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
 
-  const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
-  const PHASE_BY_WIN = {
-    ambo: "post-ambo",
-    terno: "post-terno",
-    quaterna: "post-quaterna",
-    cinquina: "post-cinquina",
-    tombola: "finale"
-  };
-
   const ref = gameId || game?._id || null;
   const bodyRef = (extra = {}) => JSON.stringify({ ...extra, ...(ref ? { gameId: ref } : {}) });
 
@@ -81,13 +72,15 @@ export default function DirectorPanel({ ws, gameId }) {
   // di fase avviene automaticamente subito dopo.
   async function claimWin() {
     setError(null);
-    const won = new Set(game?.wonTypes || []);
-    const next = WIN_ORDER.find((w) => !won.has(w));
-    if (!next) {
-      setError("Tutte le vincite sono già state reclamate");
-      return;
+    try {
+      const body = JSON.stringify({ ...(ref ? { gameId: ref } : {}) });
+      await apiRequest(`/api/game/${ref}/claim-win`, {
+        method: "POST",
+        body: bodyRef()
+      });
+    } catch (e) {
+      setError(e.message);
     }
-    await setPhase(PHASE_BY_WIN[next]);
   }
 
   async function playVideo(id) {

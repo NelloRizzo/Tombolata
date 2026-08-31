@@ -254,6 +254,40 @@ export async function extractNumber(gameId) {
   return { game: game.toObject(), newWins };
 }
 
+export const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
+
+// Reclama una vincita per la partita (il direttore conferma la vincita raggiunta
+// in sala). Registra il tipo in `wonTypes`, aggiorna `lastWin` e ritorna la fase
+// narrativa corrispondente (post-ambo → … → finale) da impostare.
+export async function claimWin(gameId, winType) {
+  const game = gameId ? await Game.findById(gameId) : await getActiveGame();
+  if (!game) throw new Error("Partita non trovata");
+
+  const type = WIN_ORDER.includes(winType)
+    ? winType
+    : WIN_ORDER.find((w) => !game.wonTypes.includes(w));
+  if (!type) throw new Error("Tutte le vincite sono già state reclamate");
+  if (!game.wonTypes.includes(type)) game.wonTypes.push(type);
+
+  game.lastWin = {
+    type,
+    playerName: null,
+    numbers: [],
+    timestamp: new Date()
+  };
+
+  const PHASE_BY_WIN = {
+    ambo: "post-ambo",
+    terno: "post-terno",
+    quaterna: "post-quaterna",
+    cinquina: "post-cinquina",
+    tombola: "finale"
+  };
+
+  await game.save();
+  return { game: game.toObject(), phase: PHASE_BY_WIN[type] ?? null };
+}
+
 export async function resetGame(id) {
   const game = await Game.findById(id);
   if (!game) throw new Error("Partita non trovata");

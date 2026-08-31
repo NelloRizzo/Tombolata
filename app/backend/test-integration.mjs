@@ -147,6 +147,15 @@ async function run() {
   const actorTriggers = await req("/api/triggers", "GET", null, actorLogin.token);
   assert(actorTriggers.ok && actorTriggers.data.length >= 1, "attore vede i propri trigger live");
 
+  // reclama vincite: ogni chiamata registra la vincita successiva e avanza la fase
+  const claim1 = await req(`/api/game/${gid}/claim-win`, "POST", {}, adminToken);
+  assert(claim1.ok && claim1.data.wonTypes.includes("ambo"), "reclamo ambo: registrato");
+  assert(claim1.phase === "post-ambo", "reclamo ambo: fase post-ambo");
+  const claim2 = await req(`/api/game/${gid}/claim-win`, "POST", {}, adminToken);
+  assert(claim2.ok && claim2.data.wonTypes.includes("terno") && claim2.phase === "post-terno", "reclamo terno: registrato e fase post-terno");
+  const claim5 = await req(`/api/game/${gid}/claim-win`, "POST", { winType: "tombola" }, adminToken);
+  assert(claim5.ok && claim5.data.wonTypes.includes("tombola") && claim5.phase === "finale", "reclamo tombola: fase finale");
+
   console.log("== TEST PROGRAMMA ==");
   const sched = await req("/api/game/start", "POST", {
     name: "Partita di Pasqua",

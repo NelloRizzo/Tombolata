@@ -87,7 +87,7 @@ export async function getGameProgram() {
 }
 
 function allBoardNumbers(board) {
-  return board.rows.flat();
+  return board.rows.flat().filter((n) => n != null);
 }
 
 // Verifica se una cartella fa una determinata vincita

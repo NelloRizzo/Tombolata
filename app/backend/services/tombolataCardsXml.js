@@ -55,8 +55,19 @@ export function parseCardName(name) {
   return { title: name.trim(), setNumber: null, cardNumber: null };
 }
 
+// Griglia 3×9 come nella tombola italiana (numeri 1-90, 9 colonne da 10).
+// Colonna 0: 1-10, colonna 1: 11-19, ..., colonna 8: 80-90.
+// Celle vuote (null) dove il numero non c'è nella colonna.
 export function toRows(cells) {
-  return [cells.slice(0, 5), cells.slice(5, 10), cells.slice(10, 15)];
+  const grid = [[], [], []];
+  for (let col = 0; col < 9; col++) {
+    for (let row = 0; row < 3; row++) {
+      const lo = col === 0 ? 1 : col * 10 + 1;
+      const hi = (col + 1) * 10;
+      grid[row].push(cells.find((n) => n >= lo && n <= hi) ?? null);
+    }
+  }
+  return grid;
 }
 
 // Etichetta leggibile: "Tombolata 2025 · S.1 · n.3" / "Primo Giro · n.42"

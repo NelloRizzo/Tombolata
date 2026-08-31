@@ -632,6 +632,32 @@ h3 {
   font-size: 0.85rem;
   font-weight: 600;
 }
+.bm-board-row span.bm-cell-win {
+  background: var(--gold);
+  color: #1a1520;
+  box-shadow: 0 0 8px rgba(255, 200, 80, 0.7);
+}
+.bm-win-tag {
+  background: var(--gold);
+  color: #1a1520;
+  border-radius: 10px;
+  padding: 2px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+/* Avanzamento rapido fasi vincite (regia) */
+.phase-advance {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.phase-current {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
 
 /* ---------- Archivio cartelle (inventario) ---------- */
 .ci-toolbar {
@@ -672,10 +698,15 @@ h3 {
   gap: 10px;
   background: #1d2c52;
   border-radius: 10px;
-  padding: 10px;
+  padding: 10px 12px;
+  cursor: default;
+  transition: background 0.15s;
+}
+.ci-item:hover {
+  background: #232f5a;
 }
 .ci-item input[type="checkbox"] {
-  margin-top: 6px;
+  margin-top: 4px;
   transform: scale(1.15);
   accent-color: var(--red);
 }
@@ -685,15 +716,41 @@ h3 {
 }
 .ci-label {
   font-weight: 600;
-  margin-bottom: 6px;
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
-.ci-board .bm-board-row {
-  margin-bottom: 2px;
+.ci-chevron {
+  font-size: 0.7rem;
+  color: var(--muted);
+  margin-left: auto;
 }
-.ci-board .bm-board-row span {
-  width: 26px;
-  height: 26px;
-  font-size: 0.75rem;
+.ci-board {
+  margin-top: 10px;
+}
+.ci-board-row {
+  display: flex;
+  gap: 2px;
+}
+.ci-board-row + .ci-board-row {
+  margin-top: 2px;
+}
+.ci-cell {
+  width: 32px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0f1a33;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.ci-empty {
+  background: #172040;
+  opacity: 0.3;
 }
 
 

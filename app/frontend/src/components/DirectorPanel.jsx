@@ -18,6 +18,8 @@ export default function DirectorPanel({ ws, gameId }) {
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
 
+  const WIN_PHASES = ["post-ambo", "post-terno", "post-quaterna", "post-cinquina", "finale"];
+
   const ref = gameId || game?._id || null;
   const bodyRef = (extra = {}) => JSON.stringify({ ...extra, ...(ref ? { gameId: ref } : {}) });
 
@@ -60,6 +62,17 @@ export default function DirectorPanel({ ws, gameId }) {
     }
   }
 
+  // Avanza alla fase di vincita successiva (post-ambo → … → finale).
+  // Se la fase corrente non è una fase di vincita, porta alla prima (post-ambo).
+  async function nextWinPhase() {
+    const current = narration?.phase;
+    const next =
+      current && WIN_PHASES.includes(current)
+        ? WIN_PHASES[WIN_PHASES.indexOf(current) + 1] || WIN_PHASES[WIN_PHASES.length - 1]
+        : WIN_PHASES[0];
+    await setPhase(next);
+  }
+
   async function playVideo(id) {
     setError(null);
     try {
@@ -83,6 +96,12 @@ export default function DirectorPanel({ ws, gameId }) {
       <div className="panel-grid">
         <div className="panel-block">
           <h2>Fase narrativa</h2>
+          <div className="phase-advance">
+            <button className="btn-sm btn-accent" onClick={nextWinPhase} title="Porta alla fase di vincita successiva (post-ambo → post-terno → … → finale)">
+              Avanzia fase vincite ▸
+            </button>
+            <span className="phase-current">Corrente: {narration?.phase || "-"}</span>
+          </div>
           <div className="phase-buttons">
             {PHASES.map((p) => (
               <button

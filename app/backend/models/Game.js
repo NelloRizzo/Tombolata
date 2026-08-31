@@ -10,8 +10,8 @@ const boardSchema = new mongoose.Schema({
   rows: {
     type: [[Number]],
     validate: {
-      validator: (rows) => rows.length === 3 && rows.every((r) => r.length === 5),
-      message: "Una cartella deve avere 3 righe da 5 numeri"
+      validator: (rows) => rows.length === 3 && rows.every((r) => r.length === 5 || r.length === 9),
+      message: "Una cartella deve avere 3 righe da 5 o 9 numeri"
     }
   }
 }, { _id: false });

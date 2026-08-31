@@ -9,6 +9,30 @@ function cardLabel(card) {
   return parts.join(" · ");
 }
 
+// Espone le righe a 9 colonne (tombola italiana) indipendentemente dal formato
+// di存储: 5 celle → mappa nella colonna giusta; 9 celle → già pronto.
+function toNineCols(rows) {
+  return rows.map((row) => {
+    if (row.length === 9) return row;
+    const out = Array(9).fill(null);
+    for (const n of row) {
+      if (n == null) continue;
+      let col;
+      if (n <= 10) col = 0;
+      else if (n <= 19) col = 1;
+      else if (n <= 29) col = 2;
+      else if (n <= 39) col = 3;
+      else if (n <= 49) col = 4;
+      else if (n <= 59) col = 5;
+      else if (n <= 69) col = 6;
+      else if (n <= 79) col = 7;
+      else col = 8;
+      if (out[col] == null) out[col] = n;
+    }
+    return out;
+  });
+}
+
 // Archivio globale di cartelle (slegate dalle partite). Qui si importa il file
 // .cards e si selezionano le cartelle da "mettere in gioco" nella partita
 // corrente (singole, per espressione regolare o tutte insieme).
@@ -17,6 +41,7 @@ export default function CardInventory({ game }) {
   const [regex, setRegex] = useState("");
   const [regexError, setRegexError] = useState(null);
   const [selected, setSelected] = useState(new Set());
+  const [expanded, setExpanded] = useState(new Set());
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -46,8 +71,17 @@ export default function CardInventory({ game }) {
     return cards.filter((c) => re.test(cardLabel(c)));
   }, [cards, regex]);
 
-  function toggle(id) {
+  function toggleSelect(id) {
     setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleExpand(id) {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -177,27 +211,46 @@ export default function CardInventory({ game }) {
 
       <div className="ci-list">
         {cards.length === 0 && <p className="empty">Archivio vuoto: importa un file .cards/.xml.</p>}
-        {cards.map((card) => (
-          <div className="ci-item" key={card._id}>
-            <input
-              type="checkbox"
-              checked={selected.has(String(card._id))}
-              onChange={() => toggle(String(card._id))}
-            />
-            <div className="ci-body">
-              <div className="ci-label">{cardLabel(card) || "Cartella"}</div>
-              <div className="ci-board">
-                {card.rows.map((row, r) => (
-                  <div className="bm-board-row" key={r}>
-                    {row.map((n, c) => (
-                      <span key={c}>{n}</span>
+        {cards.map((card) => {
+          const isExpanded = expanded.has(String(card._id));
+          const rows9 = toNineCols(card.rows || []);
+          return (
+            <div
+              className={`ci-item${isExpanded ? " ci-expanded" : ""}`}
+              key={card._id}
+            >
+              <input
+                type="checkbox"
+                checked={selected.has(String(card._id))}
+                onChange={() => toggleSelect(String(card._id))}
+                onClick={(e) => e.stopPropagation()}
+              />
+              <div className="ci-body">
+                <div
+                  className="ci-label"
+                  onClick={() => toggleExpand(String(card._id))}
+                  title={isExpanded ? "Comprimi" : "Espandi"}
+                >
+                  {cardLabel(card) || "Cartella"}
+                  <span className="ci-chevron">{isExpanded ? "▲" : "▼"}</span>
+                </div>
+                {isExpanded && (
+                  <div className="ci-board">
+                    {rows9.map((row, r) => (
+                      <div className="ci-board-row" key={r}>
+                        {row.map((n, c) => (
+                          <span key={c} className={n != null ? "ci-cell" : "ci-cell ci-empty"}>
+                            {n ?? ""}
+                          </span>
+                        ))}
+                      </div>
                     ))}
                   </div>
-                ))}
+                )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import GameManager from "./GameManager.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 const PHASES = [
   { value: "prologue", label: "Prologo" },
@@ -12,11 +13,20 @@ const PHASES = [
   { value: "live", label: "Live" }
 ];
 
+const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
+
 export default function DirectorPanel({ ws, gameId }) {
   const { game, narration, firedTriggers } = ws;
   const [triggers, setTriggers] = useState([]);
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
+  const [confirmClaim, setConfirmClaim] = useState(null);
+
+  // Prossima vincita da reclamare (ambo → … → tombola) in base a quelle già ottenute.
+  const nextClaim =
+    game?.wonTypes?.length >= WIN_ORDER.length
+      ? null
+      : WIN_ORDER.find((w) => !(game?.wonTypes || []).includes(w));
 
   const ref = gameId || game?._id || null;
   const bodyRef = (extra = {}) => JSON.stringify({ ...extra, ...(ref ? { gameId: ref } : {}) });
@@ -66,14 +76,13 @@ export default function DirectorPanel({ ws, gameId }) {
     ? game.wonTypes[game.wonTypes.length - 1]
     : null;
 
-  // Segnala la vincita successiva (ambo → terno → quaterna → cinquina → tombola)
-  // e porta la narrazione alla fase che le corrisponde (post-ambo → … → finale).
-  // "Reclama" = il direttore conferma la vincita raggiunta in sala; il passaggio
-  // di fase avviene automaticamente subito dopo.
+  // Conferma e reclama la vincita segnalata (ambo → terno → quaterna →
+  // cinquina → tombola), poi la narrazione passa automaticamente alla fase
+  // corrispondente. Il modale evita i reclami per errore.
   async function claimWin() {
     setError(null);
+    setConfirmClaim(null);
     try {
-      const body = JSON.stringify({ ...(ref ? { gameId: ref } : {}) });
       await apiRequest(`/api/game/${ref}/claim-win`, {
         method: "POST",
         body: bodyRef()
@@ -107,7 +116,12 @@ export default function DirectorPanel({ ws, gameId }) {
         <div className="panel-block">
           <h2>Fase narrativa</h2>
           <div className="phase-advance">
-            <button className="btn-sm btn-accent" onClick={claimWin} title="Reclama la vincita successiva (ambo → terno → quaterna → cinquina → tombola) e passa automaticamente alla fase corrispondente">
+            <button
+              className="btn-sm btn-accent"
+              onClick={() => setConfirmClaim(nextClaim)}
+              disabled={!nextClaim}
+              title={nextClaim ? `Reclama la vincita "${nextClaim}"` : "Tutte le vincite sono già state reclamate"}
+            >
               Reclama Vincita
             </button>
             <span className="phase-current">Corrente: {narration?.phase || "-"}</span>
@@ -176,6 +190,15 @@ export default function DirectorPanel({ ws, gameId }) {
           ))}
         </div>
       </div>
+
+      <ConfirmModal
+        open={!!confirmClaim}
+        title="Reclama la vincita?"
+        message={`Confermi la vincita "${confirmClaim}" in sala? La narrazione passerà automaticamente alla fase corrispondente.`}
+        confirmLabel="Conferma vincita"
+        onCancel={() => setConfirmClaim(null)}
+        onConfirm={claimWin}
+      />
     </div>
   );
 }

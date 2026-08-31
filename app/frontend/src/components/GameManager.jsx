@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import { AdminTriggers, AdminVideos, AdminSounds } from "./AdminPanel.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 function toLocalInput(value) {
   if (!value) return "";
@@ -21,6 +22,7 @@ export default function GameManager({ game }) {
   const [editDesc, setEditDesc] = useState("");
   const [editScheduled, setEditScheduled] = useState("");
   const [error, setError] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { id, name } | null
 
   async function refresh() {
     try {
@@ -55,21 +57,24 @@ export default function GameManager({ game }) {
     }
   }
 
-  async function selectGame(id) {
-    setError(null);
-    try {
-      await apiRequest(`/api/game/${id}/select`, { method: "POST" });
-      setShowHistory(false);
-    } catch (e) {
-      setError(e.message);
-    }
-  }
-
   function startEdit(g) {
     setEditingId(g._id);
     setEditName(g.name || "");
     setEditDesc(g.description || "");
     setEditScheduled(toLocalInput(g.scheduledAt));
+  }
+
+  // Avvia/Ferma la partita (può essere giocata più volte): se è attiva la ferma,
+  // se è chiusa la avvia per un nuovo giro (riazzerando i numeri estratti ma
+  // mantenendo le cartelle in gioco).
+  async function runGame(id) {
+    setError(null);
+    try {
+      await apiRequest(`/api/game/${id}/toggle-run`, { method: "POST" });
+      refresh();
+    } catch (e) {
+      setError(e.message);
+    }
   }
 
   async function saveEdit(id) {
@@ -91,7 +96,6 @@ export default function GameManager({ game }) {
   }
 
   async function removeGame(id, name) {
-    if (!window.confirm(`Eliminare la partita "${name}"?`)) return;
     setError(null);
     try {
       await apiRequest(`/api/game/${id}`, { method: "DELETE" });
@@ -176,18 +180,24 @@ export default function GameManager({ game }) {
                       </div>
                       <div className="gm-actions">
                         <button className="btn-sm" onClick={() => startEdit(g)}>Modifica</button>
-                        <button className="btn-sm btn-ghost" onClick={() => removeGame(g._id, g.name)}>Elimina</button>
+                        <button
+                          className="btn-sm btn-ghost"
+                          onClick={() => setConfirmDelete({ id: g._id, name: g.name })}
+                        >
+                          Elimina
+                        </button>
                         <button
                           className="btn-sm"
                           onClick={() => setExpandedId((v) => (v === g._id ? null : g._id))}
                         >
                           {expandedId === g._id ? "Chiudi contenuti" : "Trigger / Video"}
                         </button>
-                        {!active && (
-                          <button className="btn-sm btn-accent" onClick={() => selectGame(g._id)}>
-                            {g.status === "scheduled" ? "Attiva" : "Apri"}
-                          </button>
-                        )}
+                        <button
+                          className={`btn-sm ${g.status === "active" ? "btn-ghost" : "btn-accent"}`}
+                          onClick={() => runGame(g._id)}
+                        >
+                          {g.status === "active" ? "Ferma partita" : "Avvia partita"}
+                        </button>
                       </div>
                       {expandedId === g._id && (
                         <div className="gm-expanded">
@@ -204,6 +214,20 @@ export default function GameManager({ game }) {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="Eliminare la partita?"
+        message={`Eliminare definitivamente la partita "${confirmDelete?.name}"? Questa azione non può essere annullata.`}
+        confirmLabel="Elimina"
+        danger
+        onCancel={() => setConfirmDelete(null)}
+        onConfirm={() => {
+          const { id, name } = confirmDelete;
+          setConfirmDelete(null);
+          removeGame(id, name);
+        }}
+      />
     </div>
   );
 }

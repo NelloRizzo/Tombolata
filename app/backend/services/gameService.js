@@ -299,6 +299,33 @@ export async function resetGame(id) {
   return game.toObject();
 }
 
+// Avvia/Ferma la partita (può essere giocata più volte):
+// - se è attiva → la ferma (status "finished", conserva i dati del giro per
+//   essere "chiusa" con l'esito);
+// - se è chiusa/programmata → la avvia per un NUOVO giro: riparte a zero i
+//   numeri estratti, le vincite e wonTypes, ma MANTIENE le cartelle in gioco.
+export async function toggleGameRun(id) {
+  const game = await Game.findById(id);
+  if (!game) throw new Error("Partita non trovata");
+
+  if (game.status === "active") {
+    game.status = "finished";
+    game.finishedAt = new Date();
+  } else {
+    // Nuovo giro: reset dati partita, conserva boards (le cartelle restano).
+    game.status = "active";
+    game.finishedAt = null;
+    game.extractedNumbers = [];
+    game.currentNumber = null;
+    game.extractionCount = 0;
+    game.wins = [];
+    game.lastWin = null;
+    game.wonTypes = [];
+  }
+  await game.save();
+  return game.toObject();
+}
+
 export async function deleteGame(id) {
   const game = await Game.findById(id);
   if (!game) throw new Error("Partita non trovata");

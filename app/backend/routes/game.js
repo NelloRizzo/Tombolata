@@ -21,7 +21,8 @@ import {
   addBoard,
   removeBoard,
   addBoardsFromCards,
-  claimWin
+  claimWin,
+  toggleGameRun
 } from "../services/gameService.js";
 import { evaluateTriggers, setPhase, getNarrationState } from "../services/triggerService.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
@@ -244,6 +245,17 @@ router.delete("/:id/boards/:boardIndex", authenticate, requireRoles("drawer", "d
 router.post("/:id/finish", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const game = await resetGame(req.params.id);
+    res.json({ ok: true, data: game });
+  } catch (error) {
+    res.status(404).json({ ok: false, message: error.message });
+  }
+});
+
+// Avvia/Ferma la partita (può essere giocata più volte).
+router.post("/:id/toggle-run", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const game = await toggleGameRun(req.params.id);
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.json({ ok: true, data: game });
   } catch (error) {
     res.status(404).json({ ok: false, message: error.message });

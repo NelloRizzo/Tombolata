@@ -668,6 +668,48 @@ h3 {
   text-transform: capitalize;
 }
 
+/* ---------- Modale di conferma ---------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  padding: 20px;
+}
+.modal {
+  background: var(--card);
+  border: 1px solid #3a3a5a;
+  border-radius: 12px;
+  padding: 22px 26px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.modal-title {
+  margin: 0 0 10px;
+  color: var(--text);
+}
+.modal-message {
+  margin: 0 0 20px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.btn-danger {
+  background: var(--red);
+  color: #fff;
+}
+.btn-danger:hover {
+  filter: brightness(1.1);
+}
+
 /* ---------- Archivio cartelle (inventario) ---------- */
 .ci-toolbar {
   display: flex;

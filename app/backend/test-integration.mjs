@@ -156,6 +156,16 @@ async function run() {
   const claim5 = await req(`/api/game/${gid}/claim-win`, "POST", { winType: "tombola" }, adminToken);
   assert(claim5.ok && claim5.data.wonTypes.includes("tombola") && claim5.phase === "finale", "reclamo tombola: fase finale");
 
+  // avvia/ferma partita (più giri): ferma → finished, riavvia → nuovo giro
+  // azzerando i numeri estratti ma mantenendo le cartelle.
+  const boardsBefore = claim5.data.boards.length;
+  const stop = await req(`/api/game/${gid}/toggle-run`, "POST", null, adminToken);
+  assert(stop.ok && stop.data.status === "finished", "ferma partita → finished");
+  const again = await req(`/api/game/${gid}/toggle-run`, "POST", null, adminToken);
+  assert(again.ok && again.data.status === "active", "riavvia partita → active");
+  assert(again.data.extractedNumbers.length === 0 && again.data.wonTypes.length === 0, "nuovo giro: numeri e vincite azzerati");
+  assert(again.data.boards.length === boardsBefore, "nuovo giro: cartelle mantenute");
+
   console.log("== TEST PROGRAMMA ==");
   const sched = await req("/api/game/start", "POST", {
     name: "Partita di Pasqua",

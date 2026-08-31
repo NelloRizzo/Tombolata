@@ -13,17 +13,13 @@ const ROLE_SEZIONI = [
   { key: "actor", label: "Attore", icon: "🎭" }
 ];
 
-// Selezione della partita corrente: le azioni della dashboard e il tabellone
-// pubblico di questo browser si riferiscono alla partita scelta.
 function GameSelector() {
   const { currentGameId, setCurrentGame } = useCurrentGame();
   const [games, setGames] = useState([]);
 
   useEffect(() => {
     apiRequest("/api/game/history")
-      .then((json) => {
-        if (json.ok) setGames(json.data);
-      })
+      .then((json) => { if (json.ok) setGames(json.data); })
       .catch(() => {});
   }, []);
 
@@ -32,19 +28,13 @@ function GameSelector() {
   return (
     <label className="game-selector" title="Partita corrente della dashboard">
       <span className="gs-label">{currentName || (currentGameId ? "Partita selezionata" : "Partita auto")}</span>
-      <select
-        value={currentGameId || ""}
-        onChange={(e) => setCurrentGame(e.target.value || null)}
-      >
+      <select value={currentGameId || ""} onChange={(e) => setCurrentGame(e.target.value || null)}>
         <option value="">✓ Partita attiva (automatica)</option>
-        {games
-          .filter((g) => g.status !== "finished")
-          .map((g) => (
-            <option key={g._id} value={g._id}>
-              {g.name}
-              {g.status === "scheduled" ? " (programmata)" : ""}
-            </option>
-          ))}
+        {games.filter((g) => g.status !== "finished").map((g) => (
+          <option key={g._id} value={g._id}>
+            {g.name}{g.status === "scheduled" ? " (programmata)" : ""}
+          </option>
+        ))}
       </select>
     </label>
   );
@@ -56,7 +46,9 @@ export default function Navbar() {
   const navigate = useNavigate();
 
   const inConsole = location.pathname === "/console";
+  const inBoards = location.pathname === "/boards";
   const sezioni = ROLE_SEZIONI.filter((s) => hasRole(s.key));
+  const canManageBoards = hasRole("drawer") || hasRole("director") || hasRole("admin");
 
   function handleLogout() {
     logout();
@@ -72,27 +64,36 @@ export default function Navbar() {
       </div>
 
       <nav className="navbar-links">
+        <Link to="/board" className="nav-link" title="Tabellone pubblico">
+          <span className="nav-icon">🖥️</span>
+          <span className="nav-label">Tabellone</span>
+        </Link>
+
+        {canManageBoards && (inConsole || inBoards) && (
+          <Link
+            to="/boards"
+            className={`nav-link ${inBoards ? "active" : ""}`}
+            title="Gestione cartelle"
+          >
+            <span className="nav-icon">🎟️</span>
+            <span className="nav-label">Cartelle</span>
+          </Link>
+        )}
+
         {inConsole ? (
           sezioni.length > 0 ? (
             sezioni.map((s) => (
               <NavLink
                 key={s.key}
                 to={`/console?tab=${s.key}`}
-                className={({ isActive }) =>
-                  `nav-link ${isActive ? "active" : ""}`
-                }
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
                 title={s.label}
               >
                 <span className="nav-icon">{s.icon}</span>
                 <span className="nav-label">{s.label}</span>
               </NavLink>
             ))
-          ) : (
-            <Link to="/console" className="nav-link">
-              <span className="nav-icon">🖥️</span>
-              <span className="nav-label">Tabellone</span>
-            </Link>
-          )
+          ) : null
         ) : (
           <Link to="/console" className="nav-link">
             <span className="nav-icon">🖥️</span>
@@ -108,9 +109,7 @@ export default function Navbar() {
             <span className="navbar-user" title={user.displayName || user.username}>
               {user.displayName || user.username}
             </span>
-            <button className="navbar-logout" onClick={handleLogout}>
-              Esci
-            </button>
+            <button className="navbar-logout" onClick={handleLogout}>Esci</button>
           </>
         ) : (
           <NavLink to="/login" className="nav-link">

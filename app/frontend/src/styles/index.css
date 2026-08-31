@@ -54,7 +54,7 @@ h3 {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 10px 16px 8px;
+  padding: 4px 16px 2px;
   overflow: hidden;
 }
 
@@ -63,10 +63,10 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 16px 8px;
+  padding: 0 16px 4px;
 }
 .board-title {
-  font-size: 2rem;
+  font-size: 1.4rem;
   color: var(--gold);
   letter-spacing: 1px;
 }
@@ -151,7 +151,7 @@ h3 {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 .number-grid.fill {
   flex: 1;
@@ -162,7 +162,7 @@ h3 {
   display: grid;
   grid-template-columns: repeat(10, 1fr);
   grid-template-rows: 1fr;
-  gap: 6px;
+  gap: 4px;
 }
 .number-grid.fill .grid-group {
   flex: 1 1 0;
@@ -379,6 +379,13 @@ h3 {
   gap: 16px;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.console-boards {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
 }
 
 .console-grid {
@@ -1076,36 +1083,16 @@ h3 {
 .board-page.board-fullscreen .board-main {
   min-height: 100vh;
 }
-/* Bussolotti quadrati al massimo della dimensione sul monitor */
-.board-page.board-fullscreen .board-left .number-grid.fill {
+/* Bussolotti quadrati al massimo della dimensione: la griglia misura la sua
+   larghezza sulla base dell'altezza disponibile (10 col x 9 righe) e resta
+   centrata, così le celle sono quadrate e i bussolotti il piu grandi possibile. */
+.board-left .number-grid.fill {
   flex: none;
-  width: min(100%, calc((100dvh - 48px) * 10 / 9));
+  width: min(100%, calc((100dvh - 128px) * 10 / 9));
   aspect-ratio: 10 / 9;
 }
-
-/* Link discreti sul tabellone pubblico (programma + schermo intero) */
-.board-links {
-  position: fixed;
-  bottom: 12px;
-  right: 12px;
-  z-index: 40;
-  display: flex;
-  gap: 8px;
-}
-.board-monitor-link {
-  padding: 8px 14px;
-  background: rgba(0, 0, 0, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 999px;
-  color: #fff;
-  font-size: 0.85rem;
-  text-decoration: none;
-  opacity: 0.7;
-  transition: opacity 0.15s ease;
-}
-.board-monitor-link:hover {
-  opacity: 1;
-  background: var(--red);
+.board-page.board-fullscreen .board-left .number-grid.fill {
+  width: min(100%, calc((100dvh - 36px) * 10 / 9));
 }
 
 /* ---------- Home: presentazione e programma ---------- */

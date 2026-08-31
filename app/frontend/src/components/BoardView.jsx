@@ -9,8 +9,8 @@ import PublicBoardPopup from "./PublicBoardPopup.jsx";
 import { playExtract, playWin, playTombola } from "../utils/audio.js";
 
 // Vista tabellone riutilizzabile.
-// - showChrome=true: mostra l'header e il link verso il monitor (Board pubblico).
-// - showChrome=false: render a tutto schermo senza header/link (Monitor proiettore).
+// - showChrome=true: mostra l'header di stato (Board pubblico).
+// - showChrome=false: render a tutto schermo senza header (Monitor proiettore).
 // - gameId: partita corrente (null = partita attiva).
 export default function BoardView({ showChrome = true, gameId = null }) {
   const { connected, on } = useWebSocket(gameId);

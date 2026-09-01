@@ -820,6 +820,10 @@ h3 {
   color: #fff;
   box-shadow: 0 0 6px rgba(90, 220, 140, 0.6);
 }
+.ci-win-none {
+  background: #3a3a5a;
+  color: var(--muted);
+}
 .ci-hint {
   color: var(--muted);
   font-size: 0.8rem;

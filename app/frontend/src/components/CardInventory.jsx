@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { apiRequest } from "../api.js";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 function cardLabel(card) {
   const parts = [];
@@ -50,6 +51,12 @@ function cardHighestWin(rows, extracted) {
   return null;
 }
 
+// Numero di celle della cartella occupate da numeri estratti.
+function cardMatchedCount(rows, extracted) {
+  const extractedSet = new Set(extracted);
+  return rows.flat().filter((n) => n != null && extractedSet.has(n)).length;
+}
+
 // Archivio globale di cartelle (slegate dalle partite). Qui si importa il file
 // .cards e si selezionano le cartelle da "mettere in gioco" o "togliere dal
 // gioco" nella partita corrente. Il filtro si applica automaticamente dal
@@ -62,6 +69,7 @@ export default function CardInventory({ game }) {
   const [selected, setSelected] = useState(new Set());
   const [expanded, setExpanded] = useState(new Set());
   const [showWins, setShowWins] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null);
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -257,7 +265,7 @@ export default function CardInventory({ game }) {
 
         <button
           className="btn-sm btn-accent"
-          onClick={putInPlay}
+          onClick={() => setConfirmAction({ type: "putInPlay" })}
           disabled={busy || selected.size === 0 || !game}
           title={game ? "Copia le cartelle selezionate nella partita corrente" : "Scegli una partita dal menu in alto"}
         >
@@ -265,7 +273,7 @@ export default function CardInventory({ game }) {
         </button>
         <button
           className="btn-sm btn-ghost"
-          onClick={takeOutOfPlay}
+          onClick={() => setConfirmAction({ type: "takeOut" })}
           disabled={busy || selected.size === 0 || !game}
           title={game ? "Rimuove dalla partita corrente le cartelle selezionate già in gioco" : "Scegli una partita dal menu in alto"}
         >
@@ -286,8 +294,9 @@ export default function CardInventory({ game }) {
           const isSelected = selected.has(String(card._id));
           const isExpanded = expanded.has(String(card._id));
           const rows9 = toNineCols(card.rows || []);
-          const win = showWins && isSelected ? cardHighestWin(rows9, game?.extractedNumbers || []) : null;
-          const extracted = new Set(game?.extractedNumbers || []);
+          const extracted = game?.extractedNumbers || [];
+          const win = showWins && isSelected ? cardHighestWin(rows9, extracted) : null;
+          const matched = showWins && isSelected ? cardMatchedCount(rows9, extracted) : 0;
           return (
             <div
               className={`ci-item${isExpanded ? " ci-expanded" : ""}${isSelected ? " ci-selected" : ""}`}
@@ -306,7 +315,11 @@ export default function CardInventory({ game }) {
                   title={isExpanded ? "Comprimi" : "Espandi"}
                 >
                   {cardLabel(card) || "Cartella"}
-                  {win && <span className="ci-win-tag">{win}</span>}
+                  {showWins && isSelected && (
+                    <span className={`ci-win-tag${win ? "" : " ci-win-none"}`} title={`${matched} numeri estratti su 15`}>
+                      {win || `☐ ${matched}/15`}
+                    </span>
+                  )}
                   <span className="ci-chevron">{isExpanded ? "▲" : "▼"}</span>
                 </div>
                 {isExpanded && (
@@ -316,7 +329,7 @@ export default function CardInventory({ game }) {
                         {row.map((n, c) => (
                           <span
                             key={c}
-                            className={`ci-cell${n == null ? " ci-empty" : ""}${showWins && isSelected && n != null && extracted.has(n) ? " ci-cell-win" : ""}`}
+                            className={`ci-cell${n == null ? " ci-empty" : ""}${showWins && isSelected && n != null && extracted.includes(n) ? " ci-cell-win" : ""}`}
                           >
                             {n ?? ""}
                           </span>
@@ -330,6 +343,27 @@ export default function CardInventory({ game }) {
           );
         })}
       </div>
+
+      <ConfirmModal
+        open={confirmAction !== null}
+        title={
+          confirmAction?.type === "takeOut" ? "Togli dal gioco" : "Mettere in gioco"
+        }
+        message={
+          confirmAction?.type === "takeOut"
+            ? `Confermi di togliere dal gioco ${selected.size} cartella/e selezionate?`
+            : `Confermi di mettere in gioco ${selected.size} cartella/e selezionate nella partita "${game?.name || ""}"?`
+        }
+        confirmLabel={confirmAction?.type === "takeOut" ? "Togli" : "Metti in gioco"}
+        danger={confirmAction?.type === "takeOut"}
+        onConfirm={() => {
+          const a = confirmAction?.type;
+          setConfirmAction(null);
+          if (a === "takeOut") takeOutOfPlay();
+          else putInPlay();
+        }}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

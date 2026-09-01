@@ -257,10 +257,9 @@ export default function CardInventory({ game }) {
         <button
           className={`btn-sm${showWins ? " btn-accent" : ""}`}
           onClick={() => setShowWins((v) => !v)}
-          disabled={selected.size === 0}
-          title="Mostra accanto a ogni cartella selezionata la vincita attuale sui numeri estratti"
+          title="Abilita/Disabilita la visualizzazione della vincita quando selezioni una cartella"
         >
-          {showWins ? "Nascondi vincite" : "Mostra vincita attuale"}
+          {showWins ? "Disattiva vincite" : "Mostra vincita attiva"}
         </button>
 
         <button

@@ -3,19 +3,25 @@ import { apiRequest } from "../api.js";
 import GameManager from "./GameManager.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
 
-const PHASES = [
+// Fasi sequenziali (riflettono l'andamento delle vincite).
+const SEQUENTIAL_PHASES = [
   { value: "prologue", label: "Prologo" },
   { value: "post-ambo", label: "Post-Ambo" },
   { value: "post-terno", label: "Post-Terno" },
   { value: "post-quaterna", label: "Post-Quaterna" },
   { value: "post-cinquina", label: "Post-Cinquina" },
+  { value: "finale", label: "Finale" }
+];
+
+// Fasi a toggle: quando sono attive, un nuovo click le disattiva tornando
+// alla fase sequenziale precedentemente attiva.
+const TOGGLE_PHASES = [
   { value: "spareggio", label: "Spareggio" },
-  { value: "finale", label: "Finale" },
   { value: "live", label: "Live" }
 ];
 
-// Ordine di avanzamento manuale (l'ultima raggiungibile è "live").
-const PHASE_ORDER = PHASES.map((p) => p.value);
+// Ordine di avanzamento manuale della sequenza vincite.
+const PHASE_ORDER = SEQUENTIAL_PHASES.map((p) => p.value);
 
 const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
 
@@ -24,9 +30,8 @@ export default function DirectorPanel({ ws, gameId }) {
   const [triggers, setTriggers] = useState([]);
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
-  const [prevPhase, setPrevPhase] = useState(null);
-
-  const isSpareggio = narration?.phase === "spareggio";
+  const [prevStack, setPrevStack] = useState([]);
+  const [confirmClaim, setConfirmClaim] = useState(false);
 
   const ref = gameId || game?._id || null;
   const bodyRef = (extra = {}) => JSON.stringify({ ...extra, ...(ref ? { gameId: ref } : {}) });
@@ -58,36 +63,81 @@ export default function DirectorPanel({ ws, gameId }) {
     }
   }
 
-  // Imposta una fase. Se si entra in "spareggio", ricorda la fase precedente
-  // così da poterci tornare col pulsante dedicato.
+  // Imposta una fase. Prologue…finale sono sequenziali; spareggio e live sono
+  // toggle: quando già attivi, un nuovo click li disattiva tornando alla fase
+  // che era attiva prima dell'attivazione (pila LIFO di rientro).
   async function setPhase(phase) {
     setError(null);
-    const prev = narration?.phase;
+    const current = narration?.phase;
+    const isToggle = TOGGLE_PHASES.some((t) => t.value === phase);
+    // Toccolo il toggle già attivo → lo disattivo e torno alla fase di rientro.
+    if (isToggle && current === phase) {
+      const stack = [...prevStack];
+      const back = stack.pop() || "finale";
+      setPrevStack(stack);
+      try {
+        await apiRequest("/api/triggers/phase", {
+          method: "POST",
+          body: bodyRef({ phase: back })
+        });
+      } catch (e) {
+        setError(e.message);
+      }
+      return;
+    }
     try {
-      if (phase === "spareggio" && prev) setPrevPhase(prev);
+      // Toggle attivato: memorizza la fase da cui si è partiti (LIFO).
+      if (isToggle) {
+        setPrevStack((s) => [...s, current].filter(Boolean));
+      } else {
+        // Fase sequenziale: azzera ogni rientro precedente.
+        setPrevStack([]);
+      }
       await apiRequest("/api/triggers/phase", {
         method: "POST",
         body: bodyRef({ phase })
       });
-      if (phase !== "spareggio") setPrevPhase(null);
     } catch (e) {
       setError(e.message);
     }
   }
 
-  // Avanza manualmente alla fase successiva in PHASE_ORDER.
+  // Avanza manualmente lungo la sequenza vincite (prologue → … → finale).
+  // Se la fase corrente è un toggle (spareggio/live), si prosegue dalla fase
+  // che era attiva prima del toggle.
   async function advancePhase() {
     const current = narration?.phase || "prologue";
-    const idx = PHASE_ORDER.indexOf(current);
+    const base = PHASE_ORDER.includes(current)
+      ? current
+      : (prevStack[prevStack.length - 1] || "prologue");
+    const idx = PHASE_ORDER.indexOf(base);
     const next = PHASE_ORDER[Math.min(idx + 1, PHASE_ORDER.length - 1)];
-    // Se ci si sposta da spareggio senza tornare indietro, la fase "precedente" si azzera.
-    if (next !== "spareggio") setPrevPhase(null);
+    setPrevStack([]);
     await setPhase(next);
   }
 
-  // Torna alla fase attiva prima di entrare in spareggio.
-  async function returnToPrevPhase() {
-    if (prevPhase) await setPhase(prevPhase);
+  // Prossima vincita da reclamare (prima in ambo → … → tombola non ancora registrata).
+  const won = new Set(game?.wonTypes || []);
+  const nextWin = WIN_ORDER.find((w) => !won.has(w));
+
+  // Reclama la vincita via endpoint dedicato: registra wonTypes/lastWin e
+  // porta automaticamente la narrazione alla fase corrispondente.
+  async function claimWin() {
+    setError(null);
+    if (!nextWin) {
+      setError("Tutte le vincite sono già state reclamate");
+      return;
+    }
+    try {
+      await apiRequest(`/api/game/${ref}/claim-win`, {
+        method: "POST",
+        body: JSON.stringify({ winType: nextWin })
+      });
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setConfirmClaim(false);
+    }
   }
 
   async function playVideo(id) {
@@ -123,15 +173,22 @@ export default function DirectorPanel({ ws, gameId }) {
             </button>
             <span className="phase-current">Corrente: {narration?.phase || "-"}</span>
           </div>
-          {isSpareggio && (
-            <div className="phase-back">
-              <button className="btn-sm" onClick={returnToPrevPhase} disabled={!prevPhase}>
-                Torna a: {prevPhase || "fase precedente"}
-              </button>
-            </div>
-          )}
+          <div className="phase-claimed">
+            Vincite reclamate: {(game?.wonTypes || []).join(", ") || <em>nessuna</em>}
+            {nextWin && <> · prossima: <strong>{nextWin}</strong></>}
+          </div>
+          <div className="phase-advance">
+            <button
+              className="btn-sm btn-accent"
+              onClick={() => setConfirmClaim(true)}
+              disabled={!nextWin || !ref}
+              title="Registra la vincita (wonTypes/lastWin) e porta la narrazione alla fase corrispondente"
+            >
+              Reclama Vincita {nextWin ? `(${nextWin})` : ""}
+            </button>
+          </div>
           <div className="phase-buttons">
-            {PHASES.map((p) => (
+            {SEQUENTIAL_PHASES.map((p) => (
               <button
                 key={p.value}
                 className={`phase-btn ${narration?.phase === p.value ? "active" : ""}`}
@@ -140,6 +197,21 @@ export default function DirectorPanel({ ws, gameId }) {
                 {p.label}
               </button>
             ))}
+          </div>
+          <div className="phase-buttons phase-toggles">
+            {TOGGLE_PHASES.map((p) => {
+              const active = narration?.phase === p.value;
+              return (
+                <button
+                  key={p.value}
+                  className={`phase-btn ${active ? "phase-toggle-active" : ""}`}
+                  onClick={() => setPhase(p.value)}
+                  title={active ? `Disattiva ${p.label} e torna a ${prevStack[prevStack.length - 1] || "finale"}` : `Attiva ${p.label}`}
+                >
+                  {active ? "⬤" : "○"} {p.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -191,6 +263,17 @@ export default function DirectorPanel({ ws, gameId }) {
           ))}
         </div>
       </div>
+
+      <ConfirmModal
+        open={confirmClaim}
+        title="Reclama vincita"
+        message={`Confermi la vincita "${nextWin}"? Registra la vincita e porta la fase a ${
+          { ambo: "post-ambo", terno: "post-terno", quaterna: "post-quaterna", cinquina: "post-cinquina", tombola: "finale" }[nextWin] || nextWin
+        }.`}
+        confirmLabel="Reclama"
+        onConfirm={claimWin}
+        onCancel={() => setConfirmClaim(false)}
+      />
     </div>
   );
 }

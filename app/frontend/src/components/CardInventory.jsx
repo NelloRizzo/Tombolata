@@ -33,15 +33,35 @@ function toNineCols(rows) {
   });
 }
 
+// Vincita piu' alta raggiunta da una cartella sui numeri estratti, coerente
+// con la logica del gioco: vincite di riga (ambo…cinquina) o tombola completa.
+const CARD_WIN_ORDER = ["cinquina", "quaterna", "terno", "ambo"];
+function cardHighestWin(rows, extracted) {
+  const extractedSet = new Set(extracted);
+  const all = rows.flat().filter((n) => n != null);
+  if (all.length > 0 && all.every((n) => extractedSet.has(n))) return "tombola";
+  for (const type of CARD_WIN_ORDER) {
+    const count = { ambo: 2, terno: 3, quaterna: 4, cinquina: 5 }[type];
+    for (const row of rows) {
+      const hit = row.filter((n) => n != null && extractedSet.has(n)).length;
+      if (hit >= count) return type;
+    }
+  }
+  return null;
+}
+
 // Archivio globale di cartelle (slegate dalle partite). Qui si importa il file
-// .cards e si selezionano le cartelle da "mettere in gioco" nella partita
-// corrente (singole, per espressione regolare o tutte insieme).
+// .cards e si selezionano le cartelle da "mettere in gioco" o "togliere dal
+// gioco" nella partita corrente. Il filtro si applica automaticamente dal
+// secondo carattere digitato; con una selezione si puo' anche mostrare la
+// vincita attuale calcolata sui numeri estratti.
 export default function CardInventory({ game }) {
   const [cards, setCards] = useState([]);
   const [regex, setRegex] = useState("");
   const [regexError, setRegexError] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [expanded, setExpanded] = useState(new Set());
+  const [showWins, setShowWins] = useState(false);
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -61,10 +81,12 @@ export default function CardInventory({ game }) {
   }, []);
 
   const filtered = useMemo(() => {
-    if (!regex.trim()) return cards;
+    const term = regex.trim();
+    // Filtro automatico: si applica dal secondo carattere digitato.
+    if (term.length < 2) return cards;
     let re;
     try {
-      re = new RegExp(regex.trim(), "i");
+      re = new RegExp(term, "i");
     } catch {
       return cards;
     }
@@ -153,6 +175,34 @@ export default function CardInventory({ game }) {
     }
   }
 
+  async function takeOutOfPlay() {
+    if (!game) {
+      setError("Nessuna partita selezionata: scegline una dal menu in alto");
+      return;
+    }
+    if (selected.size === 0) {
+      setError("Seleziona almeno una cartella da togliere dal gioco");
+      return;
+    }
+    setError(null);
+    setMsg(null);
+    setBusy(true);
+    try {
+      const json = await apiRequest(`/api/game/${game._id}/boards/remove-from-cards`, {
+        method: "POST",
+        body: JSON.stringify({ cardIds: [...selected] })
+      });
+      setMsg(
+        `Tolte dal gioco ${json.summary.removed ?? 0} cartelle`
+      );
+      setSelected(new Set());
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="board-manager">
       <div className="bm-header">
@@ -197,6 +247,15 @@ export default function CardInventory({ game }) {
         </div>
 
         <button
+          className={`btn-sm${showWins ? " btn-accent" : ""}`}
+          onClick={() => setShowWins((v) => !v)}
+          disabled={selected.size === 0}
+          title="Mostra accanto a ogni cartella selezionata la vincita attuale sui numeri estratti"
+        >
+          {showWins ? "Nascondi vincite" : "Mostra vincita attuale"}
+        </button>
+
+        <button
           className="btn-sm btn-accent"
           onClick={putInPlay}
           disabled={busy || selected.size === 0 || !game}
@@ -204,24 +263,39 @@ export default function CardInventory({ game }) {
         >
           Metti in gioco ({selected.size})
         </button>
+        <button
+          className="btn-sm btn-ghost"
+          onClick={takeOutOfPlay}
+          disabled={busy || selected.size === 0 || !game}
+          title={game ? "Rimuove dalla partita corrente le cartelle selezionate già in gioco" : "Scegli una partita dal menu in alto"}
+        >
+          Togli dal gioco
+        </button>
       </div>
 
       {regexError && <div className="error-text">{regexError}</div>}
-      {!game && <div className="error-text">Seleziona una partita dal menu in alto per mettere le cartelle in gioco.</div>}
+      {regex.trim() && regex.trim().length < 2 && (
+        <div className="ci-hint">Digita almeno 2 caratteri per filtrare l'archivio.</div>
+      )}
+      {(!game || (showWins && !game)) && <div className="error-text">Seleziona una partita dal menu in alto per mettere/togliere le cartelle dal gioco.</div>}
 
       <div className="ci-list">
         {cards.length === 0 && <p className="empty">Archivio vuoto: importa un file .cards/.xml.</p>}
-        {cards.map((card) => {
+        {filtered.length === 0 && cards.length > 0 && <p className="empty">Nessuna cartella corrisponde al filtro.</p>}
+        {filtered.map((card) => {
+          const isSelected = selected.has(String(card._id));
           const isExpanded = expanded.has(String(card._id));
           const rows9 = toNineCols(card.rows || []);
+          const win = showWins && isSelected ? cardHighestWin(rows9, game?.extractedNumbers || []) : null;
+          const extracted = new Set(game?.extractedNumbers || []);
           return (
             <div
-              className={`ci-item${isExpanded ? " ci-expanded" : ""}`}
+              className={`ci-item${isExpanded ? " ci-expanded" : ""}${isSelected ? " ci-selected" : ""}`}
               key={card._id}
             >
               <input
                 type="checkbox"
-                checked={selected.has(String(card._id))}
+                checked={isSelected}
                 onChange={() => toggleSelect(String(card._id))}
                 onClick={(e) => e.stopPropagation()}
               />
@@ -232,6 +306,7 @@ export default function CardInventory({ game }) {
                   title={isExpanded ? "Comprimi" : "Espandi"}
                 >
                   {cardLabel(card) || "Cartella"}
+                  {win && <span className="ci-win-tag">{win}</span>}
                   <span className="ci-chevron">{isExpanded ? "▲" : "▼"}</span>
                 </div>
                 {isExpanded && (
@@ -239,7 +314,10 @@ export default function CardInventory({ game }) {
                     {rows9.map((row, r) => (
                       <div className="ci-board-row" key={r}>
                         {row.map((n, c) => (
-                          <span key={c} className={n != null ? "ci-cell" : "ci-cell ci-empty"}>
+                          <span
+                            key={c}
+                            className={`ci-cell${n == null ? " ci-empty" : ""}${showWins && isSelected && n != null && extracted.has(n) ? " ci-cell-win" : ""}`}
+                          >
                             {n ?? ""}
                           </span>
                         ))}

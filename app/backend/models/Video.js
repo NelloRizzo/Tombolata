@@ -26,6 +26,9 @@ const videoSchema = new mongoose.Schema(
     // Suono di accompagnamento (id da catalogo suoni)
     soundOnPlay: { type: String, default: null },
     aspectRatio: { type: String, default: "16:9" },
+    // Quando true, al termine della riproduzione il tabellone torna
+    // automaticamente visibile (overlay chiuso, player idle).
+    autoCloseOnEnd: { type: Boolean, default: true },
     active: { type: Boolean, default: true }
   },
   { timestamps: true }

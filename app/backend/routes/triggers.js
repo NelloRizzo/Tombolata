@@ -7,7 +7,7 @@ import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
 
 const router = Router();
 const ACTIONS = ["video", "live", "sound", "effect"];
-const PHASES = ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-cinquina", "finale", "always"];
+const PHASES = ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-cinquina", "spareggio", "finale", "live", "always"];
 
 // Lista trigger (admin/director vede tutto, actor vede solo i propri 'live' per il
 // personaggio che interpreta nella partita attiva)

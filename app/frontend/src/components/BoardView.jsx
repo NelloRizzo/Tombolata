@@ -59,6 +59,14 @@ export default function BoardView({ showChrome = true, gameId = null }) {
         if (n && (!n.gameId || !gameId || String(n.gameId) === String(gameId))) setNarration(n);
       })
     );
+    offs.push(
+      on("narration:clock", (c) => {
+        setNarration((prev) => {
+          if (!prev || !c || c.videoId !== prev.player?.videoId) return prev;
+          return { ...prev, player: { ...prev.player, clockMs: c.clockMs } };
+        });
+      })
+    );
 
     return () => offs.forEach((off) => off());
   }, [on, gameId]);
@@ -94,7 +102,7 @@ export default function BoardView({ showChrome = true, gameId = null }) {
 
       {showChrome && lastWin && <WinNotification win={lastWin} />}
 
-      <PublicBoardPopup narration={narration} />
+      <PublicBoardPopup narration={narration} gameId={gameId} />
     </div>
   );
 }

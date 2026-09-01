@@ -1010,6 +1010,21 @@ h3 {
   pointer-events: none;
   z-index: 3;
 }
+.overlay-clock {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  z-index: 5;
+  font-family: "Courier New", monospace;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  padding: 4px 12px;
+  border-radius: 6px;
+  pointer-events: none;
+  user-select: none;
+}
 .effect {
   position: absolute;
   inset: 0;
@@ -1086,6 +1101,11 @@ h3 {
 .tab-name { font-weight: 600; }
 .tab-sub { font-size: 0.75rem; color: var(--muted); }
 .trigger-form { align-items: flex-start; }
+.fx-editor { display: flex; flex-direction: column; gap: 8px; width: 100%; border: 1px solid #3a3a5a; border-radius: 8px; padding: 10px; background: #16213e; }
+.fx-editor select, .fx-editor input { width: 100%; }
+.fx-editor label { display: flex; flex-direction: column; gap: 4px; }
+.fx-list { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 6px; }
+.fx-list li { display: flex; align-items: center; justify-content: space-between; background: #1d2c52; padding: 6px 10px; border-radius: 6px; font-size: 0.8rem; }
 
 /* ---------- Loading ---------- */
 .loading {

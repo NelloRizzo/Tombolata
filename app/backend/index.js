@@ -15,6 +15,7 @@ import { getGameState } from "./services/gameService.js";
 import { getNarrationState } from "./services/triggerService.js";
 import { bootstrap } from "./services/bootstrap.js";
 import { broadcastToClients } from "./services/broadcast.js";
+import { setClockWss } from "./services/clockTicker.js";
 
 dotenv.config();
 
@@ -48,6 +49,7 @@ app.use("/api/upload", uploadRoutes);
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws" });
 app.set("wss", wss);
+setClockWss(wss);
 
 // Export mantenuto per compatibilità: invia l'evento a tutti.
 function broadcast(type, payload) {

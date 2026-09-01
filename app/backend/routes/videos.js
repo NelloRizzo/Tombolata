@@ -3,8 +3,31 @@ import Video from "../models/Video.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
 import { getNarrationForGame } from "../services/triggerService.js";
 import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
+import { startClock, stopClock } from "../services/clockTicker.js";
 
 const router = Router();
+
+// Calcola il tempo di riproduzione accumulato (ms) in base a clockMs e
+// alla sessione corrente di riproduzione.
+function calcClockMs(narration) {
+  const player = narration.player || {};
+  const base = player.clockMs || 0;
+  if (player.status !== "playing" || !player.startedAt) return base;
+  return base + (Date.now() - new Date(player.startedAt).getTime());
+}
+
+// Riporta il player a idle e rispristina il tabellone.
+async function stopPlayerForNarration(narration) {
+  narration.player = { status: "idle", videoId: null, videoName: null, startedAt: null, clockMs: 0 };
+  narration.overlayActive = false;
+  return narration;
+}
+
+// Variante con caricamento dal DB.
+async function stopPlayer(gameId) {
+  const narration = await getNarrationForGame(gameId);
+  return stopPlayerForNarration(narration);
+}
 
 // Lista video. ?gameId=X filtra i video di quella partita (incl. i globali senza gameId);
 // senza gameId mostra solo i globali (retro-compatibilità).
@@ -39,6 +62,7 @@ router.post("/", authenticate, requireRoles("admin", "director"), async (req, re
       effects: body.effects || [],
       soundOnPlay: body.soundOnPlay || null,
       aspectRatio: body.aspectRatio || "16:9",
+      autoCloseOnEnd: body.autoCloseOnEnd !== false,
       active: body.active !== false
     });
     await video.save();
@@ -56,6 +80,7 @@ router.put("/:id", authenticate, requireRoles("admin", "director"), async (req, 
       if (body[k] !== undefined) update[k] = body[k];
     });
     if (body.gameId !== undefined) update.gameId = body.gameId || null;
+    if (body.autoCloseOnEnd !== undefined) update.autoCloseOnEnd = body.autoCloseOnEnd;
     if (body.active !== undefined) update.active = body.active;
     const video = await Video.findByIdAndUpdate(req.params.id, update, { new: true });
     if (!video) return res.status(404).json({ ok: false, message: "Video non trovato" });
@@ -92,6 +117,7 @@ router.post("/:id/play", authenticate, requireRoles("admin", "director", "video"
     narration.overlayActive = true;
     await narration.save();
     await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
+    startClock(gameId);
     res.json({ ok: true, data: narration });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -102,11 +128,32 @@ router.post("/:id/play", authenticate, requireRoles("admin", "director", "video"
 router.post("/stop", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
   try {
     const gameId = resolveGameId(req);
+    const narration = await stopPlayer(gameId);
+    await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
+    stopClock(gameId);
+    res.json({ ok: true, data: narration });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// Il video è terminato (chiamato dal player). Se il video è configurato con
+// autoCloseOnEnd, ripristina il tabellone; in ogni caso segna lo stato "ended".
+router.post("/ended", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
+  try {
+    const gameId = resolveGameId(req);
+    const { autoCloseOnEnd } = req.body || {};
     const narration = await getNarrationForGame(gameId);
-    narration.player = { status: "idle", videoId: null, videoName: null, startedAt: null, clockMs: 0 };
-    narration.overlayActive = false;
+
+    if (autoCloseOnEnd !== false) {
+      await stopPlayerForNarration(narration);
+    } else {
+      narration.player.status = "ended";
+      narration.player.clockMs = calcClockMs(narration);
+    }
     await narration.save();
     await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
+    stopClock(gameId);
     res.json({ ok: true, data: narration });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -119,9 +166,11 @@ router.post("/pause", authenticate, requireRoles("admin", "director", "video"), 
     const gameId = resolveGameId(req);
     const narration = await getNarrationForGame(gameId);
     if (narration.player.status === "playing") {
+      narration.player.clockMs = calcClockMs(narration);
       narration.player.status = "paused";
       await narration.save();
       await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
+      stopClock(gameId);
     }
     res.json({ ok: true, data: narration });
   } catch (error) {
@@ -135,8 +184,10 @@ router.post("/resume", authenticate, requireRoles("admin", "director", "video"),
     const narration = await getNarrationForGame(gameId);
     if (narration.player.status === "paused") {
       narration.player.status = "playing";
+      narration.player.startedAt = new Date();
       await narration.save();
       await broadcastToClients(req.app.get("wss"), "narration:update", narration, gameId);
+      startClock(gameId);
     }
     res.json({ ok: true, data: narration });
   } catch (error) {

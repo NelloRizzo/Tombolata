@@ -36,7 +36,7 @@ const triggerSchema = new mongoose.Schema(
     // Narrative phase in which the trigger is active
     phase: {
       type: String,
-      enum: ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-cinquina", "finale", "always"],
+      enum: ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-cinquina", "spareggio", "finale", "always"],
       default: "always"
     },
     // Gruppi di condizioni (gruppi multipli = combinati in AND tra loro,

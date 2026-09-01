@@ -51,6 +51,12 @@ export default function VideoPanel({ ws, gameId }) {
         <div className="player-status">
           Stato: <strong>{status}</strong>{" "}
           {narration?.player?.videoName && `— ${narration.player.videoName}`}
+          {status === "playing" && (
+            <span className="player-clock">
+              {" "}⏱ {new Date(narration?.player?.clockMs || 0).toISOString().substr(11, 8)}
+            </span>
+          )}
+          {status === "ended" && " — terminato, chiudi l'overlay"}
         </div>
         <div className="player-controls">
           {status === "playing" && (

@@ -1,6 +1,7 @@
 import Trigger from "../models/Trigger.js";
 import Narration from "../models/Narration.js";
 import { getGameState } from "./gameService.js";
+import { startClock } from "./clockTicker.js";
 
 // Risolve la narrazione della partita: se viene fornito gameId usa un
 // documento dedicato (key "game:<gameId>"), altrimenti il doc legacy "main".
@@ -125,6 +126,7 @@ export async function fireTrigger(trigger, meta = {}, gameId) {
     narration.player.startedAt = new Date();
     narration.player.clockMs = 0;
     narration.overlayActive = true;
+    startClock(gameId);
   }
 
   narration.firedEvents.push(event);

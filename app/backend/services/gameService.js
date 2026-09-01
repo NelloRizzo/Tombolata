@@ -209,6 +209,27 @@ export async function addBoardsFromCards(gameId, { cardIds, all } = {}) {
   };
 }
 
+// Esclude dal gioco le cartelle selezionate: rimuove dalle boards della partita
+// le cartelle dell'archivio (per cardId) indicate in cardIds.
+export async function removeBoardsByCards(gameId, cardIds = []) {
+  const game = await Game.findById(gameId);
+  if (!game) throw new Error("Partita non trovata");
+
+  const want = new Set(cardIds.map((c) => String(c)));
+  let removed = 0;
+  if (Array.isArray(cardIds) && cardIds.length > 0) {
+    game.boards = game.boards.filter((b) => {
+      if (b.cardId && want.has(String(b.cardId))) {
+        removed++;
+        return false;
+      }
+      return true;
+    });
+    await game.save();
+  }
+  return { game, summary: { removed } };
+}
+
 export async function extractNumber(gameId) {
   const target = gameId || (await getActiveGame())?._id;
   const game = target ? await Game.findById(target) : null;

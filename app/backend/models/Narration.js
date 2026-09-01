@@ -10,7 +10,7 @@ const narrationSchema = new mongoose.Schema(
     // Current narrative phase
     phase: {
       type: String,
-      enum: ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-cinquina", "finale", "live"],
+      enum: ["prologue", "post-ambo", "post-terno", "post-quaterna", "post-cinquina", "spareggio", "finale", "live"],
       default: "prologue"
     },
     // Video player state

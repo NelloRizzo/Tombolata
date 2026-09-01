@@ -21,6 +21,7 @@ import {
   addBoard,
   removeBoard,
   addBoardsFromCards,
+  removeBoardsByCards,
   claimWin,
   toggleGameRun
 } from "../services/gameService.js";
@@ -225,6 +226,18 @@ router.post("/:id/boards/from-cards", authenticate, requireRoles("drawer", "dire
   try {
     const { cardIds, all } = req.body || {};
     const { game, summary } = await addBoardsFromCards(req.params.id, { cardIds, all });
+    broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
+    res.json({ ok: true, data: game, summary });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+// Esclude dal gioco le cartelle selezionate (rimuove dai boards per cardId)
+router.post("/:id/boards/remove-from-cards", authenticate, requireRoles("drawer", "director", "admin"), async (req, res) => {
+  try {
+    const { cardIds } = req.body || {};
+    const { game, summary } = await removeBoardsByCards(req.params.id, cardIds);
     broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
     res.json({ ok: true, data: game, summary });
   } catch (error) {

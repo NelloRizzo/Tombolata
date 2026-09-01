@@ -44,6 +44,14 @@ export function useGameState(gameId = null) {
       })
     );
     offSel.push(
+      on("narration:clock", (c) => {
+        setNarration((prev) => {
+          if (!prev || !c || c.videoId !== prev.player?.videoId) return prev;
+          return { ...prev, player: { ...prev.player, clockMs: c.clockMs } };
+        });
+      })
+    );
+    offSel.push(
       on("sound:play", (s) => {
         playSound(s);
       })

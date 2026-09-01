@@ -382,16 +382,53 @@ export function AdminTriggers({ gameId }) {
   );
 }
 
-function VideoForm({ gameId, onDone }) {
-  const [form, setForm] = useState({ name: "", description: "", source: "", aspectRatio: "16:9" });
+const EFFECT_TYPES = [
+  { value: "flash", label: "Flash (bianco)" },
+  { value: "zoom", label: "Zoom" },
+  { value: "fade", label: "Dissolvenza" },
+  { value: "particles", label: "Particelle" },
+  { value: "shake", label: "Scuotimento" },
+  { value: "glitch", label: "Glitch" }
+];
+
+function VideoForm({ gameId, video, onDone }) {
+  const [form, setForm] = useState({
+    name: video?.name || "",
+    description: video?.description || "",
+    source: video?.source || "",
+    aspectRatio: video?.aspectRatio || "16:9",
+    autoCloseOnEnd: video ? video.autoCloseOnEnd !== false : true,
+    effects: video?.effects || []
+  });
+  const [fx, setFx] = useState({ type: "flash", intensity: 0.5, duration: 1000 });
   const [error, setError] = useState(null);
 
-  async function create() {
+  async function save() {
     setError(null);
     try {
-      await apiRequest("/api/videos", { method: "POST", body: JSON.stringify({ ...form, gameId: gameId || null }) });
+      const payload = { ...form };
+      if (video) {
+        await apiRequest(`/api/videos/${video._id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload)
+        });
+      } else {
+        await apiRequest("/api/videos", {
+          method: "POST",
+          body: JSON.stringify({ ...payload, gameId: gameId || null })
+        });
+      }
       onDone();
     } catch (e) { setError(e.message); }
+  }
+
+  function addEffect() {
+    const fx2 = { ...fx, intensity: Number(fx.intensity), duration: Number(fx.duration) };
+    setForm((f) => ({ ...f, effects: [...f.effects, fx2] }));
+  }
+
+  function removeEffect(i) {
+    setForm((f) => ({ ...f, effects: f.effects.filter((_, idx) => idx !== i) }));
   }
 
   return (
@@ -405,7 +442,45 @@ function VideoForm({ gameId, onDone }) {
         onUploaded={(url) => setForm((f) => ({ ...f, source: url }))}
       />
       <input placeholder="Descrizione" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-      <button className="btn-sm btn-accent" onClick={create}>Aggiungi video</button>
+
+      <label>
+        <input
+          type="checkbox"
+          checked={form.autoCloseOnEnd}
+          onChange={(e) => setForm({ ...form, autoCloseOnEnd: e.target.checked })}
+        />
+        {" "}Chiudi automaticamente al termine
+      </label>
+
+      <label>Effetti</label>
+      <div className="fx-editor">
+        <select value={fx.type} onChange={(e) => setFx({ ...fx, type: e.target.value })}>
+          {EFFECT_TYPES.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
+        </select>
+        <label>Durata (ms)
+          <input type="number" min="100" step="100" value={fx.duration}
+            onChange={(e) => setFx({ ...fx, duration: parseInt(e.target.value) || 0 })} />
+        </label>
+        <label>Intensità
+          <input type="range" min="0" max="1" step="0.1" value={fx.intensity}
+            onChange={(e) => setFx({ ...fx, intensity: parseFloat(e.target.value) })} />
+        </label>
+        <button type="button" className="btn-sm btn-accent" onClick={addEffect}>+ Aggiungi</button>
+      </div>
+      {form.effects.length > 0 && (
+        <ul className="fx-list">
+          {form.effects.map((e, i) => (
+            <li key={i}>
+              <span>{e.type} · {e.duration}ms · {e.intensity}</span>
+              <button className="btn-sm btn-ghost" onClick={() => removeEffect(i)}>Rimuovi</button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <button className="btn-sm btn-accent" onClick={save}>
+        {video ? "Salva modifiche" : "Aggiungi video"}
+      </button>
     </div>
   );
 }
@@ -413,6 +488,7 @@ function VideoForm({ gameId, onDone }) {
 export function AdminVideos({ gameId }) {
   const [videos, setVideos] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [error, setError] = useState(null);
 
   async function load() {
@@ -434,17 +510,20 @@ export function AdminVideos({ gameId }) {
   return (
     <div className="admin-section">
       {error && <div className="error-text">{error}</div>}
-      <button className="btn-sm btn-accent" onClick={() => setShowForm((v) => !v)}>
+      <button className="btn-sm btn-accent" onClick={() => { setEditing(null); setShowForm((v) => !v); }}>
         {showForm ? "Chiudi" : "+ Nuovo video"}
       </button>
-      {showForm && <VideoForm onDone={() => { setShowForm(false); load(); }} />}
+      {(showForm && !editing) && <VideoForm gameId={gameId} onDone={() => { setShowForm(false); load(); }} />}
+      {editing && <VideoForm gameId={gameId} video={editing} onDone={() => { setEditing(null); setShowForm(false); load(); }} />}
       <div className="tab-list">
         {videos.map((v) => (
           <div className="tab-item" key={v._id}>
             <div className="tab-item-info">
               <span className="tab-name">{v.name}</span>
               <span className="tab-sub">{v.source}</span>
+              {v.effects?.length > 0 && <span className="tab-sub">{v.effects.map((e) => e.type).join(", ")}</span>}
             </div>
+            <button className="btn-sm" onClick={() => { setShowForm(false); setEditing(v); }}>Modifica</button>
             <button className="btn-sm btn-ghost" onClick={() => remove(v._id)}>Rimuovi</button>
           </div>
         ))}

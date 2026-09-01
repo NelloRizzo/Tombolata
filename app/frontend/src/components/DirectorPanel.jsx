@@ -9,9 +9,13 @@ const PHASES = [
   { value: "post-terno", label: "Post-Terno" },
   { value: "post-quaterna", label: "Post-Quaterna" },
   { value: "post-cinquina", label: "Post-Cinquina" },
+  { value: "spareggio", label: "Spareggio" },
   { value: "finale", label: "Finale" },
   { value: "live", label: "Live" }
 ];
+
+// Ordine di avanzamento manuale (l'ultima raggiungibile è "live").
+const PHASE_ORDER = PHASES.map((p) => p.value);
 
 const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
 
@@ -20,13 +24,9 @@ export default function DirectorPanel({ ws, gameId }) {
   const [triggers, setTriggers] = useState([]);
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
-  const [confirmClaim, setConfirmClaim] = useState(null);
+  const [prevPhase, setPrevPhase] = useState(null);
 
-  // Prossima vincita da reclamare (ambo → … → tombola) in base a quelle già ottenute.
-  const nextClaim =
-    game?.wonTypes?.length >= WIN_ORDER.length
-      ? null
-      : WIN_ORDER.find((w) => !(game?.wonTypes || []).includes(w));
+  const isSpareggio = narration?.phase === "spareggio";
 
   const ref = gameId || game?._id || null;
   const bodyRef = (extra = {}) => JSON.stringify({ ...extra, ...(ref ? { gameId: ref } : {}) });
@@ -58,38 +58,36 @@ export default function DirectorPanel({ ws, gameId }) {
     }
   }
 
+  // Imposta una fase. Se si entra in "spareggio", ricorda la fase precedente
+  // così da poterci tornare col pulsante dedicato.
   async function setPhase(phase) {
     setError(null);
+    const prev = narration?.phase;
     try {
+      if (phase === "spareggio" && prev) setPrevPhase(prev);
       await apiRequest("/api/triggers/phase", {
         method: "POST",
         body: bodyRef({ phase })
       });
+      if (phase !== "spareggio") setPrevPhase(null);
     } catch (e) {
       setError(e.message);
     }
   }
 
-  // Ultima vincita reclamata finora (ultima presente in game.wonTypes, che è
-  // mantenuto in ordine cronologico).
-  const lastClaimed = (game?.wonTypes?.length ? game.wonTypes[game.wonTypes.length - 1] : null)
-    ? game.wonTypes[game.wonTypes.length - 1]
-    : null;
+  // Avanza manualmente alla fase successiva in PHASE_ORDER.
+  async function advancePhase() {
+    const current = narration?.phase || "prologue";
+    const idx = PHASE_ORDER.indexOf(current);
+    const next = PHASE_ORDER[Math.min(idx + 1, PHASE_ORDER.length - 1)];
+    // Se ci si sposta da spareggio senza tornare indietro, la fase "precedente" si azzera.
+    if (next !== "spareggio") setPrevPhase(null);
+    await setPhase(next);
+  }
 
-  // Conferma e reclama la vincita segnalata (ambo → terno → quaterna →
-  // cinquina → tombola), poi la narrazione passa automaticamente alla fase
-  // corrispondente. Il modale evita i reclami per errore.
-  async function claimWin() {
-    setError(null);
-    setConfirmClaim(null);
-    try {
-      await apiRequest(`/api/game/${ref}/claim-win`, {
-        method: "POST",
-        body: bodyRef()
-      });
-    } catch (e) {
-      setError(e.message);
-    }
+  // Torna alla fase attiva prima di entrare in spareggio.
+  async function returnToPrevPhase() {
+    if (prevPhase) await setPhase(prevPhase);
   }
 
   async function playVideo(id) {
@@ -118,17 +116,20 @@ export default function DirectorPanel({ ws, gameId }) {
           <div className="phase-advance">
             <button
               className="btn-sm btn-accent"
-              onClick={() => setConfirmClaim(nextClaim)}
-              disabled={!nextClaim}
-              title={nextClaim ? `Reclama la vincita "${nextClaim}"` : "Tutte le vincite sono già state reclamate"}
+              onClick={advancePhase}
+              title="Passa alla fase successiva (fino a Live)"
             >
-              Reclama Vincita
+              Avanza fase ▸
             </button>
             <span className="phase-current">Corrente: {narration?.phase || "-"}</span>
           </div>
-          <div className="phase-claimed">
-            Ultima vincita reclamata: {lastClaimed ? <strong>{lastClaimed}</strong> : <em>nessuna</em>}
-          </div>
+          {isSpareggio && (
+            <div className="phase-back">
+              <button className="btn-sm" onClick={returnToPrevPhase} disabled={!prevPhase}>
+                Torna a: {prevPhase || "fase precedente"}
+              </button>
+            </div>
+          )}
           <div className="phase-buttons">
             {PHASES.map((p) => (
               <button
@@ -190,15 +191,6 @@ export default function DirectorPanel({ ws, gameId }) {
           ))}
         </div>
       </div>
-
-      <ConfirmModal
-        open={!!confirmClaim}
-        title="Reclama la vincita?"
-        message={`Confermi la vincita "${confirmClaim}" in sala? La narrazione passerà automaticamente alla fase corrispondente.`}
-        confirmLabel="Conferma vincita"
-        onCancel={() => setConfirmClaim(null)}
-        onConfirm={claimWin}
-      />
     </div>
   );
 }

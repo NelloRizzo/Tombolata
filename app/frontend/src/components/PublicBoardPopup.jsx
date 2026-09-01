@@ -32,7 +32,7 @@ function EffectsLayer({ effects }) {
   );
 }
 
-export default function PublicBoardPopup({ narration }) {
+export default function PublicBoardPopup({ narration, gameId }) {
   const [videoMap, setVideoMap] = useState({});
   const playing = narration?.overlayActive && narration?.player?.status === "playing";
 
@@ -56,9 +56,24 @@ export default function PublicBoardPopup({ narration }) {
 
   const video = narration?.player?.videoId ? videoMap[narration.player.videoId] : null;
 
+  function handleEnded() {
+    const body = {};
+    if (video) body.autoCloseOnEnd = video.autoCloseOnEnd;
+    if (gameId) body.gameId = gameId;
+    apiRequest("/api/videos/ended", {
+      method: "POST",
+      body: JSON.stringify(body)
+    }).catch(() => {});
+  }
+
+  const clockMs = narration?.player?.clockMs || 0;
+
   return (
     <div className="public-overlay">
       <EffectsLayer effects={video?.effects || []} />
+      <div className="overlay-clock">
+        {new Date(clockMs).toISOString().substr(11, 8)}
+      </div>
       {video ? (
         <video
           className="overlay-video"
@@ -67,6 +82,7 @@ export default function PublicBoardPopup({ narration }) {
           playsInline
           controls={false}
           muted={false}
+          onEnded={handleEnded}
         />
       ) : (
         <div className="overlay-placeholder">

@@ -47,7 +47,7 @@ export default function ConsoleHome() {
         <main className="console-main">
           <SpectatorPanel ws={ws} />
         </main>
-        <PublicBoardPopup narration={ws.narration} />
+        <PublicBoardPopup narration={ws.narration} gameId={currentGameId} />
       </div>
     );
   }
@@ -82,7 +82,7 @@ export default function ConsoleHome() {
         {activeTab === "actor" && <ActorPanel ws={ws} gameId={currentGameId} />}
       </main>
 
-      <PublicBoardPopup narration={ws.narration} />
+      <PublicBoardPopup narration={ws.narration} gameId={currentGameId} />
     </div>
   );
 }

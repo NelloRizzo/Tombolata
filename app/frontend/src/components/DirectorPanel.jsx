@@ -20,9 +20,6 @@ const TOGGLE_PHASES = [
   { value: "live", label: "Live" }
 ];
 
-// Ordine di avanzamento manuale della sequenza vincite.
-const PHASE_ORDER = SEQUENTIAL_PHASES.map((p) => p.value);
-
 const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
 
 export default function DirectorPanel({ ws, gameId }) {
@@ -102,20 +99,6 @@ export default function DirectorPanel({ ws, gameId }) {
     }
   }
 
-  // Avanza manualmente lungo la sequenza vincite (prologue → … → finale).
-  // Se la fase corrente è un toggle (spareggio/live), si prosegue dalla fase
-  // che era attiva prima del toggle.
-  async function advancePhase() {
-    const current = narration?.phase || "prologue";
-    const base = PHASE_ORDER.includes(current)
-      ? current
-      : (prevStack[prevStack.length - 1] || "prologue");
-    const idx = PHASE_ORDER.indexOf(base);
-    const next = PHASE_ORDER[Math.min(idx + 1, PHASE_ORDER.length - 1)];
-    setPrevStack([]);
-    await setPhase(next);
-  }
-
   // Prossima vincita da reclamare (prima in ambo → … → tombola non ancora registrata).
   const won = new Set(game?.wonTypes || []);
   const nextWin = WIN_ORDER.find((w) => !won.has(w));
@@ -164,13 +147,6 @@ export default function DirectorPanel({ ws, gameId }) {
         <div className="panel-block">
           <h2>Fase narrativa</h2>
           <div className="phase-advance">
-            <button
-              className="btn-sm btn-accent"
-              onClick={advancePhase}
-              title="Passa alla fase successiva (fino a Live)"
-            >
-              Avanza fase ▸
-            </button>
             <span className="phase-current">Corrente: {narration?.phase || "-"}</span>
           </div>
           <div className="phase-claimed">

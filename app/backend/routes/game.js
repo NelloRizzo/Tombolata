@@ -264,12 +264,22 @@ router.post("/:id/finish", authenticate, requireRoles("director", "admin"), asyn
   }
 });
 
-// Avvia/Ferma la partita (può essere giocata più volte).
+// Avvia/Ferma la partita (può essere giocata più volte). All'avvio di un nuovo
+// giro la narrazione torna a "prologue" e i trigger automatici si ripuliscono.
 router.post("/:id/toggle-run", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const game = await toggleGameRun(req.params.id);
+    const started = game.status === "active";
+    let narration = null;
+    if (started) {
+      const n = await setPhase("prologue", req.params.id);
+      n.firedEvents = [];
+      await n.save();
+      narration = n;
+    }
     broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
-    res.json({ ok: true, data: game });
+    if (narration) broadcastToClients(req.app.get("wss"), "narration:update", narration, req.params.id);
+    res.json({ ok: true, data: game, phaseReset: started ? "prologue" : null });
   } catch (error) {
     res.status(404).json({ ok: false, message: error.message });
   }

@@ -985,6 +985,27 @@ h3 {
 .cue-desc { color: var(--muted); font-size: 0.85rem; }
 
 /* ---------- Sound list ---------- */
+.quick-sounds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.quick-sound {
+  flex: 1;
+  min-width: 140px;
+  padding: 14px 12px;
+  font-size: 1.05rem;
+  color: var(--gold, #ffd700);
+  border: 1px solid var(--gold, #ffd700);
+  background: #1d2c52;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.quick-sound.playing {
+  background: var(--gold, #ffd700);
+  color: #0b1226;
+}
 .sound-list { display: flex; flex-direction: column; gap: 8px; }
 .sound-item {
   display: flex;

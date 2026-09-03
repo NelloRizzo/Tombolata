@@ -251,28 +251,12 @@ export async function extractNumber(gameId) {
   game.currentNumber = number;
   game.extractionCount = game.extractedNumbers.length;
 
-  const newWins = [];
-
-  game.boards.forEach((board, bi) => {
-    const type = findHighestWin(board, game.extractedNumbers, game.wonTypes);
-    if (type) {
-      const numbers = checkBoardWin(board, game.extractedNumbers, type) || allBoardNumbers(board);
-      const win = {
-        type,
-        playerName: board.playerName || cardLabel(board),
-        boardIndex: bi,
-        numbers,
-        timestamp: new Date()
-      };
-      newWins.push(win);
-      game.wins.push(win);
-      game.lastWin = win;
-      game.wonTypes.push(type);
-    }
-  });
+  // NOTA: la verifica/reclamo delle vincite NON avviene qui. Avviene
+  // manualmente via claimWin (POST /api/game/:id/claim-win) dalla console
+  // regia, che registra wonTypes/lastWin e porta avanti la fase narrativa.
 
   await game.save();
-  return { game: game.toObject(), newWins };
+  return { game: game.toObject(), newWins: [] };
 }
 
 export const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];

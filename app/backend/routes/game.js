@@ -201,6 +201,10 @@ router.post("/:id/claim-win", authenticate, requireRoles("director", "admin"), a
     const { winType } = req.body || {};
     const { game, phase } = await claimWin(req.params.id, winType);
     broadcastToClients(req.app.get("wss"), "game:update", game, req.params.id);
+    // Notifica la vincita reclamata manualmente (notifica + suono sul frontend).
+    if (game.lastWin) {
+      broadcastToClients(req.app.get("wss"), "game:win", [game.lastWin], req.params.id);
+    }
     if (phase) {
       const narration = await setPhase(phase, req.params.id);
       broadcastToClients(req.app.get("wss"), "narration:update", narration, req.params.id);

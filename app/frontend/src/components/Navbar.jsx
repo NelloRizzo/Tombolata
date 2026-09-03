@@ -6,7 +6,6 @@ import { apiRequest } from "../api.js";
 import { ADMIN_SECTIONS } from "../pages/AdminPage.jsx";
 
 const ROLE_SEZIONI = [
-  { key: "admin", label: "Gestione", icon: "⚙️", to: "/admin" },
   { key: "director", label: "Regia", icon: "🎬", to: "/console?tab=director" },
   { key: "drawer", label: "Estrazione", icon: "🎰", to: "/console?tab=drawer" },
   { key: "video", label: "Video", icon: "📽️", to: "/console?tab=video" },
@@ -110,7 +109,7 @@ export default function Sidebar() {
               </Link>
             )}
 
-        {location.pathname === "/admin" && (
+        {hasRole("admin") && (
           <>
             <div className="sidebar-divider" />
             {ADMIN_SECTIONS.map((s) => (

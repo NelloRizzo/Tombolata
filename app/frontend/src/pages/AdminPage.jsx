@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext.jsx";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
 import GameManager from "../components/GameManager.jsx";
 import { AdminUsers, AdminCast, AdminTriggers, AdminVideos, AdminSounds } from "../components/AdminPanel.jsx";
 
-const SECTIONS = [
+export const ADMIN_SECTIONS = [
   { key: "games", label: "Partite", icon: "🃏", render: (ws) => <GameManager game={ws.game} /> },
   { key: "users", label: "Utenti", icon: "👥", render: () => <AdminUsers /> },
   { key: "cast", label: "Cast", icon: "🎭", render: (ws) => <AdminCast ws={ws} /> },
@@ -15,38 +15,19 @@ const SECTIONS = [
 ];
 
 export default function AdminPage() {
-  const { user } = useAuth();
   const { currentGameId } = useCurrentGame();
   const ws = useGameState(currentGameId);
-  const [section, setSection] = useState("games");
+  const [searchParams] = useSearchParams();
 
-  const active = SECTIONS.find((s) => s.key === section) || SECTIONS[0];
+  const sez = searchParams.get("sez");
+  const active = ADMIN_SECTIONS.find((s) => s.key === sez) || ADMIN_SECTIONS[0];
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [section]);
+  }, [sez]);
 
   return (
     <div className="admin-dashboard">
-      <aside className="admin-sidebar">
-        <div className="admin-sidebar-head">
-          <span className="admin-sidebar-title">Amministrazione</span>
-          <span className="admin-sidebar-user">{user?.displayName || user?.username || ""}</span>
-        </div>
-        <nav className="admin-sidebar-nav">
-          {SECTIONS.map((s) => (
-            <button
-              key={s.key}
-              className={`admin-side-link ${section === s.key ? "active" : ""}`}
-              onClick={() => setSection(s.key)}
-            >
-              <span className="admin-side-icon">{s.icon}</span>
-              <span className="admin-side-label">{s.label}</span>
-            </button>
-          ))}
-        </nav>
-      </aside>
-
       <main className="admin-dashboard-main">
         <header className="admin-dashboard-header">
           <h1>{active.label}</h1>

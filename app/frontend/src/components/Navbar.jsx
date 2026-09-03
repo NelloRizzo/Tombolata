@@ -3,14 +3,15 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { apiRequest } from "../api.js";
+import { ADMIN_SECTIONS } from "../pages/AdminPage.jsx";
 
 const ROLE_SEZIONI = [
-  { key: "admin", label: "Gestione", icon: "⚙️" },
-  { key: "director", label: "Regia", icon: "🎬" },
-  { key: "drawer", label: "Estrazione", icon: "🎰" },
-  { key: "video", label: "Video", icon: "📽️" },
-  { key: "audio", label: "Audio", icon: "🎧" },
-  { key: "actor", label: "Attore", icon: "🎭" }
+  { key: "admin", label: "Gestione", icon: "⚙️", to: "/admin" },
+  { key: "director", label: "Regia", icon: "🎬", to: "/console?tab=director" },
+  { key: "drawer", label: "Estrazione", icon: "🎰", to: "/console?tab=drawer" },
+  { key: "video", label: "Video", icon: "📽️", to: "/console?tab=video" },
+  { key: "audio", label: "Audio", icon: "🎧", to: "/console?tab=audio" },
+  { key: "actor", label: "Attore", icon: "🎭", to: "/console?tab=actor" }
 ];
 
 function GameSelector() {
@@ -21,7 +22,7 @@ function GameSelector() {
     apiRequest("/api/game/history")
       .then((json) => { if (json.ok) setGames(json.data); })
       .catch(() => {});
-  }, []);
+  }, [currentGameId]);
 
   const currentName = games.find((g) => String(g._id) === String(currentGameId))?.name;
 
@@ -40,15 +41,14 @@ function GameSelector() {
   );
 }
 
-export default function Navbar() {
+export default function Sidebar() {
   const { user, hasRole, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const inConsole = location.pathname === "/console" || location.pathname === "/admin";
-  const inBoards = location.pathname === "/boards";
-  const sezioni = ROLE_SEZIONI.filter((s) => hasRole(s.key));
+  const inManagement = ["/console", "/admin", "/boards"].includes(location.pathname);
   const canManageBoards = hasRole("drawer") || hasRole("director") || hasRole("admin");
+  const sezioni = ROLE_SEZIONI.filter((s) => hasRole(s.key));
 
   function handleLogout() {
     logout();
@@ -56,66 +56,79 @@ export default function Navbar() {
   }
 
   return (
-    <header className="app-navbar">
-      <div className="navbar-brand">
+    <aside className="app-sidebar">
+      <div className="sidebar-brand">
         <Link to="/" className="navbar-logo">
           🎄 Tombolata
         </Link>
       </div>
 
-      <nav className="navbar-links">
+      <GameSelector />
+
+      <nav className="sidebar-nav">
         <Link to="/board" className="nav-link" title="Tabellone pubblico">
           <span className="nav-icon">🖥️</span>
           <span className="nav-label">Tabellone</span>
         </Link>
 
-        {canManageBoards && (inConsole || inBoards) && (
-          <Link
+        <a href="/monitor" target="_blank" rel="noopener noreferrer" className="nav-link" title="Apri il tabellone proiettore in una nuova finestra">
+          <span className="nav-icon">📺</span>
+          <span className="nav-label">Proiettore</span>
+        </a>
+
+        {canManageBoards && (
+          <NavLink
             to="/boards"
-            className={`nav-link ${inBoards ? "active" : ""}`}
+            className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
             title="Gestione cartelle"
           >
             <span className="nav-icon">🎟️</span>
             <span className="nav-label">Cartelle</span>
-          </Link>
+          </NavLink>
         )}
 
-        {inConsole ? (
-          sezioni.length > 0 ? (
-            sezioni.map((s) =>
-              s.key === "admin" ? (
-                <NavLink
-                  key={s.key}
-                  to="/admin"
-                  className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-                  title={s.label}
-                >
-                  <span className="nav-icon">{s.icon}</span>
-                  <span className="nav-label">{s.label}</span>
-                </NavLink>
-              ) : (
-                <NavLink
-                  key={s.key}
-                  to={`/console?tab=${s.key}`}
-                  className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-                  title={s.label}
-                >
-                  <span className="nav-icon">{s.icon}</span>
-                  <span className="nav-label">{s.label}</span>
-                </NavLink>
-              )
-            )
-          ) : null
-        ) : (
-          <Link to="/console" className="nav-link">
-            <span className="nav-icon">🖥️</span>
-            <span className="nav-label">Regia</span>
-          </Link>
+        {(inManagement && sezioni.length > 0) && (
+          <div className="sidebar-divider" />
+        )}
+
+        {inManagement && sezioni.length > 0
+          ? sezioni.map((s) => (
+              <NavLink
+                key={s.key}
+                to={s.to}
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+                title={s.label}
+              >
+                <span className="nav-icon">{s.icon}</span>
+                <span className="nav-label">{s.label}</span>
+              </NavLink>
+            ))
+          : (
+              <Link to="/console" className="nav-link">
+                <span className="nav-icon">🎬</span>
+                <span className="nav-label">Regia</span>
+              </Link>
+            )}
+
+        {location.pathname === "/admin" && (
+          <>
+            <div className="sidebar-divider" />
+            {ADMIN_SECTIONS.map((s) => (
+              <NavLink
+                key={s.key}
+                to={`/admin?sez=${s.key}`}
+                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+                title={s.label}
+              >
+                <span className="nav-icon">{s.icon}</span>
+                <span className="nav-label">{s.label}</span>
+              </NavLink>
+            ))}
+          </>
         )}
       </nav>
 
-      <div className="navbar-actions">
-        <GameSelector />
+      <div className="sidebar-footer">
         {user ? (
           <>
             <span className="navbar-user" title={user.displayName || user.username}>
@@ -130,6 +143,6 @@ export default function Navbar() {
           </NavLink>
         )}
       </div>
-    </header>
+    </aside>
   );
 }

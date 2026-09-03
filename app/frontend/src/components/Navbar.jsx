@@ -66,10 +66,10 @@ export default function Sidebar() {
       <GameSelector />
 
       <nav className="sidebar-nav">
-        <Link to="/board" className="nav-link" title="Tabellone pubblico">
+        <a href="/board" target="_blank" rel="noopener noreferrer" className="nav-link" title="Apri il tabellone pubblico in una nuova finestra">
           <span className="nav-icon">🖥️</span>
           <span className="nav-label">Tabellone</span>
-        </Link>
+        </a>
 
         <a href="/monitor" target="_blank" rel="noopener noreferrer" className="nav-link" title="Apri il tabellone proiettore in una nuova finestra">
           <span className="nav-icon">📺</span>

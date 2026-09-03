@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
@@ -55,6 +55,11 @@ export default function ConsoleHome() {
   const queryTab = searchParams.get("tab");
   const requested = queryTab && myRoles.includes(queryTab) ? queryTab : null;
   const activeTab = requested || fallbackTab || myRoles[0];
+
+  // La gestione (admin) ora ha una dashboard dedicata (/admin).
+  if (activeTab === "admin") {
+    return <Navigate to="/admin" replace />;
+  }
 
   function selectTab(role) {
     if (!myRoles.includes(role)) return;

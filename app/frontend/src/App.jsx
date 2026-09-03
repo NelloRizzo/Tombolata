@@ -7,6 +7,7 @@ import Monitor from "./pages/Monitor.jsx";
 import Login from "./pages/Login.jsx";
 import ConsoleHome from "./pages/ConsoleHome.jsx";
 import BoardsPage from "./pages/BoardsPage.jsx";
+import AdminPage from "./pages/AdminPage.jsx";
 import AppLayout from "./components/AppLayout.jsx";
 
 function ProtectedRoute() {
@@ -37,6 +38,7 @@ export default function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/console" element={<ConsoleHome />} />
               <Route path="/boards" element={<BoardsPage />} />
+              <Route path="/admin" element={<AdminPage />} />
             </Route>
           </Route>
 

@@ -5,7 +5,7 @@ import MediaUpload from "./MediaUpload.jsx";
 
 const ROLES = ["admin", "director", "video", "audio", "drawer", "actor"];
 
-function AdminUsers() {
+export function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [form, setForm] = useState({ username: "", password: "", displayName: "", roles: [] });
   const [error, setError] = useState(null);
@@ -83,7 +83,7 @@ function AdminUsers() {
   );
 }
 
-function AdminCast({ ws }) {
+export function AdminCast({ ws }) {
   const gameId = ws.game?._id;
   const [actors, setActors] = useState([]);
   const [assignments, setAssignments] = useState([]);

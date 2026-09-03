@@ -45,7 +45,7 @@ export default function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const inConsole = location.pathname === "/console";
+  const inConsole = location.pathname === "/console" || location.pathname === "/admin";
   const inBoards = location.pathname === "/boards";
   const sezioni = ROLE_SEZIONI.filter((s) => hasRole(s.key));
   const canManageBoards = hasRole("drawer") || hasRole("director") || hasRole("admin");
@@ -82,17 +82,29 @@ export default function Navbar() {
 
         {inConsole ? (
           sezioni.length > 0 ? (
-            sezioni.map((s) => (
-              <NavLink
-                key={s.key}
-                to={`/console?tab=${s.key}`}
-                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-                title={s.label}
-              >
-                <span className="nav-icon">{s.icon}</span>
-                <span className="nav-label">{s.label}</span>
-              </NavLink>
-            ))
+            sezioni.map((s) =>
+              s.key === "admin" ? (
+                <NavLink
+                  key={s.key}
+                  to="/admin"
+                  className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+                  title={s.label}
+                >
+                  <span className="nav-icon">{s.icon}</span>
+                  <span className="nav-label">{s.label}</span>
+                </NavLink>
+              ) : (
+                <NavLink
+                  key={s.key}
+                  to={`/console?tab=${s.key}`}
+                  className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+                  title={s.label}
+                >
+                  <span className="nav-icon">{s.icon}</span>
+                  <span className="nav-label">{s.label}</span>
+                </NavLink>
+              )
+            )
           ) : null
         ) : (
           <Link to="/console" className="nav-link">

@@ -19,6 +19,7 @@ const soundSchema = new mongoose.Schema(
     // Suoni compositi (sequenza di note)
     notes: { type: [mongoose.Schema.Types.Mixed], default: [] },
     category: { type: String, default: "generico" },
+    icon: { type: String, default: "" },
     active: { type: Boolean, default: true }
   },
   { timestamps: true }

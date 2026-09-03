@@ -18,7 +18,7 @@ function playFile(key) {
   return playUrl(url);
 }
 
-function playUrl(url) {
+export function playUrl(url) {
   if (!url) return false;
   try {
     const key = url;

@@ -986,26 +986,83 @@ h3 {
 
 /* ---------- Sound list ---------- */
 .quick-sounds {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
 }
 .quick-sound {
-  flex: 1;
-  min-width: 140px;
-  padding: 14px 12px;
-  font-size: 1.05rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 10px;
+  border-radius: 12px;
   color: var(--gold, #ffd700);
   border: 1px solid var(--gold, #ffd700);
   background: #1d2c52;
-  border-radius: 8px;
   cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, color 0.15s ease;
 }
+.quick-sound:hover { transform: translateY(-2px); }
 .quick-sound.playing {
   background: var(--gold, #ffd700);
   color: #0b1226;
 }
+.quick-icon { font-size: 2.2rem; line-height: 1; }
+.quick-label { font-size: 0.95rem; font-weight: 600; text-align: center; }
+
+.panel-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sound-add-form { margin-top: 12px; margin-bottom: 4px; }
+
+.sound-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+}
+.sound-card {
+  position: relative;
+  border-radius: 12px;
+  border: 1px solid var(--muted, #5b6b8c);
+  background: #1d2c52;
+  overflow: hidden;
+}
+.sound-card.playing { border-color: var(--gold, #ffd700); }
+.sound-card-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 18px 10px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+}
+.sound-card-icon { font-size: 2.2rem; line-height: 1; }
+.sound-card-name { font-size: 0.9rem; font-weight: 600; text-align: center; color: var(--text, #e8ecf5); }
+.sound-card-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.sound-card-remove:hover { background: #c0392b; }
 .sound-list { display: flex; flex-direction: column; gap: 8px; }
 .sound-item {
   display: flex;
@@ -1014,6 +1071,7 @@ h3 {
   background: #1d2c52;
   padding: 10px;
   border-radius: 8px;
+
 }
 .sound-item.playing { border: 1px solid var(--gold); }
 .sound-info { display: flex; gap: 8px; }

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import GameManager from "./GameManager.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
+import { playWrong } from "../utils/audio.js";
 
 // Fasi sequenziali (riflettono l'andamento delle vincite).
 const SEQUENTIAL_PHASES = [
@@ -109,6 +110,7 @@ export default function DirectorPanel({ ws, gameId }) {
     setError(null);
     if (!nextWin) {
       setError("Tutte le vincite sono già state reclamate");
+      playWrong();
       return;
     }
     try {
@@ -118,6 +120,7 @@ export default function DirectorPanel({ ws, gameId }) {
       });
     } catch (e) {
       setError(e.message);
+      playWrong();
     } finally {
       setConfirmClaim(false);
     }

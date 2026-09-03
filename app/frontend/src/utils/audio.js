@@ -1,6 +1,41 @@
 let ctx = null;
 let enabled = true;
 
+// Effetti sonori "divertenti" scaricati in public/sounds (MP3).
+// Vengono riprodotti come file con fallback al sintetizzatore se il file
+// non è disponibile o il caricamento fallisce.
+const SOUND_FILES = {
+  extract: "/sounds/estrazione.mp3",
+  win: "/sounds/vincita.mp3",
+  wrong: "/sounds/errore.mp3"
+};
+
+const audioCache = {};
+
+function playFile(key) {
+  const url = SOUND_FILES[key];
+  if (!url) return false;
+  return playUrl(url);
+}
+
+function playUrl(url) {
+  if (!url) return false;
+  try {
+    const key = url;
+    let el = audioCache[key];
+    if (!el) {
+      el = new Audio(url);
+      audioCache[key] = el;
+    }
+    el.currentTime = 0;
+    const p = el.play();
+    if (p && typeof p.catch === "function") p.catch(() => {});
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 function getCtx() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -40,6 +75,7 @@ function tone(freq, start, duration, type = "sine", gainVal = 0.2) {
 
 export function playExtract() {
   if (!enabled) return;
+  if (playFile("extract")) return;
   const base = 440 + Math.random() * 300;
   tone(base, 0, 0.15, "triangle", 0.3);
   tone(base * 1.5, 0.1, 0.2, "triangle", 0.25);
@@ -47,6 +83,7 @@ export function playExtract() {
 
 export function playWin() {
   if (!enabled) return;
+  if (playFile("win")) return;
   const notes = [523.25, 659.25, 783.99, 1046.5];
   notes.forEach((f, i) => {
     tone(f, i * 0.12, 0.25, "sine", 0.3);
@@ -55,6 +92,7 @@ export function playWin() {
 
 export function playTombola() {
   if (!enabled) return;
+  if (playFile("win")) return;
   const notes = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
   notes.forEach((f, i) => {
     tone(f, i * 0.15, 0.3, "square", 0.2);
@@ -62,9 +100,21 @@ export function playTombola() {
   tone(784, 0.15 * notes.length, 0.6, "sine", 0.35);
 }
 
-// Riproduce una definizione di suono generica (synth o sequenza di note)
+// Suono "vincita sbagliata" / errore (fallback: buzzer sintetizzato).
+export function playWrong() {
+  if (!enabled) return;
+  if (playFile("wrong")) return;
+  tone(180, 0, 0.4, "sawtooth", 0.25);
+  tone(140, 0.35, 0.5, "sawtooth", 0.25);
+}
+
+// Riproduce una definizione di suono generica (synth, sequenza di note o file)
 export function playSound(sound) {
   if (!enabled || !sound) return;
+  if (sound.kind === "file" && sound.fileUrl) {
+    playUrl(sound.fileUrl);
+    return;
+  }
   const notes = sound.notes || [];
   if (notes.length > 0) {
     notes.forEach((n, i) => {

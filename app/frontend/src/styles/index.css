@@ -1336,6 +1336,24 @@ h3 {
 .board-page.board-fullscreen .board-left .number-grid.fill {
   width: min(100%, calc((100dvh - 12px) * 10 / 9));
 }
+/* Titolo verticale della partita, a sinistra, nella vista proiettore */
+.board-page.board-fullscreen .board-vertical-title {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  flex: 0 0 auto;
+  align-self: center;
+  max-height: 100%;
+  padding: 8px 2px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--gold);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border-right: 2px solid var(--dark-red);
+}
 
 /* ---------- Home: presentazione e programma ---------- */
 .home-page {

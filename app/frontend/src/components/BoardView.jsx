@@ -71,6 +71,26 @@ export default function BoardView({ showChrome = true, gameId = null }) {
     return () => offs.forEach((off) => off());
   }, [on, gameId]);
 
+  // Vista proiettore: attiva automaticamente il fullscreen all'apertura.
+  useEffect(() => {
+    if (showChrome) return;
+    const el = document.documentElement;
+    const goFullscreen = () => {
+      if (!document.fullscreenElement && el.requestFullscreen) {
+        el.requestFullscreen().catch(() => {});
+      }
+    };
+    goFullscreen();
+    const onFsChange = () => {
+      if (!document.fullscreenElement) goFullscreen();
+    };
+    document.addEventListener("fullscreenchange", onFsChange);
+    return () => {
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      document.removeEventListener("fullscreenchange", onFsChange);
+    };
+  }, [showChrome]);
+
   return (
     <div className={showChrome ? "board-page" : "board-page board-fullscreen"}>
       {showChrome && (
@@ -88,6 +108,11 @@ export default function BoardView({ showChrome = true, gameId = null }) {
       )}
 
       <main className="board-main">
+        {!showChrome && (
+          <div className="board-vertical-title" title={game?.name || "Tombolata"}>
+            {game?.name || "Tombolata"}
+          </div>
+        )}
         <div className="board-left">
           <NumberGrid extracted={game?.extractedNumbers || []} fill />
         </div>

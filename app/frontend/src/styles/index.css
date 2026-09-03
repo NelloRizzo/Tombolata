@@ -1334,7 +1334,7 @@ h3 {
   aspect-ratio: 10 / 9;
 }
 .board-page.board-fullscreen .board-left .number-grid.fill {
-  width: min(100%, calc((100dvh - 36px) * 10 / 9));
+  width: min(100%, calc((100dvh - 12px) * 10 / 9));
 }
 
 /* ---------- Home: presentazione e programma ---------- */

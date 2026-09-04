@@ -42,16 +42,21 @@ function evalCondition(cond, state) {
   }
 }
 
-// Valuta un gruppo di condizioni (and/or)
+// Valuta un gruppo di condizioni (and/or). Un gruppo senza condizioni non
+// conta come condizione soddisfatta: il trigger deve avere almeno una
+// condizione che la valuti davvero.
 function evalGroup(group, state) {
-  if (!group.conditions || group.conditions.length === 0) return true;
+  if (!group.conditions || group.conditions.length === 0) return false;
   if (group.operator === "or") {
     return group.conditions.some((c) => evalCondition(c, state));
   }
   return group.conditions.every((c) => evalCondition(c, state));
 }
 
-// Valuta tutti i gruppi (gruppi multipli = AND tra loro)
+// Valuta tutti i gruppi (gruppi multipli = AND tra loro).
+// Un trigger senza condizioni è automatico solo se è vincolato a una fase
+// (lo decide il filtro phase in evaluateTriggers); qui, senza condizioni,
+// risulta "soddisfatto" quando la fase matcha.
 function evalTrigger(trigger, state) {
   if (!trigger.conditions || trigger.conditions.length === 0) return true;
   return trigger.conditions.every((g) => evalGroup(g, state));
@@ -87,6 +92,11 @@ export async function evaluateTriggers(gameId) {
   const fired = [];
   for (const trigger of candidates) {
     if (trigger.fired > 0) continue; // un trigger si attiva una volta per fase
+    // Un trigger è automatico solo se è legato a una fase (≠ "always") o a una
+    // condizione. Altrimenti è manuale: non scatta da solo.
+    const hasCondition = (trigger.conditions || []).some((g) => (g.conditions || []).length > 0);
+    const boundToPhase = trigger.phase !== "always";
+    if (!(trigger.autoMode && (hasCondition || boundToPhase))) continue;
     if (evalTrigger(trigger, state)) {
       await fireTrigger(trigger, { source: "auto" }, gameId);
       fired.push(trigger);

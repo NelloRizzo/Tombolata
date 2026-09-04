@@ -224,7 +224,7 @@ function TriggerForm({ gameId, onDone }) {
     targetActor: "",
     conditions: [{ operator: "and", conditions: [{ type: "number", value: null }] }],
     order: 0,
-    autoMode: true,
+    autoMode: false,
     active: true
   });
   const [error, setError] = useState(null);
@@ -237,9 +237,10 @@ function TriggerForm({ gameId, onDone }) {
     })();
   }, [gameId]);
 
-  const cond = form.conditions[0];
+  const cond = form.conditions[0]?.conditions?.[0];
 
   const COND_LABELS = {
+    none: "Nessuna",
     number: "Numero specifico",
     termination: "Terminazione",
     dozen: "Decina",
@@ -248,17 +249,27 @@ function TriggerForm({ gameId, onDone }) {
     count: "N° estrazione"
   };
 
+  // Un trigger è automatico se è legato a una fase (≠ "always") o a una condizione.
+  const hasCondition = form.conditions.some((g) => (g.conditions || []).length > 0);
+  const boundToPhase = form.phase !== "always";
+  const isAuto = hasCondition || boundToPhase;
+
   function setCondType(type) {
+    if (type === "none") {
+      setForm((f) => ({ ...f, conditions: [] }));
+      return;
+    }
     setForm((f) => ({
       ...f,
-      conditions: [{ operator: f.conditions[0].operator, conditions: [{ type, value: null }] }]
+      conditions: [{ operator: "and", conditions: [{ type, value: null }] }]
     }));
   }
 
   function setCondValue(value) {
+    if (!cond) return;
     setForm((f) => ({
       ...f,
-      conditions: [{ operator: f.conditions[0].operator, conditions: [{ type: cond.type, value }] }]
+      conditions: [{ operator: "and", conditions: [{ type: cond.type, value }] }]
     }));
   }
 
@@ -269,6 +280,7 @@ function TriggerForm({ gameId, onDone }) {
         method: "POST",
         body: JSON.stringify({
           ...form,
+          autoMode: isAuto,
           targetActor: form.targetActor || null,
           actionRef: form.actionRef || "",
           gameId: gameId || null
@@ -307,32 +319,38 @@ function TriggerForm({ gameId, onDone }) {
       )}
 
       <label>Condizione</label>
-      <select value={cond.type} onChange={(e) => setCondType(e.target.value)}>
+      <select value={cond ? cond.type : "none"} onChange={(e) => setCondType(e.target.value)}>
         {Object.entries(COND_LABELS).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
       </select>
 
-      {cond.type === "number" && (
+      {cond && cond.type === "number" && (
         <input type="number" min="1" max="90" placeholder="Numero (es. 47)" value={cond.value ?? ""}
           onChange={(e) => setCondValue(parseInt(e.target.value))} />
       )}
-      {cond.type === "termination" && (
+      {cond && cond.type === "termination" && (
         <input type="number" min="0" max="9" placeholder="Cifra finale (es. 2)" value={cond.value ?? ""}
           onChange={(e) => setCondValue(parseInt(e.target.value))} />
       )}
-      {cond.type === "dozen" && (
+      {cond && cond.type === "dozen" && (
         <input type="number" min="1" max="9" placeholder="Decina 1-9 (es. 6 = 51-60)" value={cond.value ?? ""}
           onChange={(e) => setCondValue(parseInt(e.target.value))} />
       )}
-      {cond.type === "win" && (
+      {cond && cond.type === "win" && (
         <select value={cond.value || ""} onChange={(e) => setCondValue(e.target.value)}>
           <option value="">Vincita...</option>
           {["ambo", "terno", "quaterna", "cinquina", "tombola"].map((w) => <option key={w} value={w}>{w}</option>)}
         </select>
       )}
-      {cond.type === "count" && (
+      {cond && cond.type === "count" && (
         <input type="number" min="1" max="90" placeholder="N° estrazione (es. 50)" value={cond.value ?? ""}
           onChange={(e) => setCondValue(parseInt(e.target.value))} />
       )}
+
+      <div className={`trigger-mode ${isAuto ? "" : "manual"}`}>
+        {isAuto
+          ? "⚙️ Automatico: scatta da solo quando la fase o la condizione è soddisfatta"
+          : "✋ Manuale: va attivato dal regista con il pulsante 'Attiva'"}
+      </div>
 
       <button className="btn-sm btn-accent" onClick={create}>Crea trigger</button>
     </div>

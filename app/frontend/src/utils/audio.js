@@ -8,29 +8,41 @@ let enabled = true;
 // sintetizzatore se la riproduzione del file fallisce.
 const audioCache = {};
 
-export function playUrl(url) {
-  if (!url) return false;
-  try {
-    const key = url;
-    // I nomi file possono contenere spazi: usa un URL codificato per il fetch.
-    const encoded = /^https?:/i.test(url) ? url : url.split("/").map(encodeURIComponent).join("/");
-    let el = audioCache[key];
+// Riproduce un file audio via elemento <audio>. Ritorna una promise che
+// risolve true se la riproduzione è effettivamente partita, false se fallisce
+// (autoplay bloccato, file non caricabile, codec non supportato, ecc.).
+function playAudio(url) {
+  return new Promise((resolve) => {
+    if (!url) return resolve(false);
+    let el = audioCache[url];
     if (!el) {
+      // Codifica ogni segmento così i nomi con spazi/parentesi funzionano.
+      const encoded = /^https?:/i.test(url) ? url : url.split("/").map(encodeURIComponent).join("/");
       el = new Audio(encoded);
-      audioCache[key] = el;
+      audioCache[url] = el;
     }
+    let settled = false;
+    const done = (ok) => {
+      if (settled) return;
+      settled = true;
+      resolve(ok);
+    };
+    el.onerror = () => done(false);
+    el.onpause = null;
+    el.onended = () => done(true);
     el.currentTime = 0;
     const p = el.play();
-    if (p && typeof p.catch === "function") p.catch(() => {});
-    return true;
-  } catch (e) {
-    return false;
-  }
+    if (p && typeof p.then === "function") {
+      p.then(() => done(true)).catch(() => done(false));
+    } else {
+      done(true);
+    }
+  });
 }
 
 // Sceglie a caso un file dalla lista e prova a riprodurlo.
-// Ritorna true se è riuscito a riprodurne uno, false altrimenti.
-function playRandomFile(files) {
+// Ritorna true se ne ha riprodotto uno, false se nessuno è partito.
+async function playRandomFile(files) {
   if (!files || files.length === 0) return false;
   const order = [...files];
   for (let i = order.length - 1; i > 0; i--) {
@@ -38,7 +50,7 @@ function playRandomFile(files) {
     [order[i], order[j]] = [order[j], order[i]];
   }
   for (const url of order) {
-    if (playUrl(url)) return true;
+    if (await playAudio(url)) return true;
   }
   return false;
 }
@@ -87,18 +99,18 @@ export function playExtract() {
   tone(base * 1.5, 0.1, 0.2, "triangle", 0.25);
 }
 
-export function playWin() {
+export async function playWin() {
   if (!enabled) return;
-  if (playRandomFile(WIN_FILES)) return;
+  if (await playRandomFile(WIN_FILES)) return;
   const notes = [523.25, 659.25, 783.99, 1046.5];
   notes.forEach((f, i) => {
     tone(f, i * 0.12, 0.25, "sine", 0.3);
   });
 }
 
-export function playTombola() {
+export async function playTombola() {
   if (!enabled) return;
-  if (playRandomFile(WIN_FILES)) return;
+  if (await playRandomFile(WIN_FILES)) return;
   const notes = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
   notes.forEach((f, i) => {
     tone(f, i * 0.15, 0.3, "square", 0.2);
@@ -108,9 +120,9 @@ export function playTombola() {
 
 // Suono "vincita sbagliata" / errore: preleva a caso un file dalla cartella
 // lost/ (fallback: buzzer sintetizzato).
-export function playWrong() {
+export async function playWrong() {
   if (!enabled) return;
-  if (playRandomFile(LOST_FILES)) return;
+  if (await playRandomFile(LOST_FILES)) return;
   tone(180, 0, 0.4, "sawtooth", 0.25);
   tone(140, 0.35, 0.5, "sawtooth", 0.25);
 }
@@ -119,7 +131,7 @@ export function playWrong() {
 export function playSound(sound) {
   if (!enabled || !sound) return;
   if (sound.kind === "file" && sound.fileUrl) {
-    playUrl(sound.fileUrl);
+    playAudio(sound.fileUrl);
     return;
   }
   const notes = sound.notes || [];

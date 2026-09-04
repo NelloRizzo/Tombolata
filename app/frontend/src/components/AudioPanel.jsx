@@ -8,7 +8,7 @@ import { playWin, playWrong, playSound } from "../utils/audio.js";
 // quindi non serve un pulsante dedicato qui.
 const QUICK_SOUNDS = [
   { key: "win", label: "Vincita", icon: "🎉", fn: playWin },
-  { key: "wrong", label: "Vin. sbagliata", icon: "👎", fn: playWrong }
+  { key: "wrong", label: "Boo!", icon: "👎", fn: playWrong }
 ];
 
 const DEFAULT_ICON = "🔊";

@@ -385,6 +385,21 @@ h3 {
   font-size: 0.9rem;
 }
 
+.draw-simple-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 12px;
+}
+.draw-simple-controls .btn-extract {
+  align-self: flex-start;
+}
+.draw-simple-controls .extracted-numbers {
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
 .console-grid {
   display: flex;
   gap: 24px;

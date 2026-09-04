@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
-import GameManager from "./GameManager.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
-import { playWrong } from "../utils/audio.js";
+import ExtractedNumbers from "./ExtractedNumbers.jsx";
+import { playWrong, playExtract } from "../utils/audio.js";
+import { useAuth } from "../context/AuthContext.jsx";
 
 // Fasi sequenziali (riflettono l'andamento delle vincite).
 const SEQUENTIAL_PHASES = [
@@ -25,14 +26,37 @@ const WIN_ORDER = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
 
 export default function DirectorPanel({ ws, gameId }) {
   const { game, narration, firedTriggers } = ws;
+  const { hasRole } = useAuth();
   const [triggers, setTriggers] = useState([]);
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
   const [prevStack, setPrevStack] = useState([]);
   const [confirmClaim, setConfirmClaim] = useState(false);
+  const [extracting, setExtracting] = useState(false);
 
   const ref = gameId || game?._id || null;
   const bodyRef = (extra = {}) => JSON.stringify({ ...extra, ...(ref ? { gameId: ref } : {}) });
+
+  // Un utente con solo il ruolo "drawer" (non director) vede in Regia solo la
+  // sezione Estrazione.
+  const drawerOnly = hasRole("drawer") && !hasRole("director") && !hasRole("admin");
+
+  async function extract() {
+    if (!game) return;
+    setExtracting(true);
+    setError(null);
+    try {
+      await apiRequest("/api/game/extract", {
+        method: "POST",
+        body: ref ? JSON.stringify({ gameId: ref }) : undefined
+      });
+      playExtract();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setExtracting(false);
+    }
+  }
 
   async function load() {
     try {
@@ -141,11 +165,25 @@ export default function DirectorPanel({ ws, gameId }) {
 
       <div className="panel-block">
         <div className="panel-title">
-          <h2>Partite</h2>
+          <h2>Estrazione</h2>
         </div>
-        <GameManager game={game} />
+        <label className="console-stats">
+          Estratti: {game?.extractedNumbers?.length || 0}/90 · Cartelle: {game?.boards?.length || 0}
+        </label>
+        <div className="draw-simple-controls">
+          <button
+            className="btn-extract"
+            onClick={extract}
+            disabled={!game || extracting || (game && game.extractedNumbers.length >= 90)}
+          >
+            {extracting ? "Estrazione..." : "Estrai numero"}
+          </button>
+          <ExtractedNumbers numbers={game?.extractedNumbers || []} last={game?.currentNumber} />
+        </div>
       </div>
 
+      {!drawerOnly && (
+      <>
       <div className="panel-grid">
         <div className="panel-block">
           <h2>Fase narrativa</h2>
@@ -253,6 +291,8 @@ export default function DirectorPanel({ ws, gameId }) {
         onConfirm={claimWin}
         onCancel={() => setConfirmClaim(false)}
       />
+      </>
+      )}
     </div>
   );
 }

@@ -7,7 +7,6 @@ import { ADMIN_SECTIONS } from "../pages/AdminPage.jsx";
 
 const ROLE_SEZIONI = [
   { key: "director", label: "Regia", icon: "🎬", to: "/console?tab=director" },
-  { key: "drawer", label: "Estrazione", icon: "🎰", to: "/console?tab=drawer" },
   { key: "video", label: "Video", icon: "📽️", to: "/console?tab=video" },
   { key: "audio", label: "Audio", icon: "🎧", to: "/console?tab=audio" },
   { key: "actor", label: "Attore", icon: "🎭", to: "/console?tab=actor" }
@@ -50,7 +49,11 @@ export default function Sidebar() {
   const activeSez = qs.get("sez");
 
   const canManageBoards = hasRole("drawer") || hasRole("director") || hasRole("admin");
-  const roleSezioni = ROLE_SEZIONI.filter((s) => hasRole(s.key));
+  // Il ruolo "drawer" (Estrazione) è confluito nella Regia: un utente con solo
+  // il ruolo drawer vede nel menu la voce "Regia" (dove trova la sola Estrazione).
+  const roleSezioni = ROLE_SEZIONI.filter(
+    (s) => hasRole(s.key) || (s.key === "director" && hasRole("drawer"))
+  );
   const isAdmin = hasRole("admin");
   const isLogged = Boolean(user);
 

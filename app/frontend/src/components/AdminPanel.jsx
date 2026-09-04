@@ -111,7 +111,7 @@ export function AdminCast({ ws, gameId }) {
     return (
       <div className="admin-section">
         <p className="empty">Nessuna partita attiva. Il cast appartiene alla partita:
-          crea una partita (Regia → Partite) e poi gestisci qui i personaggi.</p>
+          crea una partita (Gestione → Partite) e poi gestisci qui i personaggi.</p>
       </div>
     );
   }

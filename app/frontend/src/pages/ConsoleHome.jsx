@@ -3,7 +3,6 @@ import { useSearchParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
-import DrawerPanel from "../components/DrawerPanel.jsx";
 import DirectorPanel from "../components/DirectorPanel.jsx";
 import VideoPanel from "../components/VideoPanel.jsx";
 import AudioPanel from "../components/AudioPanel.jsx";
@@ -16,11 +15,13 @@ const ROLE_LABELS = {
   director: "Regia",
   video: "Video",
   audio: "Audio",
-  drawer: "Estrazione",
   actor: "Attore"
 };
 
-const ROLE_ORDER = ["admin", "director", "video", "audio", "drawer", "actor"];
+// Ordine dei tab della console. Il ruolo "drawer" (Estrazione) non è più un
+// tab separato: l'estrazione è entrata nella Regia, quindi chi ha il ruolo
+// drawer accede al tab "director" (dove vede solo la sezione Estrazione).
+const ROLE_ORDER = ["director", "video", "audio", "actor"];
 
 export default function ConsoleHome() {
   const { user, hasRole } = useAuth();
@@ -30,7 +31,9 @@ export default function ConsoleHome() {
   // Manteniamo un fallback interno per il caso di nessuna query string.
   const [fallbackTab, setFallbackTab] = useState(null);
 
-  const myRoles = ROLE_ORDER.filter((r) => hasRole(r));
+  const myRoles = ROLE_ORDER.filter(
+    (r) => hasRole(r) || (r === "director" && hasRole("drawer"))
+  );
 
   if (myRoles.length === 0) {
     return (
@@ -81,7 +84,6 @@ export default function ConsoleHome() {
         {activeTab === "director" && <DirectorPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "video" && <VideoPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "audio" && <AudioPanel ws={ws} gameId={currentGameId} />}
-        {activeTab === "drawer" && <DrawerPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "actor" && <ActorPanel ws={ws} gameId={currentGameId} />}
       </main>
 

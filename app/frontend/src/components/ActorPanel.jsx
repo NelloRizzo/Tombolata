@@ -26,7 +26,7 @@ export default function ActorPanel({ ws, gameId }) {
 
   useEffect(() => {
     load();
-  }, [ws.game?._id, gameId]);
+  }, [ws.game?._id, gameId, ws.narration?.phase]);
 
   return (
     <div className="actor-panel">

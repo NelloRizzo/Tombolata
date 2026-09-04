@@ -16,5 +16,9 @@ export const LOST_FILES = [
   "/sounds/lost/lost1.wav",
   "/sounds/lost/lost2.wav",
   "/sounds/lost/lost3.wav",
-  "/sounds/lost/lost4.wav"
+  "/sounds/lost/lost4.wav",
+  "/sounds/lost/lost5.wav",
+  "/sounds/lost/lost6.wav",
+  "/sounds/lost/lost7.wav",
+  "/sounds/lost/lost8.wav"
 ];

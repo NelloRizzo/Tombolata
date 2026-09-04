@@ -28,6 +28,13 @@ export default function ActorPanel({ ws, gameId }) {
     load();
   }, [ws.game?._id, gameId, ws.narration?.phase]);
 
+  // Filtro client-side per fase: mostra solo le cue della fase narrativa
+  // corrente (o "always"), così da non presentare mai cue di fasi errate.
+  const currentPhase = ws.narration?.phase;
+  const visibleTriggers = triggers.filter(
+    (t) => t.phase === "always" || (currentPhase && t.phase === currentPhase)
+  );
+
   return (
     <div className="actor-panel">
       <div className="panel-block">
@@ -38,8 +45,8 @@ export default function ActorPanel({ ws, gameId }) {
         {error && <div className="error-text">{error}</div>}
 
         <div className="cue-list">
-          {triggers.length === 0 && <p className="empty">Nessun cue attivo per te.</p>}
-          {triggers.map((t) => (
+          {visibleTriggers.length === 0 && <p className="empty">Nessun cue attivo per te.</p>}
+          {visibleTriggers.map((t) => (
             <div className={`cue-item ${done[t._id] ? "done" : ""}`} key={t._id}>
               <div className="cue-info">
                 <span className="cue-name">{t.name}</span>

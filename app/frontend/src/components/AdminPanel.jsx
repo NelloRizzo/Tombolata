@@ -249,10 +249,10 @@ function TriggerForm({ gameId, onDone }) {
     count: "N° estrazione"
   };
 
-  // Un trigger è automatico se è legato a una fase (≠ "always") o a una condizione.
-  const hasCondition = form.conditions.some((g) => (g.conditions || []).length > 0);
+  // Un trigger è automatico se legato a una fase (≠ "always"); con fase
+  // "always" è manuale.
   const boundToPhase = form.phase !== "always";
-  const isAuto = hasCondition || boundToPhase;
+  const isAuto = boundToPhase;
 
   function setCondType(type) {
     if (type === "none") {
@@ -348,7 +348,7 @@ function TriggerForm({ gameId, onDone }) {
 
       <div className={`trigger-mode ${isAuto ? "" : "manual"}`}>
         {isAuto
-          ? "⚙️ Automatico: scatta da solo quando la fase o la condizione è soddisfatta"
+          ? "⚙️ Automatico: scatta da solo in questa fase"
           : "✋ Manuale: va attivato dal regista con il pulsante 'Attiva'"}
       </div>
 

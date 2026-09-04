@@ -121,17 +121,17 @@ async function run() {
   const playAll = await req(`/api/game/${gid}/boards/from-cards`, "POST", { all: true }, drawerToken);
   assert(playAll.ok && playAll.summary.skipped === 2, "ri-selezione 'tutte': nessuna nuova aggiunta");
 
-  // estrai 4 volte: al terzo estrattto il trigger count=3 deve essersi attivato
-  let triggered = false;
+  // estrai 4 volte: il trigger ha fase "always" → è manuale, quindi NON deve
+  // attivarsi da solo (la regola: "always" = manuale, altre fasi = automatico).
   for (let i = 0; i < 4; i++) {
     const ex = await req("/api/game/extract", "POST", null, drawerToken);
     assert(ex.ok, `estrazione ${i + 1}`);
   }
 
-  // verifica stato trigger
+  // verifica stato trigger: manuale ⇒ fired resta 0 (non auto-attivato)
   const triggers = await req("/api/triggers", "GET", null, adminToken);
   const t = triggers.data.find((x) => x._id === triggerId);
-  assert(t && t.fired === 1, "trigger attivato 1 volta");
+  assert(t && t.fired === 0, "trigger manuale (always) NON attivato da solo");
 
   // attore vede il proprio trigger live (personaggio associato per partita)
   const actorUser = await req("/api/auth/users", "POST",

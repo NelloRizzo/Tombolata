@@ -92,11 +92,9 @@ export async function evaluateTriggers(gameId) {
   const fired = [];
   for (const trigger of candidates) {
     if (trigger.fired > 0) continue; // un trigger si attiva una volta per fase
-    // Un trigger è automatico solo se è legato a una fase (≠ "always") o a una
-    // condizione. Altrimenti è manuale: non scatta da solo.
-    const hasCondition = (trigger.conditions || []).some((g) => (g.conditions || []).length > 0);
-    const boundToPhase = trigger.phase !== "always";
-    if (!(trigger.autoMode && (hasCondition || boundToPhase))) continue;
+    // Un trigger è automatico solo se è legato a una fase (≠ "always").
+    // Con fase "always" è manuale: non scatta da solo.
+    if (!(trigger.autoMode && trigger.phase !== "always")) continue;
     if (evalTrigger(trigger, state)) {
       await fireTrigger(trigger, { source: "auto" }, gameId);
       fired.push(trigger);

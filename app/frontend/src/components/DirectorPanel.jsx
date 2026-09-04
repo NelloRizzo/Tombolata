@@ -41,9 +41,8 @@ export default function DirectorPanel({ ws, gameId }) {
   // sezione Estrazione.
   const drawerOnly = hasRole("drawer") && !hasRole("director") && !hasRole("admin");
 
-  // Un trigger è manuale solo se non è legato né a una fase né a una condizione.
-  const isManualTrigger = (t) =>
-    t.phase === "always" && !(t.conditions || []).some((g) => (g.conditions || []).length > 0);
+  // Un trigger è manuale se ha fase "always"; con qualsiasi altra fase è automatico.
+  const isManualTrigger = (t) => t.phase === "always";
   const manualTriggers = triggers.filter(isManualTrigger);
   const autoTriggers = triggers.filter((t) => !isManualTrigger(t));
 

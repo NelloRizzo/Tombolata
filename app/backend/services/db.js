@@ -22,7 +22,7 @@ export async function connectDB() {
       dbName: DB_NAME
     });
     isConnected = true;
-    console.log(`✓ Connesso a MongoDB Atlas (database: ${DB_NAME})`);
+    console.log(`✓ Connesso a MongoDB (database: ${DB_NAME})`);
   } catch (error) {
     console.error("Errore di connessione a MongoDB:", error.message);
     throw error;

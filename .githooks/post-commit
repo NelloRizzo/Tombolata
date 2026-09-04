@@ -1,0 +1,48 @@
+#!/bin/sh
+# post-commit hook locale (Tombolata)
+# A ogni commit ricostruisce e riavvia i container Docker locali dei servizi
+# il cui codice e' cambiato (se parallelo/locale al progetto).
+set -e
+
+ROOT="$(git rev-parse --show-toplevel)"
+if [ -z "$ROOT" ]; then
+  echo "[docker-hook] non sono in un repo git, skip"
+  exit 0
+fi
+cd "$ROOT" || exit 1
+
+# --- Seleziona i servizi da ricostruire in base ai file dell'ultimo commit ---
+CHANGED="$(git diff --name-only HEAD^ HEAD 2>/dev/null || true)"
+
+NEED_BACKEND=0
+NEED_FRONTEND=0
+
+for f in $CHANGED; do
+  case "$f" in
+    docker-compose.yml) NEED_BACKEND=1; NEED_FRONTEND=1 ;;
+    app/backend/*)      NEED_BACKEND=1 ;;
+    app/frontend/*)     NEED_FRONTEND=1 ;;
+  esac
+done
+
+if [ "$NEED_BACKEND" != "1" ] && [ "$NEED_FRONTEND" != "1" ]; then
+  echo "[docker-hook] nessun servizio modificato, skip"
+  exit 0
+fi
+
+# --- Docker opzionale: se non e' attivo esce in modo discreto ---
+if ! command -v docker >/dev/null 2>&1; then
+  echo "[docker-hook] docker non disponibile, skip"
+  exit 0
+fi
+
+SERVICES=""
+if [ "$NEED_BACKEND" = "1" ]; then SERVICES="backend"; fi
+if [ "$NEED_FRONTEND" = "1" ]; then
+  if [ -n "$SERVICES" ]; then SERVICES="$SERVICES frontend"; else SERVICES="frontend"; fi
+fi
+
+echo "[docker-hook] ricostruisco e riavvio: $SERVICES"
+docker compose build $SERVICES
+docker compose up -d $SERVICES
+echo "[docker-hook] fatto"

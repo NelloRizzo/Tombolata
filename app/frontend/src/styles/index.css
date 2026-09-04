@@ -394,10 +394,34 @@ h3 {
 .draw-simple-controls .btn-extract {
   align-self: flex-start;
 }
-.draw-simple-controls .extracted-numbers {
-  width: 100%;
-  max-height: 300px;
+.draw-list-scroll {
+  max-height: 60vh;
   overflow-y: auto;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  padding-top: 8px;
+}
+.draw-list-scroll .extracted-numbers {
+  width: 100%;
+}
+
+.director-panel {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+.director-panel.drawer-only {
+  display: block;
+  max-width: 480px;
+}
+.director-extract-col {
+  width: 300px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+}
+.director-main-col {
+  flex: 1;
+  min-width: 0;
 }
 
 .console-grid {

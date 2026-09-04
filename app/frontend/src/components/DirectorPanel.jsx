@@ -160,30 +160,35 @@ export default function DirectorPanel({ ws, gameId }) {
   }
 
   return (
-    <div className="director-panel">
+    <div className={`director-panel ${drawerOnly ? "drawer-only" : ""}`}>
       {error && <div className="error-banner">{error}</div>}
 
-      <div className="panel-block">
-        <div className="panel-title">
-          <h2>Estrazione</h2>
+      <aside className="director-extract-col">
+        <div className="panel-block">
+          <div className="panel-title">
+            <h2>Estrazione</h2>
+          </div>
+          <label className="console-stats">
+            Estratti: {game?.extractedNumbers?.length || 0}/90 · Cartelle: {game?.boards?.length || 0}
+          </label>
+          <div className="draw-simple-controls">
+            <button
+              className="btn-extract"
+              onClick={extract}
+              disabled={!game || extracting || (game && game.extractedNumbers.length >= 90)}
+            >
+              {extracting ? "Estrazione..." : "Estrai numero"}
+            </button>
+            <div className="draw-list-scroll">
+              <ExtractedNumbers numbers={game?.extractedNumbers || []} last={game?.currentNumber} />
+            </div>
+          </div>
         </div>
-        <label className="console-stats">
-          Estratti: {game?.extractedNumbers?.length || 0}/90 · Cartelle: {game?.boards?.length || 0}
-        </label>
-        <div className="draw-simple-controls">
-          <button
-            className="btn-extract"
-            onClick={extract}
-            disabled={!game || extracting || (game && game.extractedNumbers.length >= 90)}
-          >
-            {extracting ? "Estrazione..." : "Estrai numero"}
-          </button>
-          <ExtractedNumbers numbers={game?.extractedNumbers || []} last={game?.currentNumber} />
-        </div>
-      </div>
+      </aside>
 
       {!drawerOnly && (
       <>
+      <div className="director-main-col">
       <div className="panel-grid">
         <div className="panel-block">
           <h2>Fase narrativa</h2>
@@ -291,6 +296,7 @@ export default function DirectorPanel({ ws, gameId }) {
         onConfirm={claimWin}
         onCancel={() => setConfirmClaim(false)}
       />
+      </div>
       </>
       )}
     </div>

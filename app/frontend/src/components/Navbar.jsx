@@ -97,7 +97,7 @@ export default function Sidebar() {
 
         {isLogged && roleSezioni.length > 0 && (
           <>
-            <span className="sidebar-group-label">Operativo</span>
+            <span className={`sidebar-group-label ${roleSezioni.some((s) => activeTab === s.key) ? "active" : ""}`}>Operativo</span>
             {roleSezioni.map((s) => (
               <NavLink
                 key={s.key}
@@ -114,7 +114,7 @@ export default function Sidebar() {
 
         {isLogged && isAdmin && (
           <>
-            <span className="sidebar-group-label">Gestione</span>
+            <span className={`sidebar-group-label ${ADMIN_SECTIONS.some((s) => activeSez === s.key) ? "active" : ""}`}>Gestione</span>
             {ADMIN_SECTIONS.map((s) => (
               <NavLink
                 key={s.key}

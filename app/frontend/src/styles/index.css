@@ -1343,6 +1343,10 @@ h3 {
   color: var(--text-dim, rgba(255, 255, 255, 0.45));
   padding: 12px 12px 4px;
 }
+.sidebar-group-label.active {
+  color: var(--accent, #0ea5e9);
+  font-weight: 600;
+}
 .nav-link {
   display: flex;
   align-items: center;

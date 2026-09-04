@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import MediaUpload from "./MediaUpload.jsx";
-import { playExtract, playWin, playWrong, playSound } from "../utils/audio.js";
+import { playWin, playWrong, playSound } from "../utils/audio.js";
 
 // Pulsanti sonori fissi (file MP3 scaricati in public/sounds/).
+// NB: il suono di estrazione è automatico (si attiva a ogni estrazione),
+// quindi non serve un pulsante dedicato qui.
 const QUICK_SOUNDS = [
-  { key: "extract", label: "Estrazione", icon: "🎰", fn: playExtract },
   { key: "win", label: "Vincita", icon: "🎉", fn: playWin },
   { key: "wrong", label: "Vin. sbagliata", icon: "👎", fn: playWrong }
 ];

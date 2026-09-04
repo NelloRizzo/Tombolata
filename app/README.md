@@ -19,7 +19,7 @@ app/
 - **Player video fullscreen con effetti speciali**: sostituisce il tabellone con un video in riproduzione (flash, zoom, fade, shake, glitch, particelle).
 - **Console audio (fonico)**: catalogo di suoni, riproduzione sincronizzata su tutti i dispositivi.
 - **Attori**: personaggi definiti dall'admin, ognuno con i propri trigger (cue) personali.
-- **Persistenza**: MongoDB Atlas (utenti, partite, attori, trigger, video, suoni, narrazione).
+- **Persistenza**: MongoDB (utenti, partite, attori, trigger, video, suoni, narrazione) + upload media su filesystem locale.
 
 ## Ruoli
 
@@ -84,49 +84,52 @@ cd backend
 npm test               # usa mongodb-memory-server, non serve Atlas
 ```
 
-## Deploy su Render.com
+## Deploy locale con Docker
 
-Sono previsti **2 servizi**, gestiti da un unico **Blueprint** (`render.yaml` nella root del repo):
+L'intera applicazione (backend + frontend + MongoDB) gira in container definiti
+dal `docker-compose.yml` presente nella root del progetto.
 
-| Servizio | Tipo | Root dir | Publish |
-|----------|------|----------|---------|
-| tombolasolidale-api | Web Service (Node) | `backend` | — |
-| tombolasolidale | Static Site (React) | `frontend` | `dist` |
+### Build e avvio
 
-Il Blueprint si collega al repo GitHub: **ogni push su `main` ridispiega automaticamente entrambi i servizi** (niente click manuali).
+Dalla root del progetto:
 
-### 1. MongoDB Atlas
-Creare un cluster **M0 (free)** sul sito Atlas, creare un database user e ottenere la connection string (es. `mongodb+srv://...`).
+```bash
+docker compose up --build
+```
 
-### 2. Creare il Blueprint su Render
-1. Da app.render.com → **New → Blueprint**.
-2. Connetti il repo GitHub `Tombolata`.
-3. Render rileva `render.yaml` e propone i 2 servizi.
-4. Al primo deploy Render **chiede i valori segreti** (`sync: false`): imposta
-   `MONGODB_URI`, `JWT_SECRET` (stringa casuale lunga) e `ADMIN_PASSWORD`
-   (cambia la password admin di default `admin`).
-5. Avvia il deploy.
+Questo avvia tre servizi:
 
-### 3. Verifica l'URL del backend
-Dopo il primo deploy il backend ha l'URL `https://tombolasolidale-api.onrender.com`.
+| Servizio  | Esposto su   | Descrizione                                   |
+|-----------|--------------|-----------------------------------------------|
+| `mongo`   | `27017`      | Database MongoDB (volume persistente `mongodb_data`) |
+| `backend` | `3001`       | API + WebSocket (Node/Express)                |
+| `frontend`| `8080`       | Sito statico servito da nginx + proxy API/WS  |
 
-- Il frontend usa `VITE_BACKEND_URL` **a build-time** (iniettato da
-  `vite.config.js`). Verifica che il valore in `render.yaml`
-  (attualmente `https://tombolasolidale-api.onrender.com`) corrisponda
-  all'URL reale del backend; se diverso, aggiornalo e fai un nuovo push.
+### Accesso
 
-### 4. Dopo
-- Tabellone pubblico: `https://tombolasolidale.onrender.com`
-- Console regia: `https://tombolasolidale.onrender.com/console`
-- Deploy automatico: ogni `git push origin main` ridispiega i servizi.
+- **Tabellone pubblico**: `http://localhost:8080` (nessun login)
+- **Console regia**: `http://localhost:8080/console` (login)
 
-> **Nota piano free**: i servizi free di Render si "addormentano" dopo
-> ~15 minuti di inattività e si risvegliano al primo accesso (~30-60s di
-> cold start). Va bene per la serata dal vivo, ma non è "always on".
+Le credenziali admin di default sono `admin`/`admin` (configurabili tramite le
+variabili `ADMIN_USERNAME`/`ADMIN_PASSWORD` in `docker-compose.yml`).
+
+### Persistenza
+
+- **Database**: volume `mongodb_data` → non si perde al riavvio dei container.
+- **Upload media**: volume `uploads_data` (cartella `/app/uploads` nel backend,
+  servita sotto `/uploads`). I file rimangono anche dopo un `docker compose down`.
+
+### Admin / altri comandi
+
+```bash
+docker compose down          # ferma i container (dati preservati)
+docker compose down -v       # ferma ED elimina i volumi (azzera tutto)
+docker compose logs -f       # log di tutti i servizi in tempo reale
+```
 
 ## Utilizzo
 
-- **Tabellone pubblico**: apri l'URL del frontend, es. `https://tombolata.onrender.com` (nessun login richiesto per lo schermo grande).
-- **Console regia**: stesso URL + `/console`, es. `https://tombolata.onrender.com/console` (login richiesto).
+- **Tabellone pubblico**: apri l'URL del frontend (nessun login richiesto per lo schermo grande).
+- **Console regia**: stesso URL + `/console` (login richiesto).
 
 Dopo il login, seleziona la postazione dal menu dei ruoli. Tutti i dispositivi si sincronizzano via WebSocket in tempo reale.

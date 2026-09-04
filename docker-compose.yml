@@ -1,0 +1,56 @@
+services:
+  # ===== MongoDB (database locale, volume persistente) =====
+  mongo:
+    image: mongo:7
+    container_name: tombolata-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ===== Backend (API + WebSocket) =====
+  backend:
+    build:
+      context: ./app/backend
+    container_name: tombolata-backend
+    restart: unless-stopped
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DB_NAME=tombolata
+      - PORT=3001
+      - CLIENT_ORIGIN=http://localhost:8080
+      - JWT_SECRET=change-me-to-a-long-random-string
+      - JWT_EXPIRES=12h
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin
+      - UPLOAD_DIR=/app/uploads
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "3001:3001"
+    volumes:
+      - uploads_data:/app/uploads
+
+  # ===== Frontend (nginx serve statico + proxy API/WS) =====
+  frontend:
+    build:
+      context: ./app/frontend
+      args:
+        VITE_BACKEND_URL: http://localhost:3001
+    container_name: tombolata-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+
+volumes:
+  mongodb_data:
+  uploads_data:

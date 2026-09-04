@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
-import { AdminTriggers, AdminVideos, AdminSounds } from "./AdminPanel.jsx";
+import { AdminTriggers } from "./AdminPanel.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
 
 function toLocalInput(value) {
@@ -190,7 +190,7 @@ export default function GameManager({ game }) {
                           className="btn-sm"
                           onClick={() => setExpandedId((v) => (v === g._id ? null : g._id))}
                         >
-                          {expandedId === g._id ? "Chiudi contenuti" : "Trigger / Video"}
+                          {expandedId === g._id ? "Chiudi trigger" : "Trigger per partita"}
                         </button>
                         <button
                           className={`btn-sm ${g.status === "active" ? "btn-ghost" : "btn-accent"}`}
@@ -202,8 +202,6 @@ export default function GameManager({ game }) {
                       {expandedId === g._id && (
                         <div className="gm-expanded">
                           <AdminTriggers gameId={g._id} />
-                          <AdminVideos gameId={g._id} />
-                          <AdminSounds gameId={g._id} />
                         </div>
                       )}
                     </>

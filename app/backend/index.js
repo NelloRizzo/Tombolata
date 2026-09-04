@@ -16,14 +16,21 @@ import { getNarrationState } from "./services/triggerService.js";
 import { bootstrap } from "./services/bootstrap.js";
 import { broadcastToClients } from "./services/broadcast.js";
 import { setClockWss } from "./services/clockTicker.js";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const UPLOAD_DIR = join(__dirname, process.env.UPLOAD_DIR || "./uploads");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json({ limit: "30mb" }));
+app.use("/uploads", express.static(UPLOAD_DIR));
 
 app.get("/", (req, res) => {
   res.json({

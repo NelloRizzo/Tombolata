@@ -9,7 +9,6 @@ import VideoPanel from "../components/VideoPanel.jsx";
 import AudioPanel from "../components/AudioPanel.jsx";
 import ActorPanel from "../components/ActorPanel.jsx";
 import SpectatorPanel from "../components/SpectatorPanel.jsx";
-import AdminPanel from "../components/AdminPanel.jsx";
 import PublicBoardPopup from "../components/PublicBoardPopup.jsx";
 
 const ROLE_LABELS = {
@@ -38,7 +37,7 @@ export default function ConsoleHome() {
       <div className="console-page">
         <header className="console-header">
           <div className="console-title">
-            <h1>Postazione Tabellone</h1>
+            <h1>Console Tabellone</h1>
             <span className="user-welcome">
               Benvenuto, {user.displayName || user.username}
             </span>
@@ -71,7 +70,7 @@ export default function ConsoleHome() {
     <div className="console-page">
       <header className="console-header">
         <div className="console-title">
-          <h1>Postazione {ROLE_LABELS[activeTab]}</h1>
+          <h1>Console {ROLE_LABELS[activeTab]}</h1>
           <span className="user-welcome">
             Benvenuto, {user.displayName || user.username}
           </span>
@@ -79,7 +78,6 @@ export default function ConsoleHome() {
       </header>
 
       <main className="console-main">
-        {activeTab === "admin" && <AdminPanel ws={ws} />}
         {activeTab === "director" && <DirectorPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "video" && <VideoPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "audio" && <AudioPanel ws={ws} gameId={currentGameId} />}

@@ -13,7 +13,7 @@ export async function connectDB() {
 
   if (!MONGODB_URI) {
     console.error("ERRORE: variabile d'ambiente MONGODB_URI mancante.");
-    console.error("Aggiungila in Render.com (servizio backend) o in un file .env locale.");
+    console.error("Aggiungila in docker-compose.yml o in un file .env locale.");
     throw new Error("MONGODB_URI non configurata");
   }
 

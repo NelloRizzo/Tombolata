@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { apiRequest } from "../api.js";
@@ -42,12 +42,12 @@ function GameSelector() {
 
 export default function Sidebar() {
   const { user, hasRole, logout } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
 
-  const inManagement = ["/console", "/admin", "/boards"].includes(location.pathname);
   const canManageBoards = hasRole("drawer") || hasRole("director") || hasRole("admin");
-  const sezioni = ROLE_SEZIONI.filter((s) => hasRole(s.key));
+  const roleSezioni = ROLE_SEZIONI.filter((s) => hasRole(s.key));
+  const isAdmin = hasRole("admin");
+  const isLogged = Boolean(user);
 
   function handleLogout() {
     logout();
@@ -86,32 +86,25 @@ export default function Sidebar() {
           </NavLink>
         )}
 
-        {(inManagement && sezioni.length > 0) && (
+        {isLogged && (roleSezioni.length > 0 || isAdmin) && (
           <div className="sidebar-divider" />
         )}
 
-        {inManagement && sezioni.length > 0
-          ? sezioni.map((s) => (
-              <NavLink
-                key={s.key}
-                to={s.to}
-                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
-                title={s.label}
-              >
-                <span className="nav-icon">{s.icon}</span>
-                <span className="nav-label">{s.label}</span>
-              </NavLink>
-            ))
-          : (
-              <Link to="/console" className="nav-link">
-                <span className="nav-icon">🎬</span>
-                <span className="nav-label">Regia</span>
-              </Link>
-            )}
+        {isLogged && roleSezioni.map((s) => (
+          <NavLink
+            key={s.key}
+            to={s.to}
+            className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+            title={s.label}
+          >
+            <span className="nav-icon">{s.icon}</span>
+            <span className="nav-label">{s.label}</span>
+          </NavLink>
+        ))}
 
-        {hasRole("admin") && (
+        {isLogged && isAdmin && (
           <>
-            <div className="sidebar-divider" />
+            {roleSezioni.length > 0 && <div className="sidebar-divider" />}
             {ADMIN_SECTIONS.map((s) => (
               <NavLink
                 key={s.key}

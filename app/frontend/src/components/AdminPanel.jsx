@@ -626,30 +626,4 @@ export function AdminSounds({ gameId }) {
   );
 }
 
-const SECTIONS = [
-  { key: "users", label: "Utenti", render: (ws) => <AdminUsers /> },
-  { key: "cast", label: "Cast", render: (ws) => <AdminCast ws={ws} /> },
-  { key: "triggers", label: "Trigger", render: (ws) => <AdminTriggers gameId={ws.game?._id} /> },
-  { key: "videos", label: "Video", render: (ws) => <AdminVideos gameId={ws.game?._id} /> },
-  { key: "sounds", label: "Suoni", render: (ws) => <AdminSounds gameId={ws.game?._id} /> }
-];
 
-export default function AdminPanel({ ws }) {
-  const [section, setSection] = useState("users");
-
-  return (
-    <div className="admin-panel">
-      <nav className="admin-tabs">
-        {SECTIONS.map((s) => (
-          <button key={s.key} className={`admin-tab ${section === s.key ? "active" : ""}`} onClick={() => setSection(s.key)}>
-            {s.label}
-          </button>
-        ))}
-      </nav>
-      {SECTIONS.map((s) => {
-        if (s.key !== section) return null;
-        return <div key={s.key}>{s.render(ws)}</div>;
-      })}
-    </div>
-  );
-}

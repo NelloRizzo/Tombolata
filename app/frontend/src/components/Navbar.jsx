@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { apiRequest } from "../api.js";
@@ -43,6 +43,11 @@ function GameSelector() {
 export default function Sidebar() {
   const { user, hasRole, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const qs = new URLSearchParams(location.search);
+  const activeTab = qs.get("tab");
+  const activeSez = qs.get("sez");
 
   const canManageBoards = hasRole("drawer") || hasRole("director") || hasRole("admin");
   const roleSezioni = ROLE_SEZIONI.filter((s) => hasRole(s.key));
@@ -94,7 +99,7 @@ export default function Sidebar() {
           <NavLink
             key={s.key}
             to={s.to}
-            className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+            className={`nav-link ${activeTab === s.key ? "active" : ""}`}
             title={s.label}
           >
             <span className="nav-icon">{s.icon}</span>
@@ -109,7 +114,7 @@ export default function Sidebar() {
               <NavLink
                 key={s.key}
                 to={`/admin?sez=${s.key}`}
-                className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+                className={`nav-link ${activeSez === s.key ? "active" : ""}`}
                 title={s.label}
               >
                 <span className="nav-icon">{s.icon}</span>

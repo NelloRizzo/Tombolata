@@ -1,30 +1,22 @@
+import { WIN_FILES, LOST_FILES } from "../soundFiles.js";
+
 let ctx = null;
 let enabled = true;
 
-// Effetti sonori "divertenti" scaricati in public/sounds (MP3).
-// Vengono riprodotti come file con fallback al sintetizzatore se il file
-// non è disponibile o il caricamento fallisce.
-const SOUND_FILES = {
-  extract: "/sounds/estrazione.mp3",
-  win: "/sounds/vincita.mp3",
-  wrong: "/sounds/errore.mp3"
-};
-
+// Effetti sonori: file audio in public/sounds (win/, lost/). playWin/playWrong
+// prelevano a caso uno dei file della rispettiva cartella, con fallback al
+// sintetizzatore se la riproduzione del file fallisce.
 const audioCache = {};
-
-function playFile(key) {
-  const url = SOUND_FILES[key];
-  if (!url) return false;
-  return playUrl(url);
-}
 
 export function playUrl(url) {
   if (!url) return false;
   try {
     const key = url;
+    // I nomi file possono contenere spazi: usa un URL codificato per il fetch.
+    const encoded = /^https?:/i.test(url) ? url : url.split("/").map(encodeURIComponent).join("/");
     let el = audioCache[key];
     if (!el) {
-      el = new Audio(url);
+      el = new Audio(encoded);
       audioCache[key] = el;
     }
     el.currentTime = 0;
@@ -34,6 +26,21 @@ export function playUrl(url) {
   } catch (e) {
     return false;
   }
+}
+
+// Sceglie a caso un file dalla lista e prova a riprodurlo.
+// Ritorna true se è riuscito a riprodurne uno, false altrimenti.
+function playRandomFile(files) {
+  if (!files || files.length === 0) return false;
+  const order = [...files];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  for (const url of order) {
+    if (playUrl(url)) return true;
+  }
+  return false;
 }
 
 function getCtx() {
@@ -75,7 +82,6 @@ function tone(freq, start, duration, type = "sine", gainVal = 0.2) {
 
 export function playExtract() {
   if (!enabled) return;
-  if (playFile("extract")) return;
   const base = 440 + Math.random() * 300;
   tone(base, 0, 0.15, "triangle", 0.3);
   tone(base * 1.5, 0.1, 0.2, "triangle", 0.25);
@@ -83,7 +89,7 @@ export function playExtract() {
 
 export function playWin() {
   if (!enabled) return;
-  if (playFile("win")) return;
+  if (playRandomFile(WIN_FILES)) return;
   const notes = [523.25, 659.25, 783.99, 1046.5];
   notes.forEach((f, i) => {
     tone(f, i * 0.12, 0.25, "sine", 0.3);
@@ -92,7 +98,7 @@ export function playWin() {
 
 export function playTombola() {
   if (!enabled) return;
-  if (playFile("win")) return;
+  if (playRandomFile(WIN_FILES)) return;
   const notes = [523.25, 587.33, 659.25, 783.99, 880, 1046.5];
   notes.forEach((f, i) => {
     tone(f, i * 0.15, 0.3, "square", 0.2);
@@ -100,10 +106,11 @@ export function playTombola() {
   tone(784, 0.15 * notes.length, 0.6, "sine", 0.35);
 }
 
-// Suono "vincita sbagliata" / errore (fallback: buzzer sintetizzato).
+// Suono "vincita sbagliata" / errore: preleva a caso un file dalla cartella
+// lost/ (fallback: buzzer sintetizzato).
 export function playWrong() {
   if (!enabled) return;
-  if (playFile("wrong")) return;
+  if (playRandomFile(LOST_FILES)) return;
   tone(180, 0, 0.4, "sawtooth", 0.25);
   tone(140, 0.35, 0.5, "sawtooth", 0.25);
 }

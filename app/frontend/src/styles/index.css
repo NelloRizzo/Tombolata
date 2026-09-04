@@ -395,7 +395,8 @@ h3 {
   align-self: flex-start;
 }
 .draw-list-scroll {
-  max-height: 60vh;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
   padding-top: 8px;
@@ -418,6 +419,16 @@ h3 {
   flex-shrink: 0;
   position: sticky;
   top: 0;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.director-extract-col .panel-block {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
 }
 .director-main-col {
   flex: 1;

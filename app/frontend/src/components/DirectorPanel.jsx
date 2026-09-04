@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import ConfirmModal from "./ConfirmModal.jsx";
 import ExtractedNumbers from "./ExtractedNumbers.jsx";
-import { playWrong, playExtract } from "../utils/audio.js";
+import { playWrong, playExtract, playWin, playTombola } from "../utils/audio.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 // Fasi sequenziali (riflettono l'andamento delle vincite).
@@ -142,6 +142,8 @@ export default function DirectorPanel({ ws, gameId }) {
         method: "POST",
         body: JSON.stringify({ winType: nextWin })
       });
+      if (nextWin === "tombola") playTombola();
+      else playWin();
     } catch (e) {
       setError(e.message);
       playWrong();

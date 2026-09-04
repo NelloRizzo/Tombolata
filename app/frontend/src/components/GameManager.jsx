@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
-import { AdminTriggers } from "./AdminPanel.jsx";
+import { AdminCast, AdminTriggers, AdminVideos, AdminSounds } from "./AdminPanel.jsx";
 import ConfirmModal from "./ConfirmModal.jsx";
 
 function toLocalInput(value) {
@@ -190,7 +190,7 @@ export default function GameManager({ game }) {
                           className="btn-sm"
                           onClick={() => setExpandedId((v) => (v === g._id ? null : g._id))}
                         >
-                          {expandedId === g._id ? "Chiudi trigger" : "Trigger per partita"}
+                          {expandedId === g._id ? "Chiudi contenuti" : "Gestisci contenuti"}
                         </button>
                         <button
                           className={`btn-sm ${g.status === "active" ? "btn-ghost" : "btn-accent"}`}
@@ -201,7 +201,22 @@ export default function GameManager({ game }) {
                       </div>
                       {expandedId === g._id && (
                         <div className="gm-expanded">
-                          <AdminTriggers gameId={g._id} />
+                          <div className="gm-expanded-section">
+                            <h3 className="gm-expanded-title">Cast</h3>
+                            <AdminCast gameId={g._id} />
+                          </div>
+                          <div className="gm-expanded-section">
+                            <h3 className="gm-expanded-title">Trigger</h3>
+                            <AdminTriggers gameId={g._id} />
+                          </div>
+                          <div className="gm-expanded-section">
+                            <h3 className="gm-expanded-title">Video</h3>
+                            <AdminVideos gameId={g._id} />
+                          </div>
+                          <div className="gm-expanded-section">
+                            <h3 className="gm-expanded-title">Suoni</h3>
+                            <AdminSounds gameId={g._id} />
+                          </div>
                         </div>
                       )}
                     </>

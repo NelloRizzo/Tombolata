@@ -48,7 +48,7 @@ router.get("/", authenticate, async (req, res) => {
 });
 
 // Crea video (admin/director). gameId opzionale nel body → video dedicato a quella partita.
-router.post("/", authenticate, requireRoles("admin", "director"), async (req, res) => {
+router.post("/", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
   try {
     const body = req.body || {};
     if (!body.name || !body.source) {
@@ -72,7 +72,7 @@ router.post("/", authenticate, requireRoles("admin", "director"), async (req, re
   }
 });
 
-router.put("/:id", authenticate, requireRoles("admin", "director"), async (req, res) => {
+router.put("/:id", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
   try {
     const body = req.body || {};
     const update = {};
@@ -90,7 +90,7 @@ router.put("/:id", authenticate, requireRoles("admin", "director"), async (req, 
   }
 });
 
-router.delete("/:id", authenticate, requireRoles("admin", "director"), async (req, res) => {
+router.delete("/:id", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
   try {
     await Video.findByIdAndDelete(req.params.id);
     res.json({ ok: true });

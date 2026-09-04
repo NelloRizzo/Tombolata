@@ -18,6 +18,7 @@ const videoSchema = new mongoose.Schema(
   {
     gameId: { type: mongoose.Schema.Types.ObjectId, ref: "Game", default: null },
     name: { type: String, required: true, trim: true },
+    icon: { type: String, default: "📽️" },
     description: { type: String, default: "" },
     // URL o path del file video (può essere un file caricato o un URL esterno)
     source: { type: String, required: true },

@@ -1336,6 +1336,13 @@ h3 {
   background: rgba(255, 255, 255, 0.1);
   margin: 8px 4px;
 }
+.sidebar-group-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-dim, rgba(255, 255, 255, 0.45));
+  padding: 12px 12px 4px;
+}
 .nav-link {
   display: flex;
   align-items: center;

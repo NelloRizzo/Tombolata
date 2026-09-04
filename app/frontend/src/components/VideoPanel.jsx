@@ -1,17 +1,24 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
+import MediaUpload from "./MediaUpload.jsx";
+
+const DEFAULT_ICON = "📽️";
 
 export default function VideoPanel({ ws, gameId }) {
   const { narration } = ws;
   const [videos, setVideos] = useState([]);
   const [error, setError] = useState(null);
+  const [playingId, setPlayingId] = useState(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState({ name: "", icon: "", fileUrl: "" });
 
   const ref = gameId || ws.game?._id || null;
   const withRef = { method: "POST", body: ref ? JSON.stringify({ gameId: ref }) : undefined };
 
   async function load() {
     try {
-      const json = await apiRequest("/api/videos");
+      const q = ref ? `?gameId=${ref}` : "";
+      const json = await apiRequest(`/api/videos${q}`);
       if (json.ok) setVideos(json.data);
     } catch (e) {
       setError(e.message);
@@ -20,9 +27,43 @@ export default function VideoPanel({ ws, gameId }) {
 
   useEffect(() => {
     load();
-  }, [narration?.player?.status]);
+  }, [ref]);
+
+  async function create() {
+    setError(null);
+    if (!form.name.trim() || !form.fileUrl.trim()) {
+      setError("Nome e URL del file video sono obbligatori");
+      return;
+    }
+    try {
+      const payload = {
+        name: form.name.trim(),
+        source: form.fileUrl.trim(),
+        icon: form.icon.trim() || DEFAULT_ICON,
+        gameId: ref || null
+      };
+      const json = await apiRequest("/api/videos", { method: "POST", body: JSON.stringify(payload) });
+      if (!json.ok) throw new Error(json.message || "Errore salvataggio");
+      setForm({ name: "", icon: "", fileUrl: "" });
+      setShowAdd(false);
+      load();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
+
+  async function remove(id) {
+    try {
+      await apiRequest(`/api/videos/${id}`, { method: "DELETE" });
+      load();
+    } catch (e) {
+      setError(e.message);
+    }
+  }
 
   async function play(id) {
+    setPlayingId(id);
+    setTimeout(() => setPlayingId(null), 1500);
     setError(null);
     try {
       await apiRequest(`/api/videos/${id}/play`, withRef);
@@ -70,15 +111,52 @@ export default function VideoPanel({ ws, gameId }) {
       </div>
 
       <div className="panel-block">
-        <h2>Libreria video</h2>
-        <div className="video-list">
-          {videos.length === 0 && <p className="empty">Nessun video configurato</p>}
+        <div className="panel-block-head">
+          <h2>Video caricati</h2>
+          <button className="btn-sm btn-accent" onClick={() => setShowAdd((v) => !v)}>
+            {showAdd ? "Chiudi" : "+ Carica video"}
+          </button>
+        </div>
+
+        {showAdd && (
+          <div className="admin-form video-add-form">
+            <input
+              placeholder="Nome del video"
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+            <input
+              placeholder="Icona (emoji, es. 🎬)"
+              value={form.icon}
+              onChange={(e) => setForm({ ...form, icon: e.target.value })}
+            />
+            <input
+              placeholder="URL file video"
+              value={form.fileUrl}
+              onChange={(e) => setForm({ ...form, fileUrl: e.target.value })}
+            />
+            <MediaUpload
+              label="Carica video"
+              resourceType="video"
+              mediaType="videos"
+              gameId={ref}
+              onUploaded={(url) => setForm((f) => ({ ...f, fileUrl: url }))}
+            />
+            <button className="btn-sm btn-accent" onClick={create}>Aggiungi video</button>
+          </div>
+        )}
+
+        <div className="sound-grid">
+          {videos.length === 0 && !showAdd && (
+            <p className="empty">Nessun video caricato</p>
+          )}
           {videos.map((v) => (
-            <div className="video-item" key={v._id}>
-              <span className="video-name">{v.name}</span>
-              <button className="btn-sm btn-accent" onClick={() => play(v._id)}>
-                Riproduci
+            <div className={`sound-card ${playingId === v._id ? "playing" : ""}`} key={v._id}>
+              <button className="sound-card-btn" onClick={() => play(v._id)}>
+                <span className="sound-card-icon">{v.icon || DEFAULT_ICON}</span>
+                <span className="sound-card-name">{v.name}</span>
               </button>
+              <button className="sound-card-remove" title="Rimuovi" onClick={() => remove(v._id)}>✕</button>
             </div>
           ))}
         </div>

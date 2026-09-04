@@ -83,8 +83,8 @@ export function AdminUsers() {
   );
 }
 
-export function AdminCast({ ws }) {
-  const gameId = ws.game?._id;
+export function AdminCast({ ws, gameId }) {
+  const gid = gameId || ws?.game?._id;
   const [actors, setActors] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [users, setUsers] = useState([]);
@@ -96,8 +96,8 @@ export function AdminCast({ ws }) {
   async function load() {
     try {
       const [cast, assigns, us] = await Promise.all([
-        apiRequest(`/api/game/${gameId}/actors`),
-        apiRequest(`/api/game/${gameId}/assignments`),
+        apiRequest(`/api/game/${gid}/actors`),
+        apiRequest(`/api/game/${gid}/assignments`),
         apiRequest("/api/auth/users")
       ]);
       if (cast.ok) setActors(cast.data.actors);
@@ -105,9 +105,9 @@ export function AdminCast({ ws }) {
       if (us.ok) setUsers(us.data);
     } catch (e) { setError(e.message); }
   }
-  useEffect(() => { if (gameId) { setError(null); load(); } }, [gameId]);
+  useEffect(() => { if (gid) { setError(null); load(); } }, [gid]);
 
-  if (!gameId) {
+  if (!gid) {
     return (
       <div className="admin-section">
         <p className="empty">Nessuna partita attiva. Il cast appartiene alla partita:
@@ -119,7 +119,7 @@ export function AdminCast({ ws }) {
   async function createActor() {
     setError(null);
     try {
-      await apiRequest(`/api/game/${gameId}/actors`, { method: "POST", body: JSON.stringify(actorForm) });
+      await apiRequest(`/api/game/${gid}/actors`, { method: "POST", body: JSON.stringify(actorForm) });
       setActorForm({ name: "", description: "", object: "" });
       load();
     } catch (e) { setError(e.message); }
@@ -127,7 +127,7 @@ export function AdminCast({ ws }) {
 
   async function removeActor(index) {
     try {
-      await apiRequest(`/api/game/${gameId}/actors/${index}`, { method: "DELETE" });
+      await apiRequest(`/api/game/${gid}/actors/${index}`, { method: "DELETE" });
       load();
     } catch (e) { setError(e.message); }
   }
@@ -135,7 +135,7 @@ export function AdminCast({ ws }) {
   async function assign() {
     setError(null);
     try {
-      await apiRequest(`/api/game/${gameId}/assignments`, {
+      await apiRequest(`/api/game/${gid}/assignments`, {
         method: "POST",
         body: JSON.stringify({ userId: selUser, character: selCharacter })
       });
@@ -147,7 +147,7 @@ export function AdminCast({ ws }) {
 
   async function unassign(userId) {
     try {
-      await apiRequest(`/api/game/${gameId}/assignments/${userId}`, { method: "DELETE" });
+      await apiRequest(`/api/game/${gid}/assignments/${userId}`, { method: "DELETE" });
       load();
     } catch (e) { setError(e.message); }
   }
@@ -437,7 +437,7 @@ function VideoForm({ gameId, video, onDone }) {
       <input placeholder="Nome video" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
       <input placeholder="URL / file sorgente" value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} />
       <MediaUpload
-        label="Carica video (Cloudinary)"
+        label="Carica video"
         resourceType="video"
         onUploaded={(url) => setForm((f) => ({ ...f, source: url }))}
       />
@@ -561,9 +561,9 @@ function SoundForm({ onDone, gameId }) {
       </div>
       {form.kind === "file" ? (
         <>
-          <input placeholder="URL file audio (Cloudinary)" value={form.fileUrl} onChange={(e) => setForm({ ...form, fileUrl: e.target.value })} />
+          <input placeholder="URL file audio" value={form.fileUrl} onChange={(e) => setForm({ ...form, fileUrl: e.target.value })} />
           <MediaUpload
-            label="Carica audio (Cloudinary)"
+            label="Carica audio"
             resourceType="video"
             mediaType="sounds"
             gameId={gameId}

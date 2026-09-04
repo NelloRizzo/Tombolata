@@ -95,21 +95,26 @@ export default function Sidebar() {
           <div className="sidebar-divider" />
         )}
 
-        {isLogged && roleSezioni.map((s) => (
-          <NavLink
-            key={s.key}
-            to={s.to}
-            className={`nav-link ${activeTab === s.key ? "active" : ""}`}
-            title={s.label}
-          >
-            <span className="nav-icon">{s.icon}</span>
-            <span className="nav-label">{s.label}</span>
-          </NavLink>
-        ))}
+        {isLogged && roleSezioni.length > 0 && (
+          <>
+            <span className="sidebar-group-label">Operativo</span>
+            {roleSezioni.map((s) => (
+              <NavLink
+                key={s.key}
+                to={s.to}
+                className={`nav-link ${activeTab === s.key ? "active" : ""}`}
+                title={s.label}
+              >
+                <span className="nav-icon">{s.icon}</span>
+                <span className="nav-label">{s.label}</span>
+              </NavLink>
+            ))}
+          </>
+        )}
 
         {isLogged && isAdmin && (
           <>
-            {roleSezioni.length > 0 && <div className="sidebar-divider" />}
+            <span className="sidebar-group-label">Gestione</span>
             {ADMIN_SECTIONS.map((s) => (
               <NavLink
                 key={s.key}

@@ -3,15 +3,11 @@ import { useSearchParams } from "react-router-dom";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
 import GameManager from "../components/GameManager.jsx";
-import { AdminUsers, AdminCast, AdminTriggers, AdminVideos, AdminSounds } from "../components/AdminPanel.jsx";
+import { AdminUsers } from "../components/AdminPanel.jsx";
 
 export const ADMIN_SECTIONS = [
   { key: "games", label: "Partite", icon: "🃏", render: (ws) => <GameManager game={ws.game} /> },
-  { key: "users", label: "Utenti", icon: "👥", render: () => <AdminUsers /> },
-  { key: "cast", label: "Cast", icon: "🎭", render: (ws) => <AdminCast ws={ws} /> },
-  { key: "triggers", label: "Trigger", icon: "⚡", render: (ws) => <AdminTriggers gameId={ws.game?._id} /> },
-  { key: "videos", label: "Video", icon: "📽️", render: (ws) => <AdminVideos gameId={ws.game?._id} /> },
-  { key: "sounds", label: "Suoni", icon: "🎧", render: (ws) => <AdminSounds gameId={ws.game?._id} /> }
+  { key: "users", label: "Utenti", icon: "👥", render: () => <AdminUsers /> }
 ];
 
 export default function AdminPage() {

@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { apiRequest } from "../api.js";
 
-// Input file che carica il media su Cloudinary via /api/upload (base64).
-// onUploaded(secureUrl) viene chiamato quando l'upload riesce.
+// Input file che carica il media su disco via /api/upload (base64).
+// onUploaded(url) viene chiamato quando l'upload riesce.
 // resourceType: "video" | "image" | "auto" | "raw".
-// mediaType: "videos" | "sounds" (sottocartella Cloudinary).
-// gameId: partita a cui appartiene il file (sottocartella tombola/<gameId>/<mediaType>).
+// mediaType: "videos" | "sounds" (sottocartella upload).
+// gameId: partita a cui appartiene il file (sottocartella upload/<gameId>/<mediaType>).
 export default function MediaUpload({ label, resourceType = "auto", mediaType = "", gameId = null, onUploaded }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
@@ -26,7 +26,7 @@ export default function MediaUpload({ label, resourceType = "auto", mediaType = 
         method: "POST",
         body: JSON.stringify({ file: pure, resourceType, mediaType, gameId })
       });
-      onUploaded(json.data.secure_url);
+      onUploaded(json.data.url);
     } catch (e) {
       setError(e.message);
     } finally {

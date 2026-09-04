@@ -99,7 +99,7 @@ export default function Sidebar() {
           <>
             <span className={`sidebar-group-label ${roleSezioni.some((s) => activeTab === s.key) ? "active" : ""}`}>Operativo</span>
             {roleSezioni.map((s) => (
-              <NavLink
+              <Link
                 key={s.key}
                 to={s.to}
                 className={`nav-link ${activeTab === s.key ? "active" : ""}`}
@@ -107,7 +107,7 @@ export default function Sidebar() {
               >
                 <span className="nav-icon">{s.icon}</span>
                 <span className="nav-label">{s.label}</span>
-              </NavLink>
+              </Link>
             ))}
           </>
         )}
@@ -116,7 +116,7 @@ export default function Sidebar() {
           <>
             <span className={`sidebar-group-label ${ADMIN_SECTIONS.some((s) => activeSez === s.key) ? "active" : ""}`}>Gestione</span>
             {ADMIN_SECTIONS.map((s) => (
-              <NavLink
+              <Link
                 key={s.key}
                 to={`/admin?sez=${s.key}`}
                 className={`nav-link ${activeSez === s.key ? "active" : ""}`}
@@ -124,7 +124,7 @@ export default function Sidebar() {
               >
                 <span className="nav-icon">{s.icon}</span>
                 <span className="nav-label">{s.label}</span>
-              </NavLink>
+              </Link>
             ))}
           </>
         )}

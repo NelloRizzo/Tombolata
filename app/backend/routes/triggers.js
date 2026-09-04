@@ -26,7 +26,16 @@ router.get("/", authenticate, async (req, res) => {
       const game = gameId ? await getGameById(gameId) : await getActiveGame();
       const character = game ? await getCharacterForUser(game._id, req.user.id) : null;
       if (!character) return res.json({ ok: true, data: [] });
-      query = { targetActor: character, actionType: "live" };
+      // L'attore vede solo le cue del proprio personaggio che appartengono alla
+      // fase narrativa corrente (o "always") ed è attiva.
+      const narration = await getNarrationState(game._id);
+      const phase = narration ? narration.phase : null;
+      query = {
+        targetActor: character,
+        actionType: "live",
+        active: true,
+        $or: [{ phase: "always" }, ...(phase ? [{ phase }] : [])]
+      };
     } else {
       return res.status(403).json({ ok: false, message: "Permessi insufficienti" });
     }

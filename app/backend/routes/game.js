@@ -314,7 +314,8 @@ router.delete("/:id", authenticate, requireRoles("director", "admin"), async (re
     const result = await deleteGame(req.params.id);
     res.json({ ok: true, ...result });
   } catch (error) {
-    res.status(404).json({ ok: false, message: error.message });
+    const status = error.message.includes("in corso") ? 400 : 404;
+    res.status(status).json({ ok: false, message: error.message });
   }
 });
 

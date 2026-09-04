@@ -1,6 +1,5 @@
 import Game from "../models/Game.js";
 import Card from "../models/Card.js";
-import { DEFAULT_ACTORS } from "./defaultCast.js";
 import { cardLabel } from "./tombolataCardsXml.js";
 
 const WIN_DEFS = [
@@ -18,7 +17,7 @@ export async function startNewGame({ name, description, scheduledAt } = {}) {
     name: name || "Tombolata",
     description: description || "",
     scheduledAt: scheduled ? new Date(scheduledAt) : null,
-    actors: DEFAULT_ACTORS.map((a) => ({ ...a })),
+    actors: [],
     assignments: [],
     extractedNumbers: [],
     currentNumber: null,
@@ -334,6 +333,10 @@ export async function toggleGameRun(id) {
 export async function deleteGame(id) {
   const game = await Game.findById(id);
   if (!game) throw new Error("Partita non trovata");
+
+  if (game.status === "active") {
+    throw new Error("Partita in corso: ferma la partita prima di eliminarla");
+  }
 
   await game.deleteOne();
   return { message: "Partita eliminata" };

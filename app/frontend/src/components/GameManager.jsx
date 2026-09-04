@@ -182,6 +182,8 @@ export default function GameManager({ game }) {
                         <button className="btn-sm" onClick={() => startEdit(g)}>Modifica</button>
                         <button
                           className="btn-sm btn-ghost"
+                          disabled={g.status === "active"}
+                          title={g.status === "active" ? "Ferma la partita prima di eliminarla" : ""}
                           onClick={() => setConfirmDelete({ id: g._id, name: g.name })}
                         >
                           Elimina

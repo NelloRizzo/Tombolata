@@ -79,7 +79,7 @@ async function run() {
   assert(game.ok, "creazione partita (admin)");
 
   const gid = game.data._id;
-  assert(game.data.actors.length === 6, "cast di default (6 personaggi) alla creazione");
+  assert(game.data.actors.length === 0, "nessun cast di default alla creazione");
 
   // il cast appartiene alla partita: si aggiunge un personaggio specifico
   const castActor = await req(`/api/game/${gid}/actors`, "POST",

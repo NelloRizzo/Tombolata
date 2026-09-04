@@ -41,6 +41,12 @@ export default function DirectorPanel({ ws, gameId }) {
   // sezione Estrazione.
   const drawerOnly = hasRole("drawer") && !hasRole("director") && !hasRole("admin");
 
+  // Un trigger è manuale solo se non è legato né a una fase né a una condizione.
+  const isManualTrigger = (t) =>
+    t.phase === "always" && !(t.conditions || []).some((g) => (g.conditions || []).length > 0);
+  const manualTriggers = triggers.filter(isManualTrigger);
+  const autoTriggers = triggers.filter((t) => !isManualTrigger(t));
+
   async function extract() {
     if (!game) return;
     setExtracting(true);
@@ -258,8 +264,8 @@ export default function DirectorPanel({ ws, gameId }) {
       <div className="panel-block">
         <h2>Trigger manuali</h2>
         <div className="trigger-list">
-          {triggers.length === 0 && <p className="empty">Nessun trigger configurato</p>}
-          {triggers.map((t) => (
+          {manualTriggers.length === 0 && <p className="empty">Nessun trigger manuale</p>}
+          {manualTriggers.map((t) => (
             <div className="trigger-item" key={t._id}>
               <div className="trigger-info">
                 <span className="trigger-name">{t.name}</span>
@@ -270,6 +276,24 @@ export default function DirectorPanel({ ws, gameId }) {
               <button className="btn-sm btn-accent" onClick={() => fire(t._id)}>
                 Attiva
               </button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="panel-block">
+        <h2>Trigger automatici</h2>
+        <div className="trigger-list">
+          {autoTriggers.length === 0 && <p className="empty">Nessun trigger automatico</p>}
+          {autoTriggers.map((t) => (
+            <div className="trigger-item" key={t._id}>
+              <div className="trigger-info">
+                <span className="trigger-name">{t.name}</span>
+                <span className="trigger-phase">({t.phase})</span>
+                <span className="trigger-action">{t.actionType}</span>
+                <span className="trigger-fired">auto</span>
+                {t.fired > 0 && <span className="trigger-fired">x{t.fired}</span>}
+              </div>
             </div>
           ))}
         </div>

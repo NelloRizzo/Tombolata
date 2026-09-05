@@ -254,9 +254,10 @@ async function run() {
   assert(!denyStart.ok, "drawer senza ruoli regia NON puo avviare il gioco (403)");
 
   const startGame = await req("/api/games/color/start", "POST",
-    { totalSquares: 100, numColors: 3 }, adminToken);
+    { totalSquares: 100, numColors: 3, presentSeconds: 12 }, adminToken);
   assert(startGame.ok && startGame.data.status === "running" && startGame.data.overlayActive, "avvio gioco colorCount");
   assert(startGame.data.colors.length === 100 && startGame.data.palette.length === 3, "layout generato (100 quadrati, 3 colori)");
+  assert(startGame.data.presentSeconds === 12 && startGame.data.expiresAt, "durata presentazione salvata con expiry");
 
   const stateGame = await req("/api/games/color", "GET", null, adminToken);
   assert(stateGame.ok && stateGame.data.overlayActive, "stato minigioco attivo");

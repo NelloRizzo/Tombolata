@@ -18,6 +18,10 @@ const minigameSchema = new mongoose.Schema(
     // Colore assegnato a ogni quadrato (index → hex)
     colors: { type: [String], default: [] },
     startedAt: { type: Date, default: null },
+    // Durata di presentazione a schermo (secondi) decisa dal regista
+    presentSeconds: { type: Number, default: 0 },
+    // Fine prevista della presentazione (startedAt + presentSeconds)
+    expiresAt: { type: Date, default: null },
     // L'overlay sostituisce il tabellone
     overlayActive: { type: Boolean, default: false }
   },

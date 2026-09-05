@@ -1709,6 +1709,35 @@ h3 {
   padding: 4vh;
   overflow: hidden;
 }
+/* Apparizione scenica: il riquadro emerge dallo scuro con zoom + flash */
+.minigame-overlay.entering {
+  animation: minigameEnter 0.9s ease-out both;
+}
+.minigame-overlay.entering::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 30%, rgba(247, 201, 72, 0.22) 55%, transparent 72%);
+  animation: minigameFlash 1s ease-out both;
+}
+@keyframes minigameEnter {
+  0% { opacity: 0; transform: scale(0.7) translateY(6vh); filter: blur(8px); }
+  60% { opacity: 1; transform: scale(1.04); filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes minigameFlash {
+  0% { opacity: 0.9; transform: scale(0.5); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+/* Uscita scenica: svanisce nello scuro con lo stesso effetto */
+.minigame-overlay.leaving {
+  animation: minigameExit 0.7s ease-in both;
+}
+@keyframes minigameExit {
+  0% { opacity: 1; transform: scale(1); filter: blur(0); }
+  100% { opacity: 0; transform: scale(1.15); filter: blur(10px); }
+}
 .minigame-head h1 {
   margin: 0;
   font-size: clamp(1.4rem, 4vw, 3rem);

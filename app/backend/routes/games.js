@@ -4,47 +4,92 @@ import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
 import {
   getColorGameState,
   startColorGame,
-  stopColorGame,
-  REVEAL_DURATION_MS
+  stopColorGame
 } from "../services/colorGameService.js";
+import {
+  getMinigameState,
+  presentationDurationMs,
+  stopMinigame
+} from "../services/minigameService.js";
+import {
+  startMemoryGame,
+  flipMemoryCard,
+  flipBackMemoryPair
+} from "../services/memoryGameService.js";
+import {
+  startNumberHideGame,
+  revealNumberHideGame
+} from "../services/numberHideService.js";
 
 const router = Router();
 
-// Auto-chiusura del minigioco: il backend chiude il gioco da solo allo
-// scadere dei secondi di presentazione (così basta che il tabellone pubblico
-// reagisca allo stato idle, senza bisogno di permessi sul client).
+// Timer di auto-chiusura: il backend chiude il gioco da solo allo scadere del
+// tempo di presentazione (così basta che il tabellone pubblico reagisca allo
+// stato idle, senza bisogno di permessi sul client).
 const autoStopTimers = new Map();
+// Memory: quando due carte scoperte non corrispondono, vengono rigirate da sole.
+const flipBackTimers = new Map();
 
 function timerKey(gameId) {
   return String(gameId || "default");
 }
 
-function clearAutoStop(gameId) {
+function clearTimer(map, gameId) {
   const key = timerKey(gameId);
-  const entry = autoStopTimers.get(key);
+  const entry = map.get(key);
   if (entry) {
     clearTimeout(entry.timer);
-    autoStopTimers.delete(key);
+    map.delete(key);
   }
 }
 
-function scheduleAutoStop(gameId, ms, wss) {
+function scheduleAutoStop(gameId, doc, wss) {
   const key = timerKey(gameId);
-  clearAutoStop(gameId);
+  clearTimer(autoStopTimers, gameId);
   const timer = setTimeout(async () => {
     autoStopTimers.delete(key);
     try {
-      const doc = await stopColorGame(gameId);
-      broadcastToClients(wss, "minigame:update", doc, gameId);
+      const stopped = await stopMinigame(gameId);
+      broadcastToClients(wss, "minigame:update", stopped, gameId);
     } catch (error) {
       console.error("Auto-stop minigioco fallito:", error.message);
     }
-  }, ms);
+  }, presentationDurationMs(doc));
   if (timer.unref) timer.unref();
   autoStopTimers.set(key, { timer, wss });
 }
 
-// Stato del minigioco corrente (tutti gli autenticati).
+function scheduleFlipBack(gameId, pair, wss) {
+  const key = timerKey(gameId);
+  clearTimer(flipBackTimers, gameId);
+  const timer = setTimeout(async () => {
+    flipBackTimers.delete(key);
+    try {
+      const doc = await flipBackMemoryPair(gameId, pair);
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+    } catch (error) {
+      console.error("Flip-back memory fallito:", error.message);
+    }
+  }, 2500);
+  if (timer.unref) timer.unref();
+  flipBackTimers.set(key, { timer, wss });
+}
+
+function clearAllTimers(gameId) {
+  clearTimer(autoStopTimers, gameId);
+  clearTimer(flipBackTimers, gameId);
+}
+
+// Stato del minigioco corrente (alias color per retrocompatibilità).
+router.get("/", authenticate, async (req, res) => {
+  try {
+    const doc = await getMinigameState(resolveGameId(req));
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
 router.get("/color", authenticate, async (req, res) => {
   try {
     const doc = await getColorGameState(resolveGameId(req));
@@ -54,8 +99,7 @@ router.get("/color", authenticate, async (req, res) => {
   }
 });
 
-// Il regista avvia il gioco: genera il layout e lo trasmette al pubblico.
-// Il gioco si chiude da solo dopo presentSeconds, con broadcast idle.
+// ---- colorCount ----
 router.post("/color/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const gameId = resolveGameId(req);
@@ -63,11 +107,7 @@ router.post("/color/start", authenticate, requireRoles("director", "admin"), asy
     const wss = req.app.get("wss");
     if (wss) {
       broadcastToClients(wss, "minigame:update", doc, gameId);
-      // Il tempo di presentazione parte alla fine della composizione dei
-      // quadrati (REVEAL_DURATION_MS), poi il gioco si chiude da solo.
-      if (doc.presentSeconds > 0) {
-        scheduleAutoStop(gameId, doc.presentSeconds * 1000 + REVEAL_DURATION_MS, wss);
-      }
+      scheduleAutoStop(gameId, doc, wss);
     }
     res.status(200).json({ ok: true, data: doc });
   } catch (error) {
@@ -75,12 +115,96 @@ router.post("/color/start", authenticate, requireRoles("director", "admin"), asy
   }
 });
 
-// Il regista torna al tabellone (chiude il minigioco in anticipo).
 router.post("/color/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const gameId = resolveGameId(req);
-    clearAutoStop(gameId);
+    clearAllTimers(gameId);
     const doc = await stopColorGame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// ---- memory a coppie ----
+router.post("/memory/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = resolveGameId(req);
+    const doc = await startMemoryGame(gameId, req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+      scheduleAutoStop(gameId, doc, wss);
+    }
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/memory/flip", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = resolveGameId(req);
+    const { doc, mismatch } = await flipMemoryCard(gameId, req.body?.index);
+    const wss = req.app.get("wss");
+    if (wss) {
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+      if (mismatch) scheduleFlipBack(gameId, mismatch, wss);
+    }
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/memory/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = resolveGameId(req);
+    clearAllTimers(gameId);
+    const doc = await stopMinigame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// ---- numero nascosto ----
+router.post("/numberhide/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = resolveGameId(req);
+    const doc = await startNumberHideGame(gameId, req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+      scheduleAutoStop(gameId, doc, wss);
+    }
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/numberhide/reveal", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = resolveGameId(req);
+    const doc = await revealNumberHideGame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/numberhide/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = resolveGameId(req);
+    clearAllTimers(gameId);
+    const doc = await stopMinigame(gameId);
     const wss = req.app.get("wss");
     if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
     res.status(200).json({ ok: true, data: doc });

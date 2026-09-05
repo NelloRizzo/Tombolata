@@ -3,6 +3,8 @@ import { apiRequest } from "../api.js";
 import ConfirmModal from "./ConfirmModal.jsx";
 import ExtractedNumbers from "./ExtractedNumbers.jsx";
 import ColorGamePanel from "./ColorGamePanel.jsx";
+import MemoryGamePanel from "./MemoryGamePanel.jsx";
+import NumberHidePanel from "./NumberHidePanel.jsx";
 import Collapsible from "./Collapsible.jsx";
 import { playWrong, playExtract, playWin, playTombola } from "../utils/audio.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -268,6 +270,12 @@ export default function DirectorPanel({ ws, gameId }) {
           <Collapsible title="Giochi" defaultOpen>
             <Collapsible title="Colore più presente" defaultOpen>
               <ColorGamePanel ws={ws} gameId={ref} />
+            </Collapsible>
+            <Collapsible title="Memory a coppie" defaultOpen={false}>
+              <MemoryGamePanel ws={ws} gameId={ref} />
+            </Collapsible>
+            <Collapsible title="Il numero nascosto" defaultOpen={false}>
+              <NumberHidePanel ws={ws} gameId={ref} />
             </Collapsible>
           </Collapsible>
         </div>

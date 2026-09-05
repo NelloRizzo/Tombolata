@@ -265,6 +265,55 @@ async function run() {
   const stopGame = await req("/api/games/color/stop", "POST", null, adminToken);
   assert(stopGame.ok && stopGame.data.status === "idle" && !stopGame.data.overlayActive, "stop gioco → idle e torna al tabellone");
 
+  console.log("== TEST MINIGIOCO (memory) ==");
+  const denyMemory = await req("/api/games/memory/start", "POST",
+    { rows: 2, cols: 3 }, drawerToken);
+  assert(!denyMemory.ok, "drawer NON puo avviare il memory (403)");
+
+  const startMem = await req("/api/games/memory/start", "POST",
+    { rows: 2, cols: 3, presentSeconds: 10 }, adminToken);
+  assert(startMem.ok && startMem.data.type === "memory" && startMem.data.status === "running", "avvio memory 2x3");
+  assert(startMem.data.cards.length === 6, "deck da 6 carte (3 coppie)");
+  const symCount = {};
+  startMem.data.cards.forEach((c) => { symCount[c.sym] = (symCount[c.sym] || 0) + 1; });
+  assert(Object.values(symCount).every((n) => n === 2), "ogni simbolo ha esattamente 2 carte (coppie)");
+  assert(startMem.data.rows * startMem.data.cols === 6 && (startMem.data.cols || 0) > 0 && (startMem.data.rows || 0) > 0, "griglia 2 righe x 3 colonne con coordinate");
+
+  // trova due carte dello stesso simbolo (coppia) e fra due simboli diversi (mismatch)
+  const bySym = {};
+  startMem.data.cards.forEach((c, i) => { (bySym[c.sym] = bySym[c.sym] || []).push(i); });
+  const same = Object.values(bySym).find((g) => g.length === 2);
+  const a = same[0];
+  const b = same[1];
+  await req("/api/games/memory/flip", "POST", { index: a }, adminToken);
+  const flipMatch = await req("/api/games/memory/flip", "POST", { index: b }, adminToken);
+  assert(flipMatch.ok && flipMatch.data.cards[a].face === "found" && flipMatch.data.cards[b].face === "found", "coppia indovinata → carte restano scoperte (found)");
+
+  const otherCard = startMem.data.cards.findIndex((c, i) => i !== a && i !== b && c.sym !== startMem.data.cards[a].sym);
+  const flipUp = await req("/api/games/memory/flip", "POST", { index: otherCard }, adminToken);
+  assert(flipUp.ok && flipUp.data.cards[otherCard].face === "up", "carta scoperta (up) in attesa della coppia");
+
+  const stopMem = await req("/api/games/memory/stop", "POST", null, adminToken);
+  assert(stopMem.ok && stopMem.data.status === "idle", "stop memory → idle");
+
+  console.log("== TEST MINIGIOCO (numero nascosto) ==");
+  const denyHide = await req("/api/games/numberhide/start", "POST",
+    { rows: 3, cols: 3 }, drawerToken);
+  assert(!denyHide.ok, "drawer NON puo avviare il numero nascosto (403)");
+
+  const startHide = await req("/api/games/numberhide/start", "POST",
+    { rows: 3, cols: 3, presentSeconds: 8, hiddenNumber: 47 }, adminToken);
+  assert(startHide.ok && startHide.data.type === "numberHide" && startHide.data.status === "running", "avvio numero nascosto 3x3");
+  assert(startHide.data.cells.length === 9 && startHide.data.hiddenNumber === 47, "griglia 9 celle con coordinate e numero segreto 47");
+  assert(startHide.data.hiddenIndex !== null && startHide.data.hiddenIndex >= 0 && startHide.data.hiddenIndex < 9, "cella segreta assegnata (coordinate implementate)");
+  assert(!startHide.data.revealed, "numero non ancora rivelato");
+
+  const revealHide = await req("/api/games/numberhide/reveal", "POST", null, adminToken);
+  assert(revealHide.ok && revealHide.data.revealed === true, "regista rivela il numero nascosto");
+
+  const stopHide = await req("/api/games/numberhide/stop", "POST", null, adminToken);
+  assert(stopHide.ok && stopHide.data.status === "idle" && !stopHide.data.overlayActive, "stop numero nascosto → idle");
+
   console.log("== TEST PERMESSI ==");
   // un utente senza ruoli non puo estrarre
   const spett = await req("/api/auth/users", "POST",

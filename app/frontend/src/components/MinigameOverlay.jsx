@@ -14,6 +14,7 @@ export default function MinigameOverlay({ minigame }) {
   const active = minigame?.overlayActive;
   const [leaving, setLeaving] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
 
   // All'attivazione fa partire l'effetto di ingresso scenico.
   useEffect(() => {
@@ -21,6 +22,14 @@ export default function MinigameOverlay({ minigame }) {
       setMounted(true);
       setLeaving(false);
     }
+  }, [active]);
+
+  // Tick del countdown di presentazione durante il gioco.
+  useEffect(() => {
+    if (!active) return;
+    setNow(Date.now());
+    const id = setInterval(() => setNow(Date.now()), 200);
+    return () => clearInterval(id);
   }, [active]);
 
   // Quando lo stato diventa idle (il gioco è stato terminato) viene animata
@@ -45,10 +54,28 @@ export default function MinigameOverlay({ minigame }) {
     delay: (i / Math.max(total, 1)) * REVEAL_MS
   }));
 
+  // Countdown di presentazione: parte alla fine della composizione (i 5s di
+  // rivelazione) e scende fino a 0 quando il backend chiude il gioco.
+  const expiresAt = minigame?.expiresAt ? new Date(minigame.expiresAt).getTime() : 0;
+  const presentMs = (minigame?.presentSeconds || 0) * 1000;
+  const remaining = Math.max(0, expiresAt - now);
+  const inPresentation = remaining <= presentMs && presentMs > 0;
+  const secondsLeft = inPresentation ? Math.max(0, Math.ceil(remaining / 1000)) : 0;
+
   return (
     <div className={`minigame-overlay ${leaving ? "leaving" : "entering"}`}>
       <div className="minigame-head">
         <h1>Indovina il colore più presente!</h1>
+      </div>
+      <div className="minigame-countdown">
+        {inPresentation ? (
+          <span className="mini-count-num">{secondsLeft}</span>
+        ) : (
+          <span className="mini-count-num idle">…</span>
+        )}
+        <span className="mini-count-lab">
+          {inPresentation ? "secondi" : "composizione in corso"}
+        </span>
       </div>
       <div
         className={`minigame-grid ${shown ? "revealed" : ""}`}

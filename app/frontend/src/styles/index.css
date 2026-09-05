@@ -1705,7 +1705,7 @@ h3 {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4vh;
+  gap: 2.5vh;
   padding: 4vh;
   overflow: hidden;
 }
@@ -1745,11 +1745,39 @@ h3 {
   color: var(--gold, #f7c948);
   text-shadow: 0 0 20px rgba(247, 201, 72, 0.4);
 }
+/* Countdown di presentazione (parte a fine composizione) */
+.minigame-countdown {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 11vh;
+  gap: 0.4vh;
+  font-family: var(--font-num);
+}
+.mini-count-num {
+  font-size: clamp(3.5rem, 13vh, 9rem);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--gold, #f7c948);
+  text-shadow: 0 0 34px rgba(247, 201, 72, 0.6);
+  font-variant-numeric: tabular-nums;
+}
+.mini-count-num.idle {
+  color: rgba(255, 255, 255, 0.35);
+  text-shadow: none;
+}
+.mini-count-lab {
+  font-size: clamp(0.8rem, 2.4vh, 1.5rem);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.65);
+}
 .minigame-grid {
   display: grid;
   grid-template-columns: repeat(var(--cols, 10), 1fr);
   gap: clamp(3px, 0.6vw, 10px);
-  width: min(92vw, 92vh);
+  width: min(80vw, 68vh);
   aspect-ratio: 1;
   padding: clamp(8px, 1.5vw, 20px);
   background: rgba(0, 0, 0, 0.35);

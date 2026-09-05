@@ -29,8 +29,9 @@ function generateLayout(totalSquares, numColors) {
 }
 
 // Avvia il minigioco: genera il layout e imposta status running + overlay.
-// presentSeconds = durata della presentazione a schermo (lato client gestisce
-// l'uscita scenica; expiresAt serve ai client per sapere quando chiudere).
+// presentSeconds = durata della presentazione a schermo; il backend chiude il
+// gioco da solo allo scadere (timer in routes/games.js) e broadcasta idle,
+// così i client animano l'uscita scenica. expiresAt è informativo per i client.
 export async function startColorGame(gameId, opts = {}) {
   const totalSquares = Math.max(9, Math.min(parseInt(opts.totalSquares, 10) || 100, 900));
   const numColors = Math.max(2, Math.min(parseInt(opts.numColors, 10) || 2, 10));

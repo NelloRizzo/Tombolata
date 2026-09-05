@@ -140,7 +140,7 @@ export default function BoardView({ showChrome = true, gameId = null }) {
       {showChrome && lastWin && <WinNotification win={lastWin} />}
 
       <PublicBoardPopup narration={narration} gameId={gameId} />
-      <MinigameOverlay minigame={minigame} gameId={gameId} autoStop />
+      <MinigameOverlay minigame={minigame} />
     </div>
   );
 }

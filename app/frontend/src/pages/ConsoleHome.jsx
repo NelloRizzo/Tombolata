@@ -9,7 +9,6 @@ import AudioPanel from "../components/AudioPanel.jsx";
 import ActorPanel from "../components/ActorPanel.jsx";
 import SpectatorPanel from "../components/SpectatorPanel.jsx";
 import PublicBoardPopup from "../components/PublicBoardPopup.jsx";
-import MinigameOverlay from "../components/MinigameOverlay.jsx";
 
 const ROLE_LABELS = {
   admin: "Gestione",
@@ -51,7 +50,6 @@ export default function ConsoleHome() {
           <SpectatorPanel ws={ws} />
         </main>
         <PublicBoardPopup narration={ws.narration} gameId={currentGameId} />
-        <MinigameOverlay minigame={ws.minigame} />
       </div>
     );
   }
@@ -90,7 +88,6 @@ export default function ConsoleHome() {
       </main>
 
       <PublicBoardPopup narration={ws.narration} gameId={currentGameId} />
-      <MinigameOverlay minigame={ws.minigame} />
     </div>
   );
 }

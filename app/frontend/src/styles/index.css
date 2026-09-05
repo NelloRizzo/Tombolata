@@ -935,6 +935,44 @@ h3 {
 }
 @media (max-width: 900px) { .panel-grid { grid-template-columns: 1fr; } }
 
+/* ---------- Sezioni collassabili (Giochi in Regia) ---------- */
+.collapsible {
+  overflow: hidden;
+}
+.collapsible-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  color: var(--text);
+}
+.collapsible-caret {
+  color: var(--gold);
+  font-size: 1rem;
+  line-height: 1;
+  width: 14px;
+  text-align: center;
+}
+.collapsible-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gold);
+}
+.collapsible-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.games-section {
+  margin-top: 16px;
+}
+
 /* ---------- Phase buttons ---------- */
 .phase-buttons {
   display: flex;

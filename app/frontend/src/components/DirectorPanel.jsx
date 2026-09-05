@@ -3,6 +3,7 @@ import { apiRequest } from "../api.js";
 import ConfirmModal from "./ConfirmModal.jsx";
 import ExtractedNumbers from "./ExtractedNumbers.jsx";
 import ColorGamePanel from "./ColorGamePanel.jsx";
+import Collapsible from "./Collapsible.jsx";
 import { playWrong, playExtract, playWin, playTombola } from "../utils/audio.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -263,7 +264,13 @@ export default function DirectorPanel({ ws, gameId }) {
         </div>
         </div>
 
-        <ColorGamePanel ws={ws} gameId={ref} />
+        <div className="games-section">
+          <Collapsible title="Giochi" defaultOpen>
+            <Collapsible title="Colore più presente" defaultOpen>
+              <ColorGamePanel ws={ws} gameId={ref} />
+            </Collapsible>
+          </Collapsible>
+        </div>
 
         <div className="panel-block">
           <h2>Trigger manuali</h2>

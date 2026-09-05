@@ -46,8 +46,7 @@ export default function ColorGamePanel({ ws, gameId }) {
   }
 
   return (
-    <div className="panel-block">
-      <h2>Gioco: colore più presente</h2>
+    <div className="game-panel">
       {error && <div className="error-text">{error}</div>}
       {active ? (
         <div className="game-active">

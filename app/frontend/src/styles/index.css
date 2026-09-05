@@ -1694,3 +1694,56 @@ h3 {
   margin-top: 12px;
 }
 
+
+/* ---------- Minigioco: colorCount ---------- */
+.minigame-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: linear-gradient(160deg, #0b1020 0%, #101b38 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4vh;
+  padding: 4vh;
+  overflow: hidden;
+}
+.minigame-head h1 {
+  margin: 0;
+  font-size: clamp(1.4rem, 4vw, 3rem);
+  text-align: center;
+  color: var(--gold, #f7c948);
+  text-shadow: 0 0 20px rgba(247, 201, 72, 0.4);
+}
+.minigame-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 10), 1fr);
+  gap: clamp(3px, 0.6vw, 10px);
+  width: min(92vw, 92vh);
+  aspect-ratio: 1;
+  padding: clamp(8px, 1.5vw, 20px);
+  background: rgba(0, 0, 0, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+}
+.minigame-cell {
+  opacity: 0;
+  border-radius: clamp(2px, 0.4vw, 8px);
+  box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.35);
+  animation: minigamePop 0.15s ease-out forwards;
+}
+.minigame-grid.revealed .minigame-cell {
+  animation: none;
+  opacity: 1;
+}
+@keyframes minigamePop {
+  from { opacity: 0; transform: scale(0.55); }
+  to { opacity: 1; transform: scale(1); }
+}
+.game-active {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}

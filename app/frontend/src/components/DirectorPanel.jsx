@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import ConfirmModal from "./ConfirmModal.jsx";
 import ExtractedNumbers from "./ExtractedNumbers.jsx";
+import ColorGamePanel from "./ColorGamePanel.jsx";
 import { playWrong, playExtract, playWin, playTombola } from "../utils/audio.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
@@ -41,8 +42,10 @@ export default function DirectorPanel({ ws, gameId }) {
   // sezione Estrazione.
   const drawerOnly = hasRole("drawer") && !hasRole("director") && !hasRole("admin");
 
-  // Un trigger è manuale se ha fase "always"; con qualsiasi altra fase è automatico.
-  const isManualTrigger = (t) => t.phase === "always";
+  // Un trigger è manuale solo se ha fase "always" E nessuna condizione; in ogni
+  // altro caso (fase ≠ always o condizione presente) è automatico.
+  const isManualTrigger = (t) =>
+    t.phase === "always" && !(t.conditions || []).some((g) => (g.conditions || []).length > 0);
   const manualTriggers = triggers.filter(isManualTrigger);
   const autoTriggers = triggers.filter((t) => !isManualTrigger(t));
 
@@ -258,10 +261,12 @@ export default function DirectorPanel({ ws, gameId }) {
             ))}
           </div>
         </div>
-      </div>
+        </div>
 
-      <div className="panel-block">
-        <h2>Trigger manuali</h2>
+        <ColorGamePanel ws={ws} gameId={ref} />
+
+        <div className="panel-block">
+          <h2>Trigger manuali</h2>
         <div className="trigger-list">
           {manualTriggers.length === 0 && <p className="empty">Nessun trigger manuale</p>}
           {manualTriggers.map((t) => (

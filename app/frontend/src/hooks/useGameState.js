@@ -10,6 +10,7 @@ export function useGameState(gameId = null) {
   const [narration, setNarration] = useState(null);
   const [lastWin, setLastWin] = useState(null);
   const [firedTriggers, setFiredTriggers] = useState([]);
+  const [minigame, setMinigame] = useState(null);
 
   // Accetta un evento di gioco solo se riguarda la partita corrente
   // (o qualsiasi se non è stata selezionata alcuna partita).
@@ -62,10 +63,20 @@ export function useGameState(gameId = null) {
         setFiredTriggers((prev) => [...arr, ...prev].slice(0, 50));
       })
     );
+    offSel.push(
+      on("minigame:state", (m) => {
+        if (m && (!m.gameId || !gameId || String(m.gameId) === String(gameId))) setMinigame(m);
+      })
+    );
+    offSel.push(
+      on("minigame:update", (m) => {
+        if (m && (!m.gameId || !gameId || String(m.gameId) === String(gameId))) setMinigame(m);
+      })
+    );
     return () => offSel.forEach((off) => off());
   }, [on, gameId, gameMatches]);
 
   const clearLastWin = () => setLastWin(null);
 
-  return { connected, game, narration, lastWin, clearLastWin, firedTriggers };
+  return { connected, game, narration, lastWin, clearLastWin, firedTriggers, minigame };
 }

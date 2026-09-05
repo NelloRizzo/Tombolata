@@ -11,8 +11,10 @@ import triggerRoutes from "./routes/triggers.js";
 import videoRoutes from "./routes/videos.js";
 import soundRoutes from "./routes/sounds.js";
 import uploadRoutes from "./routes/upload.js";
+import minigameRoutes from "./routes/games.js";
 import { getGameState } from "./services/gameService.js";
 import { getNarrationState } from "./services/triggerService.js";
+import { getColorGameState } from "./services/colorGameService.js";
 import { bootstrap } from "./services/bootstrap.js";
 import { broadcastToClients } from "./services/broadcast.js";
 import { setClockWss } from "./services/clockTicker.js";
@@ -52,6 +54,7 @@ app.use("/api/triggers", triggerRoutes);
 app.use("/api/videos", videoRoutes);
 app.use("/api/sounds", soundRoutes);
 app.use("/api/upload", uploadRoutes);
+app.use("/api/games", minigameRoutes);
 
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws" });
@@ -82,6 +85,13 @@ wss.on("connection", async (ws) => {
     ws.send(JSON.stringify({ type: "narration:state", payload: narration }));
   } catch (error) {
     console.error("Errore nell'inviare lo stato narrazione:", error.message);
+  }
+
+  try {
+    const minigame = await getColorGameState(ws.gameId);
+    ws.send(JSON.stringify({ type: "minigame:state", payload: minigame }));
+  } catch (error) {
+    console.error("Errore nell'inviare lo stato minigioco:", error.message);
   }
 
   ws.on("message", (raw) => {

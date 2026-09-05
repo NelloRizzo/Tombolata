@@ -6,6 +6,7 @@ import ExtractedNumbers from "./ExtractedNumbers.jsx";
 import LastNumber from "./LastNumber.jsx";
 import WinNotification from "./WinNotification.jsx";
 import PublicBoardPopup from "./PublicBoardPopup.jsx";
+import MinigameOverlay from "./MinigameOverlay.jsx";
 import { playExtract, playWin, playTombola } from "../utils/audio.js";
 
 // Vista tabellone riutilizzabile.
@@ -17,6 +18,7 @@ export default function BoardView({ showChrome = true, gameId = null }) {
   const [game, setGame] = useState(null);
   const [narration, setNarration] = useState(null);
   const [lastWin, setLastWin] = useState(null);
+  const [minigame, setMinigame] = useState(null);
   const prevNumberRef = useRef(null);
 
   const gameMatches = (item) => {
@@ -65,6 +67,16 @@ export default function BoardView({ showChrome = true, gameId = null }) {
           if (!prev || !c || c.videoId !== prev.player?.videoId) return prev;
           return { ...prev, player: { ...prev.player, clockMs: c.clockMs } };
         });
+      })
+    );
+    offs.push(
+      on("minigame:state", (m) => {
+        if (m && (!m.gameId || !gameId || String(m.gameId) === String(gameId))) setMinigame(m);
+      })
+    );
+    offs.push(
+      on("minigame:update", (m) => {
+        if (m && (!m.gameId || !gameId || String(m.gameId) === String(gameId))) setMinigame(m);
       })
     );
 
@@ -128,6 +140,7 @@ export default function BoardView({ showChrome = true, gameId = null }) {
       {showChrome && lastWin && <WinNotification win={lastWin} />}
 
       <PublicBoardPopup narration={narration} gameId={gameId} />
+      <MinigameOverlay minigame={minigame} />
     </div>
   );
 }

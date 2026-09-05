@@ -121,17 +121,17 @@ async function run() {
   const playAll = await req(`/api/game/${gid}/boards/from-cards`, "POST", { all: true }, drawerToken);
   assert(playAll.ok && playAll.summary.skipped === 2, "ri-selezione 'tutte': nessuna nuova aggiunta");
 
-  // estrai 4 volte: il trigger ha fase "always" → è manuale, quindi NON deve
-  // attivarsi da solo (la regola: "always" = manuale, altre fasi = automatico).
+  // estrai 4 volte: al terzo estratto il trigger count=3 (fase "always" + condizione)
+  // è automatico e deve essersi attivato da solo.
   for (let i = 0; i < 4; i++) {
     const ex = await req("/api/game/extract", "POST", null, drawerToken);
     assert(ex.ok, `estrazione ${i + 1}`);
   }
 
-  // verifica stato trigger: manuale ⇒ fired resta 0 (non auto-attivato)
+  // verifica stato trigger: condizione presente ⇒ automatico ⇒ fired === 1
   const triggers = await req("/api/triggers", "GET", null, adminToken);
   const t = triggers.data.find((x) => x._id === triggerId);
-  assert(t && t.fired === 0, "trigger manuale (always) NON attivato da solo");
+  assert(t && t.fired === 1, "trigger automatico (condizione) attivato da solo");
 
   // attore vede il proprio trigger live (personaggio associato per partita)
   const actorUser = await req("/api/auth/users", "POST",
@@ -246,6 +246,23 @@ async function run() {
 
   const stopRes = await req("/api/videos/stop", "POST", null, adminToken);
   assert(stopRes.ok && stopRes.data.player.status === "idle", "stop video player");
+
+  console.log("== TEST MINIGIOCO (colorCount) ==");
+  // il drawer (senza ruoli regia) NON può avviare il gioco
+  const denyStart = await req("/api/games/color/start", "POST",
+    { totalSquares: 100, numColors: 3 }, drawerToken);
+  assert(!denyStart.ok, "drawer senza ruoli regia NON puo avviare il gioco (403)");
+
+  const startGame = await req("/api/games/color/start", "POST",
+    { totalSquares: 100, numColors: 3 }, adminToken);
+  assert(startGame.ok && startGame.data.status === "running" && startGame.data.overlayActive, "avvio gioco colorCount");
+  assert(startGame.data.colors.length === 100 && startGame.data.palette.length === 3, "layout generato (100 quadrati, 3 colori)");
+
+  const stateGame = await req("/api/games/color", "GET", null, adminToken);
+  assert(stateGame.ok && stateGame.data.overlayActive, "stato minigioco attivo");
+
+  const stopGame = await req("/api/games/color/stop", "POST", null, adminToken);
+  assert(stopGame.ok && stopGame.data.status === "idle" && !stopGame.data.overlayActive, "stop gioco → idle e torna al tabellone");
 
   console.log("== TEST PERMESSI ==");
   // un utente senza ruoli non puo estrarre

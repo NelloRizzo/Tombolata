@@ -88,7 +88,9 @@ wss.on("connection", async (ws) => {
   }
 
   try {
-    const minigame = await getColorGameState(ws.gameId);
+    // Il minigioco è un evento globale proiettato sul tabellone unico: lo stato
+    // al connect è sempre il doc "main", indipendentemente dal gameId del client.
+    const minigame = await getColorGameState(null);
     ws.send(JSON.stringify({ type: "minigame:state", payload: minigame }));
   } catch (error) {
     console.error("Errore nell'inviare lo stato minigioco:", error.message);

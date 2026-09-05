@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
-import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
+import { broadcastToClients } from "../services/broadcast.js";
 import {
   getColorGameState,
   startColorGame,
@@ -83,7 +83,7 @@ function clearAllTimers(gameId) {
 // Stato del minigioco corrente (alias color per retrocompatibilità).
 router.get("/", authenticate, async (req, res) => {
   try {
-    const doc = await getMinigameState(resolveGameId(req));
+    const doc = await getMinigameState(null);
     res.json({ ok: true, data: doc });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -92,7 +92,7 @@ router.get("/", authenticate, async (req, res) => {
 
 router.get("/color", authenticate, async (req, res) => {
   try {
-    const doc = await getColorGameState(resolveGameId(req));
+    const doc = await getColorGameState(null);
     res.json({ ok: true, data: doc });
   } catch (error) {
     res.status(500).json({ ok: false, message: error.message });
@@ -102,7 +102,7 @@ router.get("/color", authenticate, async (req, res) => {
 // ---- colorCount ----
 router.post("/color/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
-    const gameId = resolveGameId(req);
+    const gameId = null;
     const doc = await startColorGame(gameId, req.body || {});
     const wss = req.app.get("wss");
     if (wss) {
@@ -117,7 +117,7 @@ router.post("/color/start", authenticate, requireRoles("director", "admin"), asy
 
 router.post("/color/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
-    const gameId = resolveGameId(req);
+    const gameId = null;
     clearAllTimers(gameId);
     const doc = await stopColorGame(gameId);
     const wss = req.app.get("wss");
@@ -131,7 +131,7 @@ router.post("/color/stop", authenticate, requireRoles("director", "admin"), asyn
 // ---- memory a coppie ----
 router.post("/memory/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
-    const gameId = resolveGameId(req);
+    const gameId = null;
     const doc = await startMemoryGame(gameId, req.body || {});
     const wss = req.app.get("wss");
     if (wss) {
@@ -146,7 +146,7 @@ router.post("/memory/start", authenticate, requireRoles("director", "admin"), as
 
 router.post("/memory/flip", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
-    const gameId = resolveGameId(req);
+    const gameId = null;
     const { doc, mismatch } = await flipMemoryCard(gameId, req.body?.index);
     const wss = req.app.get("wss");
     if (wss) {
@@ -161,7 +161,7 @@ router.post("/memory/flip", authenticate, requireRoles("director", "admin"), asy
 
 router.post("/memory/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
-    const gameId = resolveGameId(req);
+    const gameId = null;
     clearAllTimers(gameId);
     const doc = await stopMinigame(gameId);
     const wss = req.app.get("wss");
@@ -175,7 +175,7 @@ router.post("/memory/stop", authenticate, requireRoles("director", "admin"), asy
 // ---- numero nascosto ----
 router.post("/numberhide/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
-    const gameId = resolveGameId(req);
+    const gameId = null;
     const doc = await startNumberHideGame(gameId, req.body || {});
     const wss = req.app.get("wss");
     if (wss) {
@@ -190,7 +190,7 @@ router.post("/numberhide/start", authenticate, requireRoles("director", "admin")
 
 router.post("/numberhide/reveal", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
-    const gameId = resolveGameId(req);
+    const gameId = null;
     const doc = await revealNumberHideGame(gameId);
     const wss = req.app.get("wss");
     if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
@@ -202,7 +202,7 @@ router.post("/numberhide/reveal", authenticate, requireRoles("director", "admin"
 
 router.post("/numberhide/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
-    const gameId = resolveGameId(req);
+    const gameId = null;
     clearAllTimers(gameId);
     const doc = await stopMinigame(gameId);
     const wss = req.app.get("wss");

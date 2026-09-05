@@ -1,5 +1,10 @@
 import Minigame from "../models/Minigame.js";
 
+// Durata della composizione dei quadrati sul tabellone (client MinigameOverlay):
+// il tempo di presentazione scelto dal regista parte alla FINE della
+// composizione, quindi va sommato a questo offset nel timer di auto-chiusura.
+export const REVEAL_DURATION_MS = 5000;
+
 const PALETTE = [
   "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6",
   "#8b5cf6", "#14b8a6", "#ec4899", "#f43f5e", "#64748b"
@@ -29,9 +34,10 @@ function generateLayout(totalSquares, numColors) {
 }
 
 // Avvia il minigioco: genera il layout e imposta status running + overlay.
-// presentSeconds = durata della presentazione a schermo; il backend chiude il
-// gioco da solo allo scadere (timer in routes/games.js) e broadcasta idle,
-// così i client animano l'uscita scenica. expiresAt è informativo per i client.
+// presentSeconds = durata della presentazione a schermo; i secondi partono
+// alla FINE della composizione (REVEAL_DURATION_MS), quindi expiresAt somma
+// l'offset. Il backend chiude il gioco da solo allo scadere (timer in
+// routes/games.js) e broadcasta idle, così i client animano l'uscita scenica.
 export async function startColorGame(gameId, opts = {}) {
   const totalSquares = Math.max(9, Math.min(parseInt(opts.totalSquares, 10) || 100, 900));
   const numColors = Math.max(2, Math.min(parseInt(opts.numColors, 10) || 2, 10));
@@ -46,7 +52,7 @@ export async function startColorGame(gameId, opts = {}) {
   doc.colors = colors;
   doc.startedAt = new Date();
   doc.presentSeconds = presentSeconds;
-  doc.expiresAt = new Date(Date.now() + presentSeconds * 1000);
+  doc.expiresAt = new Date(Date.now() + presentSeconds * 1000 + REVEAL_DURATION_MS);
   doc.overlayActive = true;
   await doc.save();
   return doc;

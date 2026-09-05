@@ -4,7 +4,8 @@ import { broadcastToClients, resolveGameId } from "../services/broadcast.js";
 import {
   getColorGameState,
   startColorGame,
-  stopColorGame
+  stopColorGame,
+  REVEAL_DURATION_MS
 } from "../services/colorGameService.js";
 
 const router = Router();
@@ -62,7 +63,11 @@ router.post("/color/start", authenticate, requireRoles("director", "admin"), asy
     const wss = req.app.get("wss");
     if (wss) {
       broadcastToClients(wss, "minigame:update", doc, gameId);
-      if (doc.presentSeconds > 0) scheduleAutoStop(gameId, doc.presentSeconds * 1000, wss);
+      // Il tempo di presentazione parte alla fine della composizione dei
+      // quadrati (REVEAL_DURATION_MS), poi il gioco si chiude da solo.
+      if (doc.presentSeconds > 0) {
+        scheduleAutoStop(gameId, doc.presentSeconds * 1000 + REVEAL_DURATION_MS, wss);
+      }
     }
     res.status(200).json({ ok: true, data: doc });
   } catch (error) {

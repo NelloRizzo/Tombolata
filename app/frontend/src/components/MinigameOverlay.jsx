@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 
 // Overlay pubblico del minigioco "colorCount": un riquadro di quadrati che si
 // colorano in 5 secondi; i giocatori osservano e devono indovinare il colore
-// più presente. Non c'è alcun controllo vincite. Sostituisce il tabellone
-// con un effetto scenico di apparizione e, quando il gioco si chiude (auto
-// allo scadere della presentazione gestita dal backend, o Termina dal regista),
-// svanisce con lo stesso effetto scenico reattivo allo stato idle.
+// più presente. Non c'è alcun controllo vincite. Sostituisce il tabellone con
+// un effetto scenico di apparizione; il tempo di presentazione scelto dal
+// regista parte alla FINE della composizione e, quando il gioco si chiude
+// (auto lato server o Termina dal regista), svanisce con lo stesso effetto
+// scenico reattivo allo stato idle.
 const REVEAL_MS = 5000;
 const EXIT_MS = 700;
 

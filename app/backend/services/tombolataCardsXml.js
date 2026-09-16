@@ -56,15 +56,17 @@ export function parseCardName(name) {
 }
 
 // Griglia 3×9 come nella tombola italiana (numeri 1-90, 9 colonne da 10).
+// I 15 cells sono salvati riga per riga (3 righe × 5 numeri).
 // Colonna 0: 1-10, colonna 1: 11-19, ..., colonna 8: 80-90.
 // Celle vuote (null) dove il numero non c'è nella colonna.
 export function toRows(cells) {
   const grid = [[], [], []];
-  for (let col = 0; col < 9; col++) {
-    for (let row = 0; row < 3; row++) {
+  for (let row = 0; row < 3; row++) {
+    const rowCells = cells.slice(row * 5, row * 5 + 5);
+    for (let col = 0; col < 9; col++) {
       const lo = col === 0 ? 1 : col * 10 + 1;
       const hi = (col + 1) * 10;
-      grid[row].push(cells.find((n) => n >= lo && n <= hi) ?? null);
+      grid[row].push(rowCells.find((n) => n >= lo && n <= hi) ?? null);
     }
   }
   return grid;

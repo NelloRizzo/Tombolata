@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import Card from "../models/Card.js";
 import { parseTombolataCards, parseCardName, toRows } from "./tombolataCardsXml.js";
 
@@ -46,4 +47,14 @@ export async function importCards(xml) {
 
 export async function listCards() {
   return Card.find({}).sort({ boardNumber: 1 });
+}
+
+// Elimina dall'archivio le cartelle con gli id indicati.
+export async function deleteCards(cardIds) {
+  const ids = (cardIds || []).filter((id) => id && mongoose.isValidObjectId(id));
+  if (ids.length === 0) {
+    throw new Error("Nessun id valido da eliminare");
+  }
+  const res = await Card.deleteMany({ _id: { $in: ids } });
+  return { deleted: res.deletedCount };
 }

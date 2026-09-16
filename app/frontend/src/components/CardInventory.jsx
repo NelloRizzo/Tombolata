@@ -187,6 +187,29 @@ export default function CardInventory({ game }) {
     }
   }
 
+  async function deleteSelected() {
+    if (selected.size === 0) {
+      setError("Seleziona almeno una cartella da eliminare");
+      return;
+    }
+    setError(null);
+    setMsg(null);
+    setBusy(true);
+    try {
+      const json = await apiRequest("/api/cards/delete", {
+        method: "POST",
+        body: JSON.stringify({ cardIds: [...selected] })
+      });
+      setMsg(`Eliminate ${json.deleted ?? 0} cartelle dall'archivio`);
+      setSelected(new Set());
+      await refresh();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="board-manager">
       <div className="bm-header">
@@ -246,6 +269,14 @@ export default function CardInventory({ game }) {
         >
           Togli dal gioco
         </button>
+        <button
+          className="btn-sm btn-danger"
+          onClick={() => setConfirmAction({ type: "delete" })}
+          disabled={busy || selected.size === 0}
+          title="Elimina definitivamente le cartelle selezionate dall'archivio"
+        >
+          Elimina selezionate
+        </button>
       </div>
 
       {regexError && <div className="error-text">{regexError}</div>}
@@ -303,19 +334,24 @@ export default function CardInventory({ game }) {
       <ConfirmModal
         open={confirmAction !== null}
         title={
-          confirmAction?.type === "takeOut" ? "Togli dal gioco" : "Mettere in gioco"
+          confirmAction?.type === "takeOut" ? "Togli dal gioco" : confirmAction?.type === "delete" ? "Eliminare le cartelle" : "Mettere in gioco"
         }
         message={
           confirmAction?.type === "takeOut"
             ? `Confermi di togliere dal gioco ${selected.size} cartella/e selezionate?`
-            : `Confermi di mettere in gioco ${selected.size} cartella/e selezionate nella partita "${game?.name || ""}"?`
+            : confirmAction?.type === "delete"
+              ? `Confermi di eliminare definitivamente ${selected.size} cartella/e dall'archivio? Le eventuali copie già messe in gioco non vengono toccate.`
+              : `Confermi di mettere in gioco ${selected.size} cartella/e selezionate nella partita "${game?.name || ""}"?`
         }
-        confirmLabel={confirmAction?.type === "takeOut" ? "Togli" : "Metti in gioco"}
-        danger={confirmAction?.type === "takeOut"}
+        confirmLabel={
+          confirmAction?.type === "takeOut" ? "Togli" : confirmAction?.type === "delete" ? "Elimina" : "Metti in gioco"
+        }
+        danger={confirmAction?.type === "takeOut" || confirmAction?.type === "delete"}
         onConfirm={() => {
           const a = confirmAction?.type;
           setConfirmAction(null);
           if (a === "takeOut") takeOutOfPlay();
+          else if (a === "delete") deleteSelected();
           else putInPlay();
         }}
         onCancel={() => setConfirmAction(null)}

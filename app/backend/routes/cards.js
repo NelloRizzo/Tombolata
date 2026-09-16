@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { importCards, listCards } from "../services/cardService.js";
+import { importCards, listCards, deleteCards } from "../services/cardService.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
 
 const router = Router();
@@ -18,6 +18,16 @@ router.post("/import", authenticate, requireRoles("drawer", "director", "admin")
   try {
     const { cards, summary } = await importCards(req.body?.xml);
     res.status(201).json({ ok: true, data: cards, summary });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+// Elimina dall'archivio le cartelle con gli id indicati
+router.post("/delete", authenticate, requireRoles("drawer", "director", "admin"), async (req, res) => {
+  try {
+    const result = await deleteCards(req.body?.cardIds);
+    res.json({ ok: true, ...result });
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }

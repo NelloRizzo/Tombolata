@@ -10,8 +10,8 @@ function cardLabel(card) {
   return parts.join(" · ");
 }
 
-// Espone le righe a 9 colonne (tombola italiana) indipendentemente dal formato
-// di存储: 5 celle → mappa nella colonna giusta; 9 celle → già pronto.
+// Vincita a 9 colonne (tombola italiana) indipendentemente dal formato
+// di memorizzazione: 5 celle → mappa nella colonna giusta; 9 celle → già pronto.
 function toNineCols(rows) {
   return rows.map((row) => {
     if (row.length === 9) return row;
@@ -34,41 +34,17 @@ function toNineCols(rows) {
   });
 }
 
-// Vincita piu' alta raggiunta da una cartella sui numeri estratti, coerente
-// con la logica del gioco: vincite di riga (ambo…cinquina) o tombola completa.
-const CARD_WIN_ORDER = ["cinquina", "quaterna", "terno", "ambo"];
-function cardHighestWin(rows, extracted) {
-  const extractedSet = new Set(extracted);
-  const all = rows.flat().filter((n) => n != null);
-  if (all.length > 0 && all.every((n) => extractedSet.has(n))) return "tombola";
-  for (const type of CARD_WIN_ORDER) {
-    const count = { ambo: 2, terno: 3, quaterna: 4, cinquina: 5 }[type];
-    for (const row of rows) {
-      const hit = row.filter((n) => n != null && extractedSet.has(n)).length;
-      if (hit >= count) return type;
-    }
-  }
-  return null;
-}
-
-// Numero di celle della cartella occupate da numeri estratti.
-function cardMatchedCount(rows, extracted) {
-  const extractedSet = new Set(extracted);
-  return rows.flat().filter((n) => n != null && extractedSet.has(n)).length;
-}
-
 // Archivio globale di cartelle (slegate dalle partite). Qui si importa il file
 // .cards e si selezionano le cartelle da "mettere in gioco" o "togliere dal
 // gioco" nella partita corrente. Il filtro si applica automaticamente dal
-// secondo carattere digitato; con una selezione si puo' anche mostrare la
-// vincita attuale calcolata sui numeri estratti.
+// secondo carattere digitato. La verifica delle vincite e' una sezione
+// separata (WinCheckPanel).
 export default function CardInventory({ game }) {
   const [cards, setCards] = useState([]);
   const [regex, setRegex] = useState("");
   const [regexError, setRegexError] = useState(null);
   const [selected, setSelected] = useState(new Set());
   const [expanded, setExpanded] = useState(new Set());
-  const [showWins, setShowWins] = useState(false);
   const [confirmAction, setConfirmAction] = useState(null);
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
@@ -255,14 +231,6 @@ export default function CardInventory({ game }) {
         </div>
 
         <button
-          className={`btn-sm${showWins ? " btn-accent" : ""}`}
-          onClick={() => setShowWins((v) => !v)}
-          title="Abilita/Disabilita la visualizzazione della vincita quando selezioni una cartella"
-        >
-          {showWins ? "Disattiva vincite" : "Mostra vincita attiva"}
-        </button>
-
-        <button
           className="btn-sm btn-accent"
           onClick={() => setConfirmAction({ type: "putInPlay" })}
           disabled={busy || selected.size === 0 || !game}
@@ -284,7 +252,7 @@ export default function CardInventory({ game }) {
       {regex.trim() && regex.trim().length < 2 && (
         <div className="ci-hint">Digita almeno 2 caratteri per filtrare l'archivio.</div>
       )}
-      {(!game || (showWins && !game)) && <div className="error-text">Seleziona una partita dal menu in alto per mettere/togliere le cartelle dal gioco.</div>}
+      {!game && <div className="error-text">Seleziona una partita dal menu in alto per mettere/togliere le cartelle dal gioco.</div>}
 
       <div className="ci-list">
         {cards.length === 0 && <p className="empty">Archivio vuoto: importa un file .cards/.xml.</p>}
@@ -293,9 +261,6 @@ export default function CardInventory({ game }) {
           const isSelected = selected.has(String(card._id));
           const isExpanded = expanded.has(String(card._id));
           const rows9 = toNineCols(card.rows || []);
-          const extracted = game?.extractedNumbers || [];
-          const win = showWins && isSelected ? cardHighestWin(rows9, extracted) : null;
-          const matched = showWins && isSelected ? cardMatchedCount(rows9, extracted) : 0;
           return (
             <div
               className={`ci-item${isExpanded ? " ci-expanded" : ""}${isSelected ? " ci-selected" : ""}`}
@@ -314,11 +279,6 @@ export default function CardInventory({ game }) {
                   title={isExpanded ? "Comprimi" : "Espandi"}
                 >
                   {cardLabel(card) || "Cartella"}
-                  {showWins && isSelected && (
-                    <span className={`ci-win-tag${win ? "" : " ci-win-none"}`} title={`${matched} numeri estratti su 15`}>
-                      {win || `☐ ${matched}/15`}
-                    </span>
-                  )}
                   <span className="ci-chevron">{isExpanded ? "▲" : "▼"}</span>
                 </div>
                 {isExpanded && (
@@ -326,10 +286,7 @@ export default function CardInventory({ game }) {
                     {rows9.map((row, r) => (
                       <div className="ci-board-row" key={r}>
                         {row.map((n, c) => (
-                          <span
-                            key={c}
-                            className={`ci-cell${n == null ? " ci-empty" : ""}${showWins && isSelected && n != null && extracted.includes(n) ? " ci-cell-win" : ""}`}
-                          >
+                          <span key={c} className={`ci-cell${n == null ? " ci-empty" : ""}`}>
                             {n ?? ""}
                           </span>
                         ))}

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { apiRequest } from "../api.js";
 
 // Etichetta strutturata della cartella (titolo · set · numero)
@@ -8,24 +8,6 @@ function boardParts(board) {
   if (board.setNumber != null) parts.push(`S.${board.setNumber}`);
   if (board.cardNumber != null) parts.push(`n.${board.cardNumber}`);
   return parts;
-}
-
-// Rango delle vincite (piu' alto = migliore)
-const WIN_RANK = ["ambo", "terno", "quaterna", "cinquina", "tombola"];
-
-// Celle che partecipano alla vincita di una cartella (riga completa per
-// ambo/terno/quaterna/cinquina, tutti i numeri per la tombola).
-function winningCells(board, type) {
-  const extracted = new Set(board.__extracted || []);
-  if (type === "tombola") {
-    return new Set(board.rows.flat());
-  }
-  const count = { ambo: 2, terno: 3, quaterna: 4, cinquina: 5 }[type];
-  for (const row of board.rows) {
-    const matched = row.filter((n) => extracted.has(n));
-    if (matched.length === count) return new Set(matched);
-  }
-  return new Set();
 }
 
 function BoardForm({ onAdd, onCancel }) {
@@ -153,26 +135,6 @@ function BoardForm({ onAdd, onCancel }) {
 export default function BoardManager({ game }) {
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState(null);
-  const [showWins, setShowWins] = useState(false);
-
-  const boardsWithWin = useMemo(() => {
-    if (!showWins || !game) return [];
-    const extracted = game.extractedNumbers || [];
-    // Per ogni cartella: la vincita piu' alta finora registrata in game.wins
-    const byIndex = new Map();
-    (game.wins || []).forEach((w) => {
-      if (w.boardIndex == null) return;
-      const prev = byIndex.get(w.boardIndex);
-      const cur = WIN_RANK.indexOf(w.type);
-      const prevRank = prev ? WIN_RANK.indexOf(prev) : -1;
-      if (cur > prevRank) byIndex.set(w.boardIndex, w.type);
-    });
-    return (game.boards || []).map((board, i) => ({
-      board,
-      index: i,
-      type: byIndex.get(i) || null
-    }));
-  }, [showWins, game, game?.extractedNumbers, game?.wins, game?.boards]);
 
   async function add(boardData) {
     setError(null);
@@ -201,13 +163,6 @@ export default function BoardManager({ game }) {
       <div className="bm-header">
         <h2>Cartelle in gioco ({game.boards?.length || 0})</h2>
         <div className="bm-actions">
-          <button
-            className={`btn-sm${showWins ? " btn-accent" : ""}`}
-            onClick={() => setShowWins((v) => !v)}
-            title="Mostra la vincita piu' alta ottenuta su ogni cartella"
-          >
-            {showWins ? "Nascondi vincite" : "Evidenzia vincite"}
-          </button>
           <button className="btn-sm" onClick={() => setShowForm((v) => !v)}>
             {showForm ? "Chiudi" : "Aggiungi cartella"}
           </button>
@@ -220,38 +175,30 @@ export default function BoardManager({ game }) {
 
       <div className="bm-list">
         {game.boards?.length === 0 && <p className="empty">Nessuna cartella in gioco</p>}
-        {game.boards?.map((board, i) => {
-          const hit = showWins ? winningCells({ ...board, __extracted: game.extractedNumbers }, boardsWithWin[i]?.type) : null;
-          return (
-            <div className="bm-item" key={i}>
-              <div className="bm-item-head">
-                <span className="bm-player">
-                  {board.playerName || boardParts(board).join(" · ") || "Cartella"}
-                </span>
-                {boardsWithWin[i]?.type && (
-                  <span className="bm-win-tag">{boardsWithWin[i].type}</span>
-                )}
-                {board.boardNumber ? (
-                  <span className="bm-number">Cartella n. {board.boardNumber}</span>
-                ) : null}
-                <button className="btn-sm btn-ghost" onClick={() => remove(i)}>
-                  Rimuovi
-                </button>
-              </div>
-              <div className="bm-board">
-                {board.rows.map((row, r) => (
-                  <div className="bm-board-row" key={r}>
-                    {row.map((n, c) => (
-                      <span key={c} className={hit?.has(n) ? "bm-cell-win" : ""}>
-                        {n}
-                      </span>
-                    ))}
-                  </div>
-                ))}
-              </div>
+        {game.boards?.map((board, i) => (
+          <div className="bm-item" key={i}>
+            <div className="bm-item-head">
+              <span className="bm-player">
+                {board.playerName || boardParts(board).join(" · ") || "Cartella"}
+              </span>
+              {board.boardNumber ? (
+                <span className="bm-number">Cartella n. {board.boardNumber}</span>
+              ) : null}
+              <button className="btn-sm btn-ghost" onClick={() => remove(i)}>
+                Rimuovi
+              </button>
             </div>
-          );
-        })}
+            <div className="bm-board">
+              {board.rows.map((row, r) => (
+                <div className="bm-board-row" key={r}>
+                  {row.map((n, c) => (
+                    <span key={c}>{n}</span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

@@ -1,15 +1,21 @@
+import { useState } from "react";
 import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
 import CardInventory from "../components/CardInventory.jsx";
 import BoardManager from "../components/BoardManager.jsx";
+import WinCheckPanel from "../components/WinCheckPanel.jsx";
 
-// Pagina cartelle: archivio globale (import + selezione "messa in gioco")
-// e cartelle in gioco per la partita corrente (o quella selezionata in console).
+// Pagina cartelle, organizzata in due sezioni distinte:
+// 1. "Cartelle in gioco": gestione dell'archivio (import + selezione "messa in
+//    gioco"/"tolta dal gioco") e delle cartelle in gioco della partita corrente.
+// 2. "Controllo vincite": verifica, sulle cartelle in gioco, di quale vincita
+//    ogni cartella ha raggiunto in base ai numeri estratti.
 // Sinconizzata via WebSocket con la partita attiva/selezionata.
 export default function BoardsPage() {
   const { currentGameId } = useCurrentGame();
   const ws = useGameState(currentGameId);
   const game = ws.game;
+  const [tab, setTab] = useState("play");
 
   return (
     <div className="console-page">
@@ -22,12 +28,31 @@ export default function BoardsPage() {
         </div>
       </header>
 
+      <nav className="page-tabs">
+        <button
+          className={`role-tab${tab === "play" ? " active" : ""}`}
+          onClick={() => setTab("play")}
+        >
+          Cartelle in gioco
+        </button>
+        <button
+          className={`role-tab${tab === "check" ? " active" : ""}`}
+          onClick={() => setTab("check")}
+        >
+          Controllo vincite
+        </button>
+      </nav>
+
       <main className="console-main">
         {game ? (
-          <>
-            <CardInventory game={game} />
-            <BoardManager game={game} />
-          </>
+          tab === "check" ? (
+            <WinCheckPanel game={game} />
+          ) : (
+            <>
+              <CardInventory game={game} />
+              <BoardManager game={game} />
+            </>
+          )
         ) : (
           <p className="empty">Caricamento partita...</p>
         )}

@@ -18,14 +18,19 @@ import { getColorGameState } from "./services/colorGameService.js";
 import { bootstrap } from "./services/bootstrap.js";
 import { broadcastToClients } from "./services/broadcast.js";
 import { setClockWss } from "./services/clockTicker.js";
-import { join, dirname } from "path";
+import { join, isAbsolute, dirname } from "path";
 import { fileURLToPath } from "url";
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const UPLOAD_DIR = join(__dirname, process.env.UPLOAD_DIR || "./uploads");
+// In Docker UPLOAD_DIR è assoluto e va usato tale e quale; in dev è relativo
+// e va risolto rispetto a __dirname (dove scrive anche la route upload).
+const UPLOAD_DIR =
+  process.env.UPLOAD_DIR && isAbsolute(process.env.UPLOAD_DIR)
+    ? process.env.UPLOAD_DIR
+    : join(__dirname, process.env.UPLOAD_DIR || "./uploads");
 
 const app = express();
 const PORT = process.env.PORT || 3001;

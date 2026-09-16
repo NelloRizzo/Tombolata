@@ -36,6 +36,7 @@ function EffectsLayer({ effects }) {
 export default function PublicBoardPopup({ narration, gameId }) {
   const [videoMap, setVideoMap] = useState({});
   const playing = narration?.overlayActive && narration?.player?.status === "playing";
+  const videoGameId = narration?.gameId || gameId;
 
   const [lastNarration, setLastNarration] = useState(null);
   const [leaving, setLeaving] = useState(false);
@@ -62,9 +63,12 @@ export default function PublicBoardPopup({ narration, gameId }) {
 
   useEffect(() => {
     if (!playing) return;
+    // Il video in riproduzione appartiene alla narrazione (spesso per-partita);
+    // con tabellone pubblico il prop gameId è null, quindi usiamo il gameId del
+    // doc narrazione per includere nella lista anche i video dedicati alla partita.
     (async () => {
       try {
-        const qs = gameId ? `?gameId=${encodeURIComponent(gameId)}` : "";
+        const qs = videoGameId ? `?gameId=${encodeURIComponent(videoGameId)}` : "";
         const json = await apiRequest(`/api/videos${qs}`);
         if (json.ok) {
           const map = {};
@@ -75,7 +79,7 @@ export default function PublicBoardPopup({ narration, gameId }) {
         // ignora
       }
     })();
-  }, [playing, gameId]);
+  }, [playing, videoGameId]);
 
   if (!mounted && !playing) return null;
 

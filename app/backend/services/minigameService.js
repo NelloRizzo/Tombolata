@@ -7,7 +7,7 @@ import Minigame from "../models/Minigame.js";
 export const REVEAL_DURATION_MS = 5000;
 
 // Giochi in cui la presentazione parte dopo la composizione a cascata.
-export const REVEAL_GAMES = new Set(["colorCount", "numberHide"]);
+export const REVEAL_GAMES = new Set(["colorCount", "numberHide", "countShout", "missingNumber"]);
 
 // Millisecondi totali a schermo per il timer di auto-chiusura.
 export function presentationDurationMs(doc) {

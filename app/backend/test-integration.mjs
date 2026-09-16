@@ -314,6 +314,46 @@ async function run() {
   const stopHide = await req("/api/games/numberhide/stop", "POST", null, adminToken);
   assert(stopHide.ok && stopHide.data.status === "idle" && !stopHide.data.overlayActive, "stop numero nascosto → idle");
 
+  console.log("== TEST MINIGIOCO (conta e grida) ==");
+  const denyCount = await req("/api/games/countshout/start", "POST",
+    { rows: 4, cols: 4 }, drawerToken);
+  assert(!denyCount.ok, "drawer NON puo avviare 'conta e grida' (403)");
+
+  const startCount = await req("/api/games/countshout/start", "POST",
+    { rows: 4, cols: 5, presentSeconds: 10, numSymbols: 3, target: "⭐" }, adminToken);
+  assert(startCount.ok && startCount.data.type === "countShout" && startCount.data.status === "running", "avvio conta e grida 4x5");
+  assert(startCount.data.cells.length === 20, "griglia 20 celle di simboli");
+  const countAnswer = startCount.data.cells.filter((s) => s === "⭐").length;
+  assert(startCount.data.payload.answer === countAnswer && countAnswer > 0, "conteggio obiettivo salvato (target presente)");
+  assert(startCount.data.payload.target === "⭐", "simbolo obiettivo configurato");
+
+  const revealCount = await req("/api/games/countshout/reveal", "POST", null, adminToken);
+  assert(revealCount.ok && revealCount.data.revealed === true && revealCount.data.status === "done", "rivelazione conteggio");
+
+  const stopCount = await req("/api/games/countshout/stop", "POST", null, adminToken);
+  assert(stopCount.ok && stopCount.data.status === "idle", "stop conta e grida → idle");
+
+  console.log("== TEST MINIGIOCO (che numero manca?) ==");
+  const denyMissing = await req("/api/games/missingnumber/start", "POST",
+    { rows: 3, cols: 3 }, drawerToken);
+  assert(!denyMissing.ok, "drawer NON puo avviare 'che numero manca?' (403)");
+
+  const startMissing = await req("/api/games/missingnumber/start", "POST",
+    { rows: 3, cols: 3, presentSeconds: 8 }, adminToken);
+  assert(startMissing.ok && startMissing.data.type === "missingNumber" && startMissing.data.status === "running", "avvio che numero manca? 3x3");
+  const totalCells = startMissing.data.cells.length;
+  const missingVal = startMissing.data.payload.missing;
+  assert(totalCells === 9 && missingVal >= 1 && missingVal <= 9, "griglia 9 celle e numero mancante nel range");
+  assert(startMissing.data.cells.includes(""), "una cella vuota (il numero mancante)");
+  assert(!startMissing.data.cells.includes(String(missingVal)), "numero mancante assente dalla griglia");
+  assert(startMissing.data.cells.filter((c) => c !== "").length === 8, "gli altri 8 numeri presenti");
+
+  const revealMissing = await req("/api/games/missingnumber/reveal", "POST", null, adminToken);
+  assert(revealMissing.ok && revealMissing.data.revealed === true, "rivelazione numero mancante");
+
+  const stopMissing = await req("/api/games/missingnumber/stop", "POST", null, adminToken);
+  assert(stopMissing.ok && stopMissing.data.status === "idle", "stop che numero manca? → idle");
+
   console.log("== TEST PERMESSI ==");
   // un utente senza ruoli non puo estrarre
   const spett = await req("/api/auth/users", "POST",

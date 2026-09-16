@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { WIN_ORDER, boardLabel, boardWinState } from "../utils/gameLogic.js";
 
 // Controllo vincite: per ogni cartella in gioco mostra la vincita di riga
 // raggiunta sui numeri estratti, evidenziando le celle che la compongono.
+// Cliccando su una vincita nel riepilogo si filtrano le cartelle, mostrando
+// solo quelle che l'hanno raggiunta.
 // E' una postazione di lettura/verifica: le vincite vengono reclamate dalla
 // console regia (DirectorPanel), qui compare solo cosa e' stato gia' reclamato.
 export default function WinCheckPanel({ game }) {
@@ -10,6 +12,7 @@ export default function WinCheckPanel({ game }) {
   const extractedSet = new Set(extracted);
   const wonTypes = new Set(game?.wonTypes || []);
   const boards = game?.boards || [];
+  const [filter, setFilter] = useState(null);
 
   const ranked = useMemo(() => {
     const rank = WIN_ORDER.reduce((m, t, i) => (m[t] = i, m), {});
@@ -39,6 +42,12 @@ export default function WinCheckPanel({ game }) {
 
   if (!game) return null;
 
+  function toggleFilter(type) {
+    setFilter((current) => (current === type ? null : type));
+  }
+
+  const visible = filter ? ranked.filter((r) => r.state.type === filter) : ranked;
+
   return (
     <div className="board-manager">
       <div className="bm-header">
@@ -47,9 +56,11 @@ export default function WinCheckPanel({ game }) {
 
       <div className="wc-summary">
         {summary.map((s) => (
-          <div
-            className={`wc-chip${s.claimed ? " wc-claimed" : ""}${s.count > 0 ? " wc-hit" : ""}`}
+          <button
+            type="button"
+            className={`wc-chip${s.claimed ? " wc-claimed" : ""}${s.count > 0 ? " wc-hit" : ""}${filter === s.type ? " wc-active" : ""}`}
             key={s.type}
+            onClick={() => toggleFilter(s.type)}
             title={
               s.claimed
                 ? "Vincita gia' reclamata nella console regia"
@@ -62,13 +73,26 @@ export default function WinCheckPanel({ game }) {
             <span>
               {s.claimed ? " ✓ reclamato" : s.count > 0 ? ` · ${s.count} ${s.count === 1 ? "cartella" : "cartelle"}` : " · —"}
             </span>
-          </div>
+          </button>
         ))}
+        {filter && (
+          <button type="button" className="wc-chip wc-reset" onClick={() => setFilter(null)}>
+            Mostra tutte ({ranked.length})
+          </button>
+        )}
       </div>
 
       <div className="bm-list">
         {boards.length === 0 && <p className="empty">Nessuna cartella in gioco</p>}
-        {ranked.map(({ board, index, state, claimed }) => (
+        {boards.length > 0 && filter && visible.length === 0 && (
+          <p className="empty">
+            Nessuna cartella ha raggiunto la vincita "{filter}" ·{" "}
+            <button className="btn-sm btn-ghost" onClick={() => setFilter(null)}>
+              Mostra tutte
+            </button>
+          </p>
+        )}
+        {visible.map(({ board, index, state, claimed }) => (
           <div className="bm-item" key={index}>
             <div className="bm-item-head">
               <span className="bm-player">{boardLabel(board)}</span>

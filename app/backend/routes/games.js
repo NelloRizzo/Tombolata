@@ -20,6 +20,14 @@ import {
   startNumberHideGame,
   revealNumberHideGame
 } from "../services/numberHideService.js";
+import {
+  startCountShoutGame,
+  revealCountShoutGame
+} from "../services/countShoutService.js";
+import {
+  startMissingNumberGame,
+  revealMissingNumberGame
+} from "../services/missingNumberService.js";
 
 const router = Router();
 
@@ -201,6 +209,88 @@ router.post("/numberhide/reveal", authenticate, requireRoles("director", "admin"
 });
 
 router.post("/numberhide/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    clearAllTimers(gameId);
+    const doc = await stopMinigame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// ---- conta e grida (countShout) ----
+router.post("/countshout/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await startCountShoutGame(gameId, req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+      scheduleAutoStop(gameId, doc, wss);
+    }
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/countshout/reveal", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await revealCountShoutGame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/countshout/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    clearAllTimers(gameId);
+    const doc = await stopMinigame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// ---- che numero manca? (missingNumber) ----
+router.post("/missingnumber/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await startMissingNumberGame(gameId, req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+      scheduleAutoStop(gameId, doc, wss);
+    }
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/missingnumber/reveal", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await revealMissingNumberGame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/missingnumber/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const gameId = null;
     clearAllTimers(gameId);

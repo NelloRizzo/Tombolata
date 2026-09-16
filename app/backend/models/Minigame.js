@@ -19,7 +19,7 @@ const minigameSchema = new mongoose.Schema(
     gameId: { type: String, default: null },
     type: {
       type: String,
-      enum: ["colorCount", "memory", "numberHide"],
+      enum: ["colorCount", "memory", "numberHide", "countShout", "missingNumber"],
       default: "colorCount"
     },
     // idle = nessun gioco attivo; running = in corso (composizione in colorazione

@@ -5,6 +5,8 @@ import ExtractedNumbers from "./ExtractedNumbers.jsx";
 import ColorGamePanel from "./ColorGamePanel.jsx";
 import MemoryGamePanel from "./MemoryGamePanel.jsx";
 import NumberHidePanel from "./NumberHidePanel.jsx";
+import CountShoutPanel from "./CountShoutPanel.jsx";
+import MissingNumberPanel from "./MissingNumberPanel.jsx";
 import Collapsible from "./Collapsible.jsx";
 import { playWrong, playExtract, playWin, playTombola } from "../utils/audio.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -267,8 +269,8 @@ export default function DirectorPanel({ ws, gameId }) {
         </div>
 
         <div className="games-section">
-          <Collapsible title="Giochi" defaultOpen>
-            <Collapsible title="Colore più presente" defaultOpen>
+          <Collapsible title="Giochi" defaultOpen={false}>
+            <Collapsible title="Colore più presente" defaultOpen={false}>
               <ColorGamePanel ws={ws} gameId={ref} />
             </Collapsible>
             <Collapsible title="Memory a coppie" defaultOpen={false}>
@@ -276,6 +278,12 @@ export default function DirectorPanel({ ws, gameId }) {
             </Collapsible>
             <Collapsible title="Il numero nascosto" defaultOpen={false}>
               <NumberHidePanel ws={ws} gameId={ref} />
+            </Collapsible>
+            <Collapsible title="Conta e grida" defaultOpen={false}>
+              <CountShoutPanel ws={ws} gameId={ref} />
+            </Collapsible>
+            <Collapsible title="Che numero manca?" defaultOpen={false}>
+              <MissingNumberPanel ws={ws} gameId={ref} />
             </Collapsible>
           </Collapsible>
         </div>

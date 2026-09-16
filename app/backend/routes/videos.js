@@ -29,9 +29,10 @@ async function stopPlayer(gameId) {
   return stopPlayerForNarration(narration);
 }
 
-// Lista video. ?gameId=X filtra i video di quella partita (incl. i globali senza gameId);
+// Lista video (pubblico: il tabellone deve poter risolvere il video in riproduzione).
+// ?gameId=X filtra i video di quella partita (incl. i globali senza gameId);
 // senza gameId mostra solo i globali (retro-compatibilità).
-router.get("/", authenticate, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const gid = req.query.gameId;
     let query = {};
@@ -137,9 +138,10 @@ router.post("/stop", authenticate, requireRoles("admin", "director", "video"), a
   }
 });
 
-// Il video è terminato (chiamato dal player). Se il video è configurato con
-// autoCloseOnEnd, ripristina il tabellone; in ogni caso segna lo stato "ended".
-router.post("/ended", authenticate, requireRoles("admin", "director", "video"), async (req, res) => {
+// Il video è terminato (chiamato dal player, anche dal tabellone pubblico non
+// autenticato). Se il video è configurato con autoCloseOnEnd, ripristina il
+// tabellone; in ogni caso segna lo stato "ended".
+router.post("/ended", async (req, res) => {
   try {
     const gameId = resolveGameId(req);
     const { autoCloseOnEnd } = req.body || {};

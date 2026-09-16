@@ -8,7 +8,6 @@ import VideoPanel from "../components/VideoPanel.jsx";
 import AudioPanel from "../components/AudioPanel.jsx";
 import ActorPanel from "../components/ActorPanel.jsx";
 import SpectatorPanel from "../components/SpectatorPanel.jsx";
-import PublicBoardPopup from "../components/PublicBoardPopup.jsx";
 
 const ROLE_LABELS = {
   admin: "Gestione",
@@ -49,7 +48,6 @@ export default function ConsoleHome() {
         <main className="console-main">
           <SpectatorPanel ws={ws} />
         </main>
-        <PublicBoardPopup narration={ws.narration} gameId={currentGameId} />
       </div>
     );
   }
@@ -86,8 +84,6 @@ export default function ConsoleHome() {
         {activeTab === "audio" && <AudioPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "actor" && <ActorPanel ws={ws} gameId={currentGameId} />}
       </main>
-
-      <PublicBoardPopup narration={ws.narration} gameId={currentGameId} />
     </div>
   );
 }

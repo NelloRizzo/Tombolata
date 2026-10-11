@@ -1,3 +1,6 @@
 # Materiale creativo/programmazione (esterno all'app)
 /programmazione/
 /AGENTS.md
+
+# Override locale di docker compose (config macchina)
+/docker-compose.override.yml

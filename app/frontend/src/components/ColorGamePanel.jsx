@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiRequest } from "../api.js";
+import GameSolutionBanner from "./GameSolutionBanner.jsx";
 
 // Pannello del minigioco "colorCount" per il regista: imposta secondi di
 // presentazione, totale quadrati e numero di colori, avvia il gioco sul
@@ -14,6 +15,7 @@ export default function ColorGamePanel({ ws, gameId }) {
 
   const active = ws.minigame?.overlayActive;
   const status = ws.minigame?.status;
+  const g = ws.minigame;
 
   const body = (extra = {}) =>
     JSON.stringify({ ...extra, presentSeconds, totalSquares, numColors, ...(gameId ? { gameId } : {}) });
@@ -48,6 +50,7 @@ export default function ColorGamePanel({ ws, gameId }) {
   return (
     <div className="game-panel">
       {error && <div className="error-text">{error}</div>}
+      <GameSolutionBanner solution={g?.solution} type="colorCount" />
       {active ? (
         <div className="game-active">
           <p className="empty">

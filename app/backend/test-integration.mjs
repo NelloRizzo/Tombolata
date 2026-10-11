@@ -264,6 +264,12 @@ async function run() {
 
   const stopGame = await req("/api/games/color/stop", "POST", null, adminToken);
   assert(stopGame.ok && stopGame.data.status === "idle" && !stopGame.data.overlayActive, "stop gioco → idle e torna al tabellone");
+  assert(
+    stopGame.data.solution?.kind === "colorCount" &&
+      stopGame.data.solution.total === 100 &&
+      stopGame.data.solution.color,
+    "soluzione colorCount (colore più presente) persistita dopo lo stop"
+  );
 
   console.log("== TEST MINIGIOCO (memory) ==");
   const denyMemory = await req("/api/games/memory/start", "POST",
@@ -313,6 +319,12 @@ async function run() {
 
   const stopHide = await req("/api/games/numberhide/stop", "POST", null, adminToken);
   assert(stopHide.ok && stopHide.data.status === "idle" && !stopHide.data.overlayActive, "stop numero nascosto → idle");
+  assert(
+    stopHide.data.solution?.kind === "numberHide" &&
+      stopHide.data.solution.number === 47 &&
+      stopHide.data.solution.cell,
+    "soluzione numero nascosto (numero + casella) persistita dopo lo stop"
+  );
 
   console.log("== TEST MINIGIOCO (conta e grida) ==");
   const denyCount = await req("/api/games/countshout/start", "POST",
@@ -332,6 +344,12 @@ async function run() {
 
   const stopCount = await req("/api/games/countshout/stop", "POST", null, adminToken);
   assert(stopCount.ok && stopCount.data.status === "idle", "stop conta e grida → idle");
+  assert(
+    stopCount.data.solution?.kind === "countShout" &&
+      stopCount.data.solution.target === "⭐" &&
+      stopCount.data.solution.answer === countAnswer,
+    "soluzione conta e grida persistita dopo lo stop"
+  );
 
   console.log("== TEST MINIGIOCO (che numero manca?) ==");
   const denyMissing = await req("/api/games/missingnumber/start", "POST",
@@ -353,6 +371,11 @@ async function run() {
 
   const stopMissing = await req("/api/games/missingnumber/stop", "POST", null, adminToken);
   assert(stopMissing.ok && stopMissing.data.status === "idle", "stop che numero manca? → idle");
+  assert(
+    stopMissing.data.solution?.kind === "missingNumber" &&
+      stopMissing.data.solution.missing === missingVal,
+    "soluzione numero mancante persistita dopo lo stop"
+  );
 
   console.log("== TEST PERMESSI ==");
   // un utente senza ruoli non puo estrarre

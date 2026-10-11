@@ -1,4 +1,5 @@
 import {
+  captureSolution,
   clamp,
   getMinigameForGame,
   presentationDurationMs
@@ -41,6 +42,7 @@ export async function startMissingNumberGame(gameId, opts = {}) {
   doc.startedAt = new Date();
   doc.presentSeconds = presentSeconds;
   doc.revealed = false;
+  doc.solution = {};
   doc.payload = { missing, total };
   doc.expiresAt = new Date(Date.now() + presentationDurationMs(doc));
   doc.overlayActive = true;
@@ -56,6 +58,7 @@ export async function revealMissingNumberGame(gameId) {
   }
   doc.status = "done";
   doc.revealed = true;
+  captureSolution(doc);
   await doc.save();
   return doc;
 }

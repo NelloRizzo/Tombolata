@@ -2134,3 +2134,37 @@ h3 {
   gap: 10px;
   align-items: flex-start;
 }
+.game-solution {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(247, 201, 72, 0.12);
+  border: 1px solid var(--gold, #f7c948);
+  color: var(--gold, #f7c948);
+  font-size: 0.95rem;
+  flex-wrap: wrap;
+}
+.game-solution-tag {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--gold, #f7c948);
+  color: #101a30;
+}
+.game-solution-text strong {
+  color: #fff;
+}
+.color-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  vertical-align: middle;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}

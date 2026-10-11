@@ -1,4 +1,5 @@
 import {
+  captureSolution,
   clamp,
   getMinigameForGame,
   presentationDurationMs,
@@ -43,6 +44,7 @@ export async function startColorGame(gameId, opts = {}) {
   doc.startedAt = new Date();
   doc.presentSeconds = presentSeconds;
   doc.revealed = false;
+  doc.solution = {};
   doc.payload = {};
   doc.expiresAt = new Date(Date.now() + presentationDurationMs(doc));
   doc.overlayActive = true;
@@ -53,6 +55,7 @@ export async function startColorGame(gameId, opts = {}) {
 // Il regista torna al tabellone (chiude il gioco).
 export async function stopColorGame(gameId) {
   const doc = await getMinigameForGame(gameId);
+  captureSolution(doc);
   doc.status = "idle";
   doc.overlayActive = false;
   doc.colors = [];

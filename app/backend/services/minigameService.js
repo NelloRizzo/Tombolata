@@ -60,11 +60,55 @@ export async function getMinigameState(gameId) {
   return getMinigameForGame(gameId);
 }
 
+// Calcola e salva la soluzione del gioco corrente nel campo `solution` del doc.
+// Va chiamata PRIMA di azzerare i campi di gioco (a fine partita o alla rivelazione),
+// così la console di regia può mostrarla anche dopo la chiusura. Non lancia mai.
+export function captureSolution(doc) {
+  try {
+    const type = doc.type;
+    if (type === "colorCount") {
+      const counts = {};
+      for (const c of doc.colors || []) counts[c] = (counts[c] || 0) + 1;
+      const entries = Object.entries(counts)
+        .map(([color, count]) => ({ color, count }))
+        .sort((a, b) => b.count - a.count);
+      const top = entries[0] || null;
+      doc.solution = {
+        kind: "colorCount",
+        color: top ? top.color : null,
+        count: top ? top.count : 0,
+        total: (doc.colors || []).length,
+        counts: entries
+      };
+    } else if (type === "countShout") {
+      const p = doc.payload || {};
+      if (p.target != null && p.answer != null) {
+        doc.solution = { kind: "countShout", target: p.target, answer: p.answer };
+      }
+    } else if (type === "missingNumber") {
+      const p = doc.payload || {};
+      if (p.missing != null) {
+        doc.solution = { kind: "missingNumber", missing: p.missing, total: p.total };
+      }
+    } else if (type === "numberHide") {
+      if (doc.hiddenNumber != null) {
+        const cell = doc.hiddenIndex != null ? (doc.cells || [])[doc.hiddenIndex] : null;
+        doc.solution = { kind: "numberHide", number: doc.hiddenNumber, cell, index: doc.hiddenIndex };
+      }
+    }
+    if (doc.solution) doc.markModified("solution");
+  } catch (error) {
+    console.error("Calcolo soluzione minigioco fallito:", error.message);
+  }
+  return doc.solution;
+}
+
 // Stop generico: riporta il doc a idle azzerando i campi di gioco. Il `type`
 // non viene azzerato: ai client serve per sapere quale overlay smontare
-// durante l'effetto di uscita scenica.
+// durante l'effetto di uscita scenica. La `solution` viene invece conservata.
 export async function stopMinigame(gameId) {
   const doc = await getMinigameForGame(gameId);
+  captureSolution(doc);
   doc.status = "idle";
   doc.overlayActive = false;
   doc.startedAt = null;

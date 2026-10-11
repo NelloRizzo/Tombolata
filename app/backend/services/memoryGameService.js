@@ -34,6 +34,7 @@ export async function startMemoryGame(gameId, opts = {}) {
   doc.startedAt = new Date();
   doc.presentSeconds = presentSeconds;
   doc.revealed = false;
+  doc.solution = {};
   doc.overlayActive = true;
   doc.expiresAt = new Date(Date.now() + presentationDurationMs(doc));
   await doc.save();

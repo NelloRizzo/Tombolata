@@ -1,4 +1,5 @@
 import {
+  captureSolution,
   clamp,
   getMinigameForGame,
   presentationDurationMs
@@ -40,6 +41,7 @@ export async function startCountShoutGame(gameId, opts = {}) {
   doc.startedAt = new Date();
   doc.presentSeconds = presentSeconds;
   doc.revealed = false;
+  doc.solution = {};
   doc.payload = { target, answer, symbols: available };
   doc.expiresAt = new Date(Date.now() + presentationDurationMs(doc));
   doc.overlayActive = true;
@@ -55,6 +57,7 @@ export async function revealCountShoutGame(gameId) {
   }
   doc.status = "done";
   doc.revealed = true;
+  captureSolution(doc);
   await doc.save();
   return doc;
 }

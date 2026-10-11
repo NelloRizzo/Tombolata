@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiRequest } from "../api.js";
+import GameSolutionBanner from "./GameSolutionBanner.jsx";
 
 // "Che numero manca?" (Regia): il regista imposta la griglia (da 1 a N con
 // un numero mancante), avvia il gioco sul tabellone; quando qualcuno grida la
@@ -66,6 +67,7 @@ export default function MissingNumberPanel({ ws, gameId }) {
   return (
     <div className="game-panel">
       {error && <div className="error-text">{error}</div>}
+      <GameSolutionBanner solution={g?.solution} type="missingNumber" />
       {active ? (
         <div className="game-active">
           {running && (

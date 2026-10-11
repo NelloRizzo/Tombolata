@@ -1,5 +1,6 @@
 import {
   buildCells,
+  captureSolution,
   clamp,
   getMinigameForGame,
   presentationDurationMs
@@ -27,6 +28,7 @@ export async function startNumberHideGame(gameId, opts = {}) {
   doc.hiddenIndex = hiddenIndex;
   doc.hiddenNumber = hiddenNumber;
   doc.revealed = false;
+  doc.solution = {};
   doc.startedAt = new Date();
   doc.presentSeconds = presentSeconds;
   doc.overlayActive = true;
@@ -42,6 +44,7 @@ export async function revealNumberHideGame(gameId) {
     throw new Error("Nessun gioco 'numero nascosto' attivo");
   }
   doc.revealed = true;
+  captureSolution(doc);
   await doc.save();
   return doc;
 }

@@ -43,6 +43,9 @@ const minigameSchema = new mongoose.Schema(
     hiddenNumber: { type: Number, default: null },
     // numberHide: il regista ha rivelato dov'era nascosto il numero
     revealed: { type: Boolean, default: false },
+    // Soluzione dell'ultimo gioco terminato (persistita anche dopo lo stop,
+    // così la console di regia può mostrarla a fine gioco). { kind, ... }
+    solution: { type: mongoose.Schema.Types.Mixed, default: {} },
     // Payload generico per future estensioni dei singoli giochi
     payload: { type: mongoose.Schema.Types.Mixed, default: {} },
     startedAt: { type: Date, default: null },

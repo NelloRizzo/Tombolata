@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiRequest } from "../api.js";
+import GameSolutionBanner from "./GameSolutionBanner.jsx";
 
 // "Il numero nascosto" (Regia): il regista imposta griglia e numero segreto,
 // avvia il gioco sul tabellone; quando il pubblico ha scelto la casella, il
@@ -66,6 +67,7 @@ export default function NumberHidePanel({ ws, gameId }) {
   return (
     <div className="game-panel">
       {error && <div className="error-text">{error}</div>}
+      <GameSolutionBanner solution={g?.solution} type="numberHide" />
       {active ? (
         <div className="game-active">
           {running && (

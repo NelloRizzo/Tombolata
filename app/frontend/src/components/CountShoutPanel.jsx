@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { apiRequest } from "../api.js";
+import GameSolutionBanner from "./GameSolutionBanner.jsx";
 
 const SYMBOLS = ["🎄", "🎅", "⛄", "🎁", "⭐", "🕯️", "❄️", "🎀", "🔔", "🍬", "🥂", "🌸"];
 
@@ -70,6 +71,7 @@ export default function CountShoutPanel({ ws, gameId }) {
   return (
     <div className="game-panel">
       {error && <div className="error-text">{error}</div>}
+      <GameSolutionBanner solution={g?.solution} type="countShout" />
       {active ? (
         <div className="game-active">
           {running && (

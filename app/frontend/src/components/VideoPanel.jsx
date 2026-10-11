@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import MediaUpload from "./MediaUpload.jsx";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 const DEFAULT_ICON = "📽️";
 
@@ -11,6 +12,7 @@ export default function VideoPanel({ ws, gameId }) {
   const [playingId, setPlayingId] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", icon: "", fileUrl: "" });
+  const [confirmRemove, setConfirmRemove] = useState(null);
 
   const ref = gameId || ws.game?._id || null;
   const withRef = { method: "POST", body: ref ? JSON.stringify({ gameId: ref }) : undefined };
@@ -53,11 +55,14 @@ export default function VideoPanel({ ws, gameId }) {
   }
 
   async function remove(id) {
+    setError(null);
     try {
       await apiRequest(`/api/videos/${id}`, { method: "DELETE" });
+      setConfirmRemove(null);
       load();
     } catch (e) {
       setError(e.message);
+      setConfirmRemove(null);
     }
   }
 
@@ -82,10 +87,20 @@ export default function VideoPanel({ ws, gameId }) {
   }
 
   const status = narration?.player?.status || "idle";
+  const pendingVideo = videos.find((v) => v._id === confirmRemove) || null;
 
   return (
     <div className="video-panel">
       {error && <div className="error-banner">{error}</div>}
+      <ConfirmModal
+        open={!!pendingVideo}
+        title={`Elimina video "${pendingVideo?.name}"?`}
+        message="Il video sarà rimosso in modo definitivo. Se è usato da un trigger, quel trigger non potrà più riprodurlo."
+        confirmLabel="Elimina"
+        danger
+        onConfirm={() => remove(pendingVideo._id)}
+        onCancel={() => setConfirmRemove(null)}
+      />
 
       <div className="panel-block">
         <h2>Controllo riproduzione</h2>
@@ -156,7 +171,7 @@ export default function VideoPanel({ ws, gameId }) {
                 <span className="sound-card-icon">{v.icon || DEFAULT_ICON}</span>
                 <span className="sound-card-name">{v.name}</span>
               </button>
-              <button className="sound-card-remove" title="Rimuovi" onClick={() => remove(v._id)}>✕</button>
+              <button className="sound-card-remove" title="Rimuovi" onClick={() => setConfirmRemove(v._id)}>✕</button>
             </div>
           ))}
         </div>

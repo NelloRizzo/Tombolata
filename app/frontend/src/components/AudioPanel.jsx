@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiRequest } from "../api.js";
 import MediaUpload from "./MediaUpload.jsx";
 import { playWin, playWrong, playSound } from "../utils/audio.js";
+import ConfirmModal from "./ConfirmModal.jsx";
 
 // Pulsanti sonori fissi (file MP3 scaricati in public/sounds/).
 // NB: il suono di estrazione è automatico (si attiva a ogni estrazione),
@@ -21,6 +22,7 @@ export default function AudioPanel({ ws, gameId }) {
   const [quickPlaying, setQuickPlaying] = useState(null);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState({ name: "", icon: "", fileUrl: "" });
+  const [confirmRemove, setConfirmRemove] = useState(null);
 
   const ref = gameId || game?._id || null;
 
@@ -77,19 +79,32 @@ export default function AudioPanel({ ws, gameId }) {
   }
 
   async function remove(id) {
+    setError(null);
     try {
       await apiRequest(`/api/sounds/${id}`, { method: "DELETE" });
+      setConfirmRemove(null);
       load();
     } catch (e) {
       setError(e.message);
+      setConfirmRemove(null);
     }
   }
 
   const customSounds = sounds.filter((s) => s.kind === "file");
+  const pendingSound = sounds.find((s) => s._id === confirmRemove) || null;
 
   return (
     <div className="audio-panel">
       {error && <div className="error-banner">{error}</div>}
+      <ConfirmModal
+        open={!!pendingSound}
+        title={`Elimina suono "${pendingSound?.name}"?`}
+        message="Il suono sarà rimosso in modo definitivo. Se è usato da un trigger, quel trigger non potrà più riprodurlo."
+        confirmLabel="Elimina"
+        danger
+        onConfirm={() => remove(pendingSound._id)}
+        onCancel={() => setConfirmRemove(null)}
+      />
 
       <div className="panel-block">
         <h2>Effetti fissi</h2>
@@ -157,7 +172,7 @@ export default function AudioPanel({ ws, gameId }) {
                 <span className="sound-card-icon">{s.icon || DEFAULT_ICON}</span>
                 <span className="sound-card-name">{s.name}</span>
               </button>
-              <button className="sound-card-remove" title="Rimuovi" onClick={() => remove(s._id)}>✕</button>
+              <button className="sound-card-remove" title="Rimuovi" onClick={() => setConfirmRemove(s._id)}>✕</button>
             </div>
           ))}
         </div>

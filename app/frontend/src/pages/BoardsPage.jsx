@@ -15,7 +15,7 @@ export default function BoardsPage() {
   const { currentGameId } = useCurrentGame();
   const ws = useGameState(currentGameId);
   const game = ws.game;
-  const [tab, setTab] = useState("play");
+  const [tab, setTab] = useState("check");
 
   return (
     <div className="console-page">

@@ -377,6 +377,69 @@ async function run() {
     "soluzione numero mancante persistita dopo lo stop"
   );
 
+  console.log("== TEST MINIGIOCO (anagramma) ==");
+  const denyAnagram = await req("/api/games/anagram/start", "POST", { word: "REGALO" }, drawerToken);
+  assert(!denyAnagram.ok, "drawer NON puo avviare l'anagramma (403)");
+
+  const startAnagram = await req("/api/games/anagram/start", "POST",
+    { word: "regalo", presentSeconds: 15 }, adminToken);
+  assert(startAnagram.ok && startAnagram.data.type === "anagram" && startAnagram.data.status === "running", "avvio anagramma");
+  assert(startAnagram.data.payload.word === "REGALO", "parola normalizzata in maiuscolo");
+  const sortedScrambled = [...startAnagram.data.payload.scrambled].sort().join("");
+  assert(sortedScrambled === [..."REGALO"].sort().join(""), "le lettere mescolate sono un anagramma della parola");
+  assert(startAnagram.data.cells.length === 6, "6 celle (una per lettera)");
+  assert(!startAnagram.data.payload.word.includes(startAnagram.data.payload.scrambled) || startAnagram.data.payload.scrambled !== "REGALO", "parola mescolata (non identica)");
+  assert(startAnagram.data.payload.hint, "indizio presente");
+
+  const revealAnagram = await req("/api/games/anagram/reveal", "POST", null, adminToken);
+  assert(revealAnagram.ok && revealAnagram.data.revealed === true && revealAnagram.data.status === "done", "rivelazione anagramma");
+  assert(revealAnagram.data.solution?.kind === "anagram" && revealAnagram.data.solution.word === "REGALO", "soluzione anagramma (parola)");
+
+  const stopAnagram = await req("/api/games/anagram/stop", "POST", null, adminToken);
+  assert(stopAnagram.ok && stopAnagram.data.status === "idle", "stop anagramma → idle");
+  assert(stopAnagram.data.solution?.word === "REGALO", "soluzione anagramma persistita dopo lo stop");
+
+  console.log("== TEST MINIGIOCO (trova l'intruso) ==");
+  const denyIntruder = await req("/api/games/intruder/start", "POST", {}, drawerToken);
+  assert(!denyIntruder.ok, "drawer NON puo avviare 'trova l'intruso' (403)");
+
+  const startIntruder = await req("/api/games/intruder/start", "POST",
+    { words: ["pallina", "stella", "nastro", "padella"], intruder: 3, theme: "Addobbi di Natale", presentSeconds: 15 }, adminToken);
+  assert(startIntruder.ok && startIntruder.data.type === "intruder" && startIntruder.data.status === "running", "avvio trova l'intruso");
+  assert(startIntruder.data.cells.length === 4 && startIntruder.data.payload.intruderIndex === 3, "4 parole con indice intruso salvato");
+  assert(startIntruder.data.payload.words[3] === "PADELLA" && startIntruder.data.payload.theme === "Addobbi di Natale", "parole normalizzate e tema salvato");
+
+  const revealIntruder = await req("/api/games/intruder/reveal", "POST", null, adminToken);
+  assert(revealIntruder.ok && revealIntruder.data.revealed === true, "rivelazione intruso");
+  assert(revealIntruder.data.solution?.kind === "intruder" && revealIntruder.data.solution.word === "PADELLA", "soluzione intruso (parola)");
+
+  const stopIntruder = await req("/api/games/intruder/stop", "POST", null, adminToken);
+  assert(stopIntruder.ok && stopIntruder.data.status === "idle", "stop intruso → idle");
+  assert(stopIntruder.data.solution?.word === "PADELLA", "soluzione intruso persistita dopo lo stop");
+
+  console.log("== TEST MINIGIOCO (parola a categorie) ==");
+  const denyCategories = await req("/api/games/categories/start", "POST", {}, drawerToken);
+  assert(!denyCategories.ok, "drawer NON puo avviare 'parola a categorie' (403)");
+
+  const startCategories = await req("/api/games/categories/start", "POST",
+    { category: "Un oggetto", word: "presepe", hints: ["indizio uno", "indizio due", "indizio tre"], presentSeconds: 20 }, adminToken);
+  assert(startCategories.ok && startCategories.data.type === "categories" && startCategories.data.status === "running", "avvio parola a categorie");
+  assert(startCategories.data.payload.word === "PRESEPE" && startCategories.data.payload.hints.length === 3, "parola e 3 indizi salvati");
+  assert(startCategories.data.revealedHints === 0, "nessun indizio ancora svelato");
+
+  const hint1 = await req("/api/games/categories/hint", "POST", null, adminToken);
+  assert(hint1.ok && hint1.data.revealedHints === 1, "primo indizio svelato");
+  const hint2 = await req("/api/games/categories/hint", "POST", null, adminToken);
+  assert(hint2.ok && hint2.data.revealedHints === 2, "secondo indizio svelato");
+
+  const revealCategories = await req("/api/games/categories/reveal", "POST", null, adminToken);
+  assert(revealCategories.ok && revealCategories.data.revealed === true && revealCategories.data.status === "done", "rivelazione parola a categorie");
+  assert(revealCategories.data.solution?.kind === "categories" && revealCategories.data.solution.word === "PRESEPE", "soluzione parola a categorie");
+
+  const stopCategories = await req("/api/games/categories/stop", "POST", null, adminToken);
+  assert(stopCategories.ok && stopCategories.data.status === "idle", "stop parola a categorie → idle");
+  assert(stopCategories.data.solution?.word === "PRESEPE" && stopCategories.data.revealedHints === 0, "soluzione persistita e indizi azzerati allo stop");
+
   console.log("== TEST PERMESSI ==");
   // un utente senza ruoli non puo estrarre
   const spett = await req("/api/auth/users", "POST",

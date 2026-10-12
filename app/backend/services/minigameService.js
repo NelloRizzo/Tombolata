@@ -95,6 +95,18 @@ export function captureSolution(doc) {
         const cell = doc.hiddenIndex != null ? (doc.cells || [])[doc.hiddenIndex] : null;
         doc.solution = { kind: "numberHide", number: doc.hiddenNumber, cell, index: doc.hiddenIndex };
       }
+    } else if (type === "anagram") {
+      const p = doc.payload || {};
+      if (p.word) doc.solution = { kind: "anagram", word: p.word, scrambled: p.scrambled };
+    } else if (type === "intruder") {
+      const p = doc.payload || {};
+      const words = p.words || [];
+      if (words.length) {
+        doc.solution = { kind: "intruder", word: words[p.intruderIndex], theme: p.theme || "" };
+      }
+    } else if (type === "categories") {
+      const p = doc.payload || {};
+      if (p.word) doc.solution = { kind: "categories", word: p.word, category: p.category || "" };
     }
     if (doc.solution) doc.markModified("solution");
   } catch (error) {
@@ -125,6 +137,7 @@ export async function stopMinigame(gameId) {
   doc.hiddenIndex = null;
   doc.hiddenNumber = null;
   doc.revealed = false;
+  doc.revealedHints = 0;
   doc.payload = {};
   await doc.save();
   return doc;

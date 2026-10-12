@@ -28,6 +28,19 @@ import {
   startMissingNumberGame,
   revealMissingNumberGame
 } from "../services/missingNumberService.js";
+import {
+  startAnagramGame,
+  revealAnagramGame
+} from "../services/anagramService.js";
+import {
+  startIntruderGame,
+  revealIntruderGame
+} from "../services/intruderService.js";
+import {
+  startCategoriesGame,
+  nextHintCategoriesGame,
+  revealCategoriesGame
+} from "../services/categoriesService.js";
 
 const router = Router();
 
@@ -291,6 +304,141 @@ router.post("/missingnumber/reveal", authenticate, requireRoles("director", "adm
 });
 
 router.post("/missingnumber/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    clearAllTimers(gameId);
+    const doc = await stopMinigame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// ---- anagramma ----
+router.post("/anagram/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await startAnagramGame(gameId, req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+      scheduleAutoStop(gameId, doc, wss);
+    }
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/anagram/reveal", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await revealAnagramGame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/anagram/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    clearAllTimers(gameId);
+    const doc = await stopMinigame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// ---- trova l'intruso ----
+router.post("/intruder/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await startIntruderGame(gameId, req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+      scheduleAutoStop(gameId, doc, wss);
+    }
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/intruder/reveal", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await revealIntruderGame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/intruder/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    clearAllTimers(gameId);
+    const doc = await stopMinigame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+});
+
+// ---- parola a categorie (indovina la parola) ----
+router.post("/categories/start", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await startCategoriesGame(gameId, req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      broadcastToClients(wss, "minigame:update", doc, gameId);
+      scheduleAutoStop(gameId, doc, wss);
+    }
+    res.status(200).json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/categories/hint", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await nextHintCategoriesGame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/categories/reveal", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const gameId = null;
+    const doc = await revealCategoriesGame(gameId);
+    const wss = req.app.get("wss");
+    if (wss) broadcastToClients(wss, "minigame:update", doc, gameId);
+    res.json({ ok: true, data: doc });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+router.post("/categories/stop", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const gameId = null;
     clearAllTimers(gameId);

@@ -7,6 +7,9 @@ import MemoryGamePanel from "./MemoryGamePanel.jsx";
 import NumberHidePanel from "./NumberHidePanel.jsx";
 import CountShoutPanel from "./CountShoutPanel.jsx";
 import MissingNumberPanel from "./MissingNumberPanel.jsx";
+import AnagramPanel from "./AnagramPanel.jsx";
+import IntruderPanel from "./IntruderPanel.jsx";
+import CategoriesPanel from "./CategoriesPanel.jsx";
 import Collapsible from "./Collapsible.jsx";
 import { playWrong, playExtract, playWin, playTombola } from "../utils/audio.js";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -284,6 +287,15 @@ export default function DirectorPanel({ ws, gameId }) {
             </Collapsible>
             <Collapsible title="Che numero manca?" defaultOpen={false}>
               <MissingNumberPanel ws={ws} gameId={ref} />
+            </Collapsible>
+            <Collapsible title="Anagramma" defaultOpen={false}>
+              <AnagramPanel ws={ws} gameId={ref} />
+            </Collapsible>
+            <Collapsible title="Trova l'intruso" defaultOpen={false}>
+              <IntruderPanel ws={ws} gameId={ref} />
+            </Collapsible>
+            <Collapsible title="Parola a categorie" defaultOpen={false}>
+              <CategoriesPanel ws={ws} gameId={ref} />
             </Collapsible>
           </Collapsible>
         </div>

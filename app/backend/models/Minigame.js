@@ -19,7 +19,16 @@ const minigameSchema = new mongoose.Schema(
     gameId: { type: String, default: null },
     type: {
       type: String,
-      enum: ["colorCount", "memory", "numberHide", "countShout", "missingNumber"],
+      enum: [
+        "colorCount",
+        "memory",
+        "numberHide",
+        "countShout",
+        "missingNumber",
+        "anagram",
+        "intruder",
+        "categories"
+      ],
       default: "colorCount"
     },
     // idle = nessun gioco attivo; running = in corso (composizione in colorazione
@@ -43,6 +52,8 @@ const minigameSchema = new mongoose.Schema(
     hiddenNumber: { type: Number, default: null },
     // numberHide: il regista ha rivelato dov'era nascosto il numero
     revealed: { type: Boolean, default: false },
+    // categories ("indovina la parola"): quanti indizi sono stati svelati
+    revealedHints: { type: Number, default: 0 },
     // Soluzione dell'ultimo gioco terminato (persistita anche dopo lo stop,
     // così la console di regia può mostrarla a fine gioco). { kind, ... }
     solution: { type: mongoose.Schema.Types.Mixed, default: {} },

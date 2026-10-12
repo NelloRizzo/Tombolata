@@ -5,7 +5,10 @@ const LABELS = {
   countShout: "Conta e grida",
   missingNumber: "Che numero manca?",
   numberHide: "Il numero nascosto",
-  colorCount: "Colore più presente"
+  colorCount: "Colore più presente",
+  anagram: "Anagramma",
+  intruder: "Trova l'intruso",
+  categories: "Parola a categorie"
 };
 
 export default function GameSolutionBanner({ solution, type }) {
@@ -38,6 +41,13 @@ export default function GameSolutionBanner({ solution, type }) {
         <strong>
           {solution.count}/{solution.total}
         </strong>
+      </>
+    );
+  } else if (type === "anagram" || type === "intruder" || type === "categories") {
+    content = (
+      <>
+        Parola: <strong>{solution.word}</strong>
+        {solution.theme ? <> · {solution.theme}</> : null}
       </>
     );
   } else {

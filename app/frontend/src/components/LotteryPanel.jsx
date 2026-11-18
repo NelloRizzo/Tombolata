@@ -2,12 +2,13 @@ import { useEffect, useState } from "react";
 import { apiRequest, authHeaders } from "../api.js";
 import { apiUrl } from "../hooks/useWebSocket.js";
 
-export default function LotteryPanel({ mode = "all" }) {
-  const isPrep = mode === "prep" || mode === "all";
-  const isDraw = mode === "draw" || mode === "all";
+export default function LotteryPanel() {
+  const [view, setView] = useState("prep"); // "prep" | "draw"
+  const isPrep = view === "prep";
+  const isDraw = view === "draw";
   const [extractions, setExtractions] = useState([]);
   const [selectedId, setSelectedId] = useState("");
-  const [tab, setTab] = useState(isPrep ? "config" : "draw");
+  const [tab, setTab] = useState("config");
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
 
@@ -34,6 +35,13 @@ export default function LotteryPanel({ mode = "all" }) {
 
   return (
     <div className="admin-section lottery-panel">
+      <div className="admin-form">
+        <h3>Modalità</h3>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className={`btn-sm ${isPrep ? "btn-accent" : "btn-ghost"}`} onClick={() => { setView("prep"); setTab("config"); }}>Preparazione</button>
+          <button className={`btn-sm ${isDraw ? "btn-accent" : "btn-ghost"}`} onClick={() => { setView("draw"); setTab("draw"); }}>Estrazione</button>
+        </div>
+      </div>
       <div className="admin-form">
         <h3>Estrazione attiva</h3>
         <label>

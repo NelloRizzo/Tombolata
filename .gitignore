@@ -3,5 +3,7 @@
 /AGENTS.md
 
 # Override locale di docker compose (config macchina)
-/docker-compose.override.ymlbackground.psd
+/docker-compose.override.yml
+
+# File locali
 background.psd

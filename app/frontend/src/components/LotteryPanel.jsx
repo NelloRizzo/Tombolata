@@ -533,15 +533,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
           <button className="btn-sm btn-accent" onClick={createSession} disabled={busy}>Nuova sessione</button>
           <button className="btn-sm btn-accent" onClick={prepare} disabled={busy || !sessionId}>Prepara estrazione</button>
           <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>Estrai prossimi {batchSize}</button>
-          <button className="btn-sm btn-ghost" onClick={async () => {
-            try {
-              await apiRequest("/api/lottery/display", {
-                method: "POST",
-                body: JSON.stringify({ active: true, sessionId, status: "finalists" })
-              });
-              onMsg("Finaliste presentate sul tabellone");
-            } catch (e) { onError(e); }
-          }} disabled={!done}>Presenta finaliste</button>
+
           <button className="btn-sm btn-ghost" onClick={async () => {
             try {
               await apiRequest("/api/lottery/display/clear", { method: "POST" });

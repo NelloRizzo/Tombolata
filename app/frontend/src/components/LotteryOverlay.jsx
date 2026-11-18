@@ -31,28 +31,44 @@ export default function LotteryOverlay({ lottery }) {
   const eliminated = new Set(Array.isArray(lottery.eliminated) ? lottery.eliminated : []);
   const finalists = new Set(Array.isArray(lottery.finalists) ? lottery.finalists : []);
   const winnerNum = lottery.winnerNumber;
+  const drawnSet = new Set(drawn);
 
   const cards = drawn.length ? drawn : Array.from({ length: 40 }, (_, i) => i + 1);
+  // During drawing, show all 40; drawn ones highlighted
+  const allCards = Array.from({ length: 40 }, (_, i) => i + 1);
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 16, color: "#fff" }}>
       <div style={{ fontSize: "3rem", fontWeight: 800, color: "#ff6b6b", letterSpacing: "0.2em" }}>ESTRAZIONE LOTTERIA</div>
       {lottery.prizeName && <div style={{ fontSize: "1.4rem", color: "#ffd700" }}>{lottery.prizeName}</div>}
 
+      <div style={{ fontSize: "1.2rem", color: "#aaa", marginBottom: 8 }}>
+        {lottery.status === "drawing" && `Estrazione in corso: ${drawn.length}/40 simbodo`}
+        {lottery.status === "finalists" && "5 CARTE FINALISTE"}
+        {lottery.status === "reveal" && "REVEAL IN CORSO"}
+        {lottery.status === "winner" && "BIGLIETTO VINCENTE"}
+      </div>
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 10, maxWidth: "92vw" }}>
-        {cards.map((id) => {
-          const n = typeof id === "object" ? (id.id ?? id) : id;
+        {allCards.map((n) => {
+          const isDrawn = drawnSet.has(n);
           const isElim = eliminated.has(n);
           const isFinal = finalists.has(n);
           const isWinner = winnerNum === n;
-          let bg = "#16213e";
-          let border = "2px solid #3a3a5a";
-          let opacity = 1;
-          if (isElim) { opacity = 0.25; }
-          if (isFinal) { border = "2px solid #ffd700"; }
-          if (isWinner) { border = "3px solid #00ff88"; }
+          let border = "2px solid #333";
+          let bg = "#0a0a1a";
+          let opacity = 0.35;
+          if (lottery.status === "drawing") {
+            if (isDrawn) { border = "2px solid #3b82f6"; bg = "#1e3a8a"; opacity = 1; }
+          } else {
+            // finalists/winner/reveal phase
+            if (isElim) { opacity = 0.2; }
+            else { opacity = 1; }
+            if (isFinal) { border = "2px solid #ffd700"; bg = "#3a2e00"; }
+            if (isWinner) { border = "3px solid #00ff88"; bg = "#003a1f"; }
+          }
           return (
-            <div key={n} style={{ minHeight: 70, border, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", opacity }}>
+            <div key={n} style={{ minHeight: 70, border, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", opacity, transition: "all 0.4s ease" }}>
               <span style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff" }}>S{pad(n)}</span>
             </div>
           );

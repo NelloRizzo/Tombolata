@@ -4,10 +4,12 @@ import { useCurrentGame } from "../context/GameContext.jsx";
 import { useGameState } from "../hooks/useGameState.js";
 import GameManager from "../components/GameManager.jsx";
 import { AdminUsers } from "../components/AdminPanel.jsx";
+import LotteryPanel from "../components/LotteryPanel.jsx";
 
 export const ADMIN_SECTIONS = [
   { key: "games", label: "Partite", icon: "🃏", render: (ws) => <GameManager game={ws.game} /> },
-  { key: "users", label: "Utenti", icon: "👥", render: () => <AdminUsers /> }
+  { key: "users", label: "Utenti", icon: "👥", render: () => <AdminUsers /> },
+  { key: "lottery", label: "Lotteria", icon: "??", render: () => <LotteryPanel /> }
 ];
 
 export default function AdminPage() {

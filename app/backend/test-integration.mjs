@@ -448,6 +448,50 @@ async function run() {
   const forbidden = await req("/api/game/extract", "POST", null, spettLogin.token);
   assert(!forbidden.ok, "utente senza ruoli NON puo estrarre (403)");
 
+  console.log("== TEST LOTTERIA ==");
+  // crea estrazione
+  const ext = await req("/api/lottery/extractions", "POST", { name: "Test Ext", startDate: "2026-01-01", endDate: "2026-01-02" }, adminToken);
+  assert(ext.ok, "creazione estrazione lotteria");
+  const extId = ext.data._id;
+
+  // seed simbolo
+  const seed = await req(`/api/lottery/extractions/${extId}/symbols/seed`, "POST", { count: 40 }, adminToken);
+  assert(seed.ok, "seed simbolo");
+  const syms = await req(`/api/lottery/extractions/${extId}/symbols`, "GET", null, adminToken);
+
+  assert(syms.ok && syms.data.length === 40, "40 simbodo presenti");
+
+  // genera biglietti (piccola tiratura)
+  const gen = await req(`/api/lottery/extractions/${extId}/generate`, "POST", { count: 100, symbolsCount: 40, bookletSize: 10 }, adminToken);
+  assert(gen.ok && gen.data.count === 100, "generazione 100 biglietti");
+  assert(gen.data.report.isValid, "tiratura valida");
+
+  // segna tutti venduti
+  const sell = await req(`/api/lottery/extractions/${extId}/tickets/sell`, "POST", { all: true }, adminToken);
+  assert(sell.ok, "vendita tutti");
+
+  // premio
+  const prize = await req(`/api/lottery/extractions/${extId}/prizes`, "POST", { name: "P1", symbolId: 1 }, adminToken);
+  assert(prize.ok, "creazione premio");
+
+  // sessione estrazione
+  const sess = await req("/api/lottery/draw/sessions", "POST", { extractionId: extId }, adminToken);
+  assert(sess.ok, "creazione sessione");
+  const sid = sess.data._id;
+
+  const draw = await req(`/api/lottery/draw/sessions/${sid}/draw-cards`, "POST", null, adminToken);
+  assert(draw.ok && draw.data.finalists.length === 5, "estrazione 40 carte -> 5 finaliste");
+
+  const assign = await req(`/api/lottery/draw/sessions/${sid}/assign-prize`, "POST", { prizeId: prize.data._id, symbolId: 1 }, adminToken);
+  assert(assign.ok, "assegnazione premio");
+  assert(assign.data.winner && assign.data.winner.serial, "vincitore presente");
+
+  const winners = await req(`/api/lottery/draw/sessions/${sid}/winners`, "GET", null, adminToken);
+  assert(winners.ok && winners.data.length === 1, "1 vincitore registrato");
+
+  const close = await req(`/api/lottery/draw/sessions/${sid}/close`, "POST", null, adminToken);
+  assert(close.ok, "chiusura sessione");
+
   child.kill();
   await mongod.stop();
   console.log("\n✓ TUTTI I TEST SUPERATI");

@@ -25,17 +25,12 @@ export default function LotteryOverlay({ lottery }) {
 
   if (!lottery || !lottery.active) return null;
 
-  const drawn = lottery.drawn || [];
-  const eliminated = new Set(lottery.eliminated || []);
-  const finalists = new Set(lottery.finalists || []);
+  const drawn = Array.isArray(lottery.drawn) ? lottery.drawn : [];
+  const eliminated = new Set(Array.isArray(lottery.eliminated) ? lottery.eliminated : []);
+  const finalists = new Set(Array.isArray(lottery.finalists) ? lottery.finalists : []);
   const winnerNum = lottery.winnerNumber;
 
-  const cards = useMemo(() => {
-    const ids = drawn.length ? drawn : Array.from({ length: 40 }, (_, i) => i + 1);
-    return ids;
-  }, [drawn]);
-
-  const sessionLabel = lottery.sessionId ? "" : "";
+  const cards = drawn.length ? drawn : Array.from({ length: 40 }, (_, i) => i + 1);
 
   return (
     <div className="lottery-overlay">
@@ -44,21 +39,17 @@ export default function LotteryOverlay({ lottery }) {
 
       <div className="lottery-cards-grid">
         {cards.map((id) => {
-          const isElim = eliminated.has(id);
-          const isFinal = finalists.has(id);
-          const isWinner = winnerNum === id;
+          const n = typeof id === "object" ? (id.id ?? id) : id;
+          const isElim = eliminated.has(n);
+          const isFinal = finalists.has(n);
+          const isWinner = winnerNum === n;
           let cls = "lottery-card";
           if (isElim) cls += " eliminated";
           if (isFinal) cls += " finalist";
           if (isWinner) cls += " winner";
           return (
-            <div key={id} className={cls}>
-              <img
-                src={`/lottery-assets/symbols/S${pad(id)}.jpeg`}
-                alt={`S${pad(id)}`}
-                onError={(e) => { e.target.style.display = "none"; }}
-              />
-              <span className="lottery-card-num">S{pad(id)}</span>
+            <div key={n} className={cls}>
+              <span className="lottery-card-num">S{pad(n)}</span>
             </div>
           );
         })}

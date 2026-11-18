@@ -419,7 +419,8 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
           const imgY = y + 2 + idx * (matrixImgSize + 1);
           drawRoundedImage(imgPath, imgX, imgY, matrixImgSize, 6);
         });
-        doc.fontSize(12).text(t.serial, x + 1, y + ticketHeight - 14, { width: matrixWidth - 2, align: "center" });
+        doc.font("Helvetica-Bold").fontSize(12).text(t.serial, x + 1, y + ticketHeight - 14, { width: matrixWidth - 2, align: "center" });
+        doc.font("Helvetica");
 
         // FIGLIA: sfondo
         const figliaWidth = ticketWidth - matrixWidth;
@@ -427,9 +428,14 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
           try { doc.image(bgPath, splitX, y, { width: figliaWidth, height: ticketHeight }); } catch {}
         }
 
-        // FIGLIA: titolo
+        // FIGLIA: titolo (scalato per occupare tutto lo spazio disponibile)
         if (config.title) {
-          doc.fontSize(8).text(config.title, splitX + 2, y + 10, { width: figliaWidth - 4, align: "center" });
+          let titleSize = 16;
+          while (titleSize > 6 && doc.widthOfString(config.title, { size: titleSize }) > (figliaWidth - 4)) {
+            titleSize -= 0.5;
+          }
+          doc.font("Helvetica-Bold").fontSize(titleSize).text(config.title, splitX + 2, y + 10, { width: figliaWidth - 4, align: "center" });
+          doc.font("Helvetica");
         }
 
         // FIGLIA: 3 immagini in orizzontale
@@ -449,10 +455,12 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
         const numH = 12;
         doc.rect(splitX + (figliaWidth - numW) / 2, numY, numW, numH).fillAndStroke("white", "white");
         doc.fillColor("black");
-        doc.fontSize(10).text(t.serial, splitX + (figliaWidth - numW) / 2, numY + 2, { width: numW, align: "center", lineBreak: false });
+        doc.font("Helvetica-Bold").fontSize(10).text(t.serial, splitX + (figliaWidth - numW) / 2, numY + 2, { width: numW, align: "center", lineBreak: false });
+        doc.font("Helvetica");
         doc.restore();
-        // perimetro del biglietto disegnato per ultimo, per racchiudere tutto
-        doc.lineWidth(0.4).rect(x, y, ticketWidth, ticketHeight).stroke();
+        // perimetro del biglietto disegnato per ultimo, per racchiudere tutto (rosso scuro)
+        doc.strokeColor("#8B0000").lineWidth(0.6).rect(x, y, ticketWidth, ticketHeight).stroke();
+        doc.strokeColor("black");
       }
     }
 

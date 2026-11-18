@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const lotteryDrawSessionSchema = new mongoose.Schema(
   {
     extractionId: { type: mongoose.Schema.Types.ObjectId, ref: "LotteryExtraction", default: null },
+    number: { type: Number, default: null },
     closed: { type: Boolean, default: false }
   },
   { timestamps: true }

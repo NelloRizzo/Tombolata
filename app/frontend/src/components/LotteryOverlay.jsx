@@ -35,6 +35,8 @@ export default function LotteryOverlay({ lottery }) {
     return ids;
   }, [drawn]);
 
+  const sessionLabel = lottery.sessionId ? "" : "";
+
   return (
     <div className="lottery-overlay">
       <div className="lottery-overlay-title">ESTRAZIONE LOTTERIA</div>
@@ -97,8 +99,8 @@ export default function LotteryOverlay({ lottery }) {
         </div>
       )}
 
-      {lottery.status === "finalists" && finalists.size > 0 && (
-        <div className="lottery-status">5 CARTE FINALISTE</div>
+      {lottery.status === "finalists" && (lottery.finalists || []).length > 0 && (
+        <div className="lottery-status">5 CARTE FINALISTE: {(lottery.finalists || []).join(" · ")}</div>
       )}
     </div>
   );

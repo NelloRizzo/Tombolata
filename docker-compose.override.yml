@@ -1,0 +1,6 @@
+services:
+  # Override locale: NON esporre mongo sull'host (la porta 27017 e' spesso
+  # occupata da altri progetti). Il backend lo raggiunge comunque via rete
+  # interna Docker (mongodb://mongo:27017).
+  mongo:
+    ports: !reset []

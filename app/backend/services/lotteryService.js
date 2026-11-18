@@ -625,7 +625,11 @@ export async function deletePrize(prizeId) {
 }
 
 export async function createDrawSession(extractionId) {
-  const session = await LotteryDrawSession.create({ extractionId: extractionId || null });
+  const agg = await LotteryDrawSession.aggregate([
+    { $group: { _id: null, maxNum: { $max: "$number" } } }
+  ]);
+  const number = (agg[0]?.maxNum ?? 0) + 1;
+  const session = await LotteryDrawSession.create({ extractionId: extractionId || null, number });
   return session;
 }
 

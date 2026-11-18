@@ -507,7 +507,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
           Sessione
           <select value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
             <option value="">-- seleziona --</option>
-            {sessions.map((s) => <option key={s._id} value={s._id}>{s._id} {s.closed ? "(chiusa)" : ""}</option>)}
+            {sessions.map((s) => <option key={s._id} value={s._id}>Estrazione #{s.number || "?"} {s.closed ? "(chiusa)" : ""}</option>)}
           </select>
         </label>
         <label>

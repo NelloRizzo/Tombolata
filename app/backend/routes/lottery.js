@@ -3,6 +3,9 @@ import {
   createExtraction,
   listExtractions,
   getExtraction,
+  getLotteryDisplay,
+  setLotteryDisplay,
+  clearLotteryDisplay,
   seedSymbols,
   listSymbols,
   generateTicketsForExtraction,
@@ -213,6 +216,44 @@ router.get("/extractions/:id/booklets/pdf", authenticate, async (req, res) => {
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", `attachment; filename="lotteria-${req.params.id}${suffix}.pdf"`);
     res.send(buf);
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
+// ---------- Display su tabellone (proiettore) ----------
+router.get("/display", async (req, res) => {
+  try {
+    const doc = await getLotteryDisplay();
+    res.json({ ok: true, data: doc });
+  } catch (e) {
+    res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+router.post("/display", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const doc = await setLotteryDisplay(req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", doc, null);
+    }
+    res.json({ ok: true, data: doc });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
+router.post("/display/clear", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const doc = await clearLotteryDisplay();
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", doc, null);
+    }
+    res.json({ ok: true, data: doc });
   } catch (e) {
     res.status(400).json({ ok: false, message: e.message });
   }

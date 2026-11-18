@@ -384,6 +384,7 @@ function PrizesTab({ extractionId, onError, onMsg }) {
 function DrawTab({ extractionId, onError, onMsg }) {
   const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState("");
+  const [drawnData, setDrawnData] = useState(null);
   const [finalists, setFinalists] = useState([]);
   const [prizes, setPrizes] = useState([]);
   const [prizeId, setPrizeId] = useState("");
@@ -426,6 +427,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
     try {
       const json = await apiRequest(`/api/lottery/draw/sessions/${sessionId}/draw-cards`, { method: "POST" });
       if (json.ok) {
+        setDrawnData(json.data);
         setFinalists(json.data.finalists || []);
         onMsg("Carte estratte");
       }
@@ -443,6 +445,23 @@ function DrawTab({ extractionId, onError, onMsg }) {
       });
       if (json.ok) {
         onMsg(`Vincitore: ${json.data.winner.serial} (candidati: ${json.data.candidateCount})`);
+        const prize = prizes.find((p) => String(p._id) === String(prizeId));
+        try {
+          await apiRequest("/api/lottery/display", {
+            method: "POST",
+            body: JSON.stringify({
+              active: true,
+              sessionId,
+              drawn: drawnData?.drawn?.map((c) => c.id ?? c) || [],
+              eliminated: drawnData?.eliminated?.map((c) => c.id ?? c) || [],
+              finalists: drawnData?.finalists?.map((c) => c.id ?? c) || [],
+              winnerSerial: json.data.winner.serial,
+              winnerNumber: json.data.winner.number,
+              prizeName: prize?.name || "",
+              status: "winner"
+            })
+          });
+        } catch (e) { onError(e); }
       }
     } catch (e) { onError(e); }
     finally { setBusy(false); }
@@ -470,6 +489,29 @@ function DrawTab({ extractionId, onError, onMsg }) {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn-sm btn-accent" onClick={createSession} disabled={busy}>Nuova sessione</button>
           <button className="btn-sm btn-accent" onClick={draw} disabled={busy || !sessionId}>Estrai 40 carte</button>
+          <button className="btn-sm btn-ghost" onClick={async () => {
+            if (!drawnData) return;
+            try {
+              await apiRequest("/api/lottery/display", {
+                method: "POST",
+                body: JSON.stringify({
+                  active: true,
+                  sessionId,
+                  drawn: drawnData.drawn.map((c) => c.id ?? c),
+                  eliminated: drawnData.eliminated.map((c) => c.id ?? c),
+                  finalists: drawnData.finalists.map((c) => c.id ?? c),
+                  status: "finalists"
+                })
+              });
+              onMsg("Estrazione presentata sul tabellone");
+            } catch (e) { onError(e); }
+          }} disabled={!drawnData}>Presenta su tabellone</button>
+          <button className="btn-sm btn-ghost" onClick={async () => {
+            try {
+              await apiRequest("/api/lottery/display/clear", { method: "POST" });
+              onMsg("Presentazione rimossa dal tabellone");
+            } catch (e) { onError(e); }
+          }}>Nascondi dal tabellone</button>
           <button className="btn-sm btn-ghost" onClick={close} disabled={!sessionId}>Chiudi sessione</button>
         </div>
       </div>

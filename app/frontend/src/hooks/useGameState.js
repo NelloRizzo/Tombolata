@@ -11,6 +11,7 @@ export function useGameState(gameId = null) {
   const [lastWin, setLastWin] = useState(null);
   const [firedTriggers, setFiredTriggers] = useState([]);
   const [minigame, setMinigame] = useState(null);
+  const [lottery, setLottery] = useState(null);
 
   // Accetta un evento di gioco solo se riguarda la partita corrente
   // (o qualsiasi se non è stata selezionata alcuna partita).
@@ -73,10 +74,21 @@ export function useGameState(gameId = null) {
         if (m && (!m.gameId || !gameId || String(m.gameId) === String(gameId))) setMinigame(m);
       })
     );
+    // Lotteria: stato globale (non legato alla partita), come il minigioco.
+    offSel.push(
+      on("lottery:state", (m) => {
+        if (m) setLottery(m);
+      })
+    );
+    offSel.push(
+      on("lottery:update", (m) => {
+        if (m) setLottery(m);
+      })
+    );
     return () => offSel.forEach((off) => off());
   }, [on, gameId, gameMatches]);
 
   const clearLastWin = () => setLastWin(null);
 
-  return { connected, game, narration, lastWin, clearLastWin, firedTriggers, minigame };
+  return { connected, game, narration, lastWin, clearLastWin, firedTriggers, minigame, lottery };
 }

@@ -7,6 +7,7 @@ import LotteryDrawSession from "../models/LotteryDrawSession.js";
 import LotteryDrawEvent from "../models/LotteryDrawEvent.js";
 import LotteryPrize from "../models/LotteryPrize.js";
 import LotteryPrizeWinner from "../models/LotteryPrizeWinner.js";
+import LotteryDisplay from "../models/LotteryDisplay.js";
 
 // ---------- generator ported from AspettandoLaBefana ----------
 function numberToBookletCode(n) {
@@ -470,6 +471,35 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
 
     doc.end();
   });
+}
+
+// ---------- Display su tabellone (proiettore) ----------
+export async function getLotteryDisplay() {
+  let doc = await LotteryDisplay.findOne({ key: "main" });
+  if (!doc) {
+    doc = await LotteryDisplay.create({ key: "main" });
+  }
+  return doc;
+}
+
+export async function setLotteryDisplay(data) {
+  let doc = await LotteryDisplay.findOne({ key: "main" });
+  if (!doc) doc = new LotteryDisplay({ key: "main" });
+  if (data.active != null) doc.active = data.active;
+  if (data.sessionId != null) doc.sessionId = data.sessionId;
+  if (Array.isArray(data.drawn)) doc.drawn = data.drawn;
+  if (Array.isArray(data.eliminated)) doc.eliminated = data.eliminated;
+  if (Array.isArray(data.finalists)) doc.finalists = data.finalists;
+  if (data.winnerSerial != null) doc.winnerSerial = data.winnerSerial;
+  if (data.winnerNumber != null) doc.winnerNumber = data.winnerNumber;
+  if (data.prizeName != null) doc.prizeName = data.prizeName;
+  if (data.status != null) doc.status = data.status;
+  await doc.save();
+  return doc;
+}
+
+export async function clearLotteryDisplay() {
+  return setLotteryDisplay({ active: false, drawn: [], eliminated: [], finalists: [], winnerSerial: "", winnerNumber: null, prizeName: "", status: "idle" });
 }
 
 // Keep a simple booklet-list PDF helper (legacy)

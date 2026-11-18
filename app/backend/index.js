@@ -15,6 +15,7 @@ import minigameRoutes from "./routes/games.js";
 import lotteryRoutes from "./routes/lottery.js";
 import { getGameState } from "./services/gameService.js";
 import { getNarrationState } from "./services/triggerService.js";
+import { getLotteryDisplay } from "./services/lotteryService.js";
 import { getColorGameState } from "./services/colorGameService.js";
 import { bootstrap } from "./services/bootstrap.js";
 import { broadcastToClients } from "./services/broadcast.js";
@@ -39,6 +40,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json({ limit: "30mb" }));
 app.use("/uploads", express.static(UPLOAD_DIR));
+app.use("/lottery-assets", express.static(join(__dirname, "assets")));
 
 app.get("/", (req, res) => {
   res.json({
@@ -101,6 +103,13 @@ wss.on("connection", async (ws) => {
     ws.send(JSON.stringify({ type: "minigame:state", payload: minigame }));
   } catch (error) {
     console.error("Errore nell'inviare lo stato minigioco:", error.message);
+  }
+
+  try {
+    const lotteryDisplay = await getLotteryDisplay();
+    ws.send(JSON.stringify({ type: "lottery:state", payload: lotteryDisplay }));
+  } catch (error) {
+    console.error("Errore nell'inviare lo stato lotteria:", error.message);
   }
 
   ws.on("message", (raw) => {

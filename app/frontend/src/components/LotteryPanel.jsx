@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { apiRequest, authHeaders } from "../api.js";
 import { apiUrl } from "../hooks/useWebSocket.js";
 
-export default function LotteryPanel() {
+export default function LotteryPanel({ mode = "all" }) {
+  const isPrep = mode === "prep" || mode === "all";
+  const isDraw = mode === "draw" || mode === "all";
   const [extractions, setExtractions] = useState([]);
   const [selectedId, setSelectedId] = useState("");
-  const [tab, setTab] = useState("config");
+  const [tab, setTab] = useState(isPrep ? "config" : "draw");
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
 
@@ -56,18 +58,23 @@ export default function LotteryPanel() {
       {selectedId && (
         <>
           <nav className="page-tabs">
-            {["config", "tickets", "prizes", "draw", "winners"].map((t) => (
+            {isPrep && ["config", "tickets", "prizes"].map((t) => (
               <button key={t} className={`role-tab${tab === t ? " active" : ""}`} onClick={() => setTab(t)}>
-                {t === "config" ? "Configurazione" : t === "tickets" ? "Biglietti" : t === "prizes" ? "Premi" : t === "draw" ? "Estrazione" : "Vincitori"}
+                {t === "config" ? "Configurazione" : t === "tickets" ? "Biglietti" : "Premi"}
+              </button>
+            ))}
+            {isDraw && ["draw", "winners"].map((t) => (
+              <button key={t} className={`role-tab${tab === t ? " active" : ""}`} onClick={() => setTab(t)}>
+                {t === "draw" ? "Estrazione" : "Vincitori"}
               </button>
             ))}
           </nav>
           <div className="lottery-tab">
-            {tab === "config" && <ConfigTab extractionId={selectedId} onError={fail} onMsg={notify} />}
-            {tab === "tickets" && <TicketsTab extractionId={selectedId} onError={fail} onMsg={notify} />}
-            {tab === "prizes" && <PrizesTab extractionId={selectedId} onError={fail} onMsg={notify} />}
-            {tab === "draw" && <DrawTab extractionId={selectedId} onError={fail} onMsg={notify} />}
-            {tab === "winners" && <WinnersTab extractionId={selectedId} onError={fail} />}
+            {isPrep && tab === "config" && <ConfigTab extractionId={selectedId} onError={fail} onMsg={notify} />}
+            {isPrep && tab === "tickets" && <TicketsTab extractionId={selectedId} onError={fail} onMsg={notify} />}
+            {isPrep && tab === "prizes" && <PrizesTab extractionId={selectedId} onError={fail} onMsg={notify} />}
+            {isDraw && tab === "draw" && <DrawTab extractionId={selectedId} onError={fail} onMsg={notify} />}
+            {isDraw && tab === "winners" && <WinnersTab extractionId={selectedId} onError={fail} />}
           </div>
         </>
       )}

@@ -487,12 +487,17 @@ export async function setLotteryDisplay(data) {
   if (!doc) doc = new LotteryDisplay({ key: "main" });
   if (data.active != null) doc.active = data.active;
   if (data.sessionId != null) doc.sessionId = data.sessionId;
+  if (data.batchSize != null) doc.batchSize = data.batchSize;
+  if (Array.isArray(data.pool)) doc.pool = data.pool;
   if (Array.isArray(data.drawn)) doc.drawn = data.drawn;
   if (Array.isArray(data.eliminated)) doc.eliminated = data.eliminated;
   if (Array.isArray(data.finalists)) doc.finalists = data.finalists;
   if (data.winnerSerial != null) doc.winnerSerial = data.winnerSerial;
   if (data.winnerNumber != null) doc.winnerNumber = data.winnerNumber;
   if (data.prizeName != null) doc.prizeName = data.prizeName;
+  if (data.revealSerial != null) doc.revealSerial = data.revealSerial;
+  if (data.revealBooklet != null) doc.revealBooklet = data.revealBooklet;
+  if (data.revealIndex != null) doc.revealIndex = data.revealIndex;
   if (data.status != null) doc.status = data.status;
   await doc.save();
   return doc;
@@ -504,7 +509,8 @@ export async function clearLotteryDisplay() {
 
 export async function prepareLotteryDraw(sessionId, batchSize) {
   const n = Number(batchSize) || 5;
-  const symbols = await LotterySymbol.find({ extractionId: (await LotteryDrawSession.findById(sessionId))?.extractionId }).lean();
+  const sess = await LotteryDrawSession.findById(sessionId);
+  const symbols = await LotterySymbol.find({ extractionId: sess?.extractionId }).lean();
   const ids = symbols.length ? symbols.map((s) => s.id) : Array.from({ length: 40 }, (_, i) => i + 1);
   // shuffle
   const pool = [...ids];

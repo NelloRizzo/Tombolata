@@ -9,7 +9,8 @@ import LotteryPanel from "../components/LotteryPanel.jsx";
 export const ADMIN_SECTIONS = [
   { key: "games", label: "Partite", icon: "🃏", render: (ws) => <GameManager game={ws.game} /> },
   { key: "users", label: "Utenti", icon: "👥", render: () => <AdminUsers /> },
-  { key: "lottery", label: "Lotteria", icon: "??", render: () => <LotteryPanel /> }
+  { key: "lottery-prep", label: "Lotteria Prep.", icon: "??", render: () => <LotteryPanel mode="prep" /> },
+  { key: "lottery-draw", label: "Lotteria Estraz.", icon: "??", render: () => <LotteryPanel mode="draw" /> }
 ];
 
 export default function AdminPage() {

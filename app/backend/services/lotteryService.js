@@ -268,6 +268,51 @@ export async function listBooklets(extractionId) {
   return LotteryBooklet.find({ extractionId }).sort({ number: 1 }).lean();
 }
 
+export async function buildBookletsPdf(extractionId, bookletNumber) {
+  const PDFDocument = (await import("pdfkit")).default;
+  const booklets = await listBooklets(extractionId);
+  const filtered = bookletNumber != null
+    ? booklets.filter((b) => b.number === Number(bookletNumber))
+    : booklets;
+  const tickets = await listTickets(extractionId);
+  const byNumber = new Map(tickets.map((t) => [t.number, t]));
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A4", margin: 40 });
+    const chunks = [];
+    doc.on("data", (c) => chunks.push(c));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    filtered.forEach((bk, idx) => {
+      if (idx > 0) doc.addPage();
+      doc.fontSize(16).text(`Blocchetto n. ${bk.number}`, { align: "center" });
+      doc.fontSize(10).text(`Biglietti ${bk.fromNum} - ${bk.toNum}  (${(bk.ticketNumbers || []).length} bigl.)`, { align: "center" });
+      doc.moveDown(0.5);
+
+      const nums = bk.ticketNumbers || [];
+      doc.fontSize(9).font("Courier");
+      let line = [];
+      for (const n of nums) {
+        const t = byNumber.get(n);
+        line.push(`${String(n).padStart(5)} ${t?.serial || ""}`);
+        if (line.length === 4) {
+          doc.text(line.join("     "));
+          line = [];
+        }
+      }
+      if (line.length) doc.text(line.join("     "));
+      doc.font("Helvetica");
+    });
+
+    if (filtered.length === 0) {
+      doc.fontSize(12).text("Nessun blocchetto trovato.");
+    }
+
+    doc.end();
+  });
+}
+
 export async function markTicketsSold(extractionId, payload = {}) {
   const { ticketNumbers, bookletNumber, all } = payload;
   if (all) {

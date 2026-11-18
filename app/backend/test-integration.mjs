@@ -492,6 +492,13 @@ async function run() {
   const close = await req(`/api/lottery/draw/sessions/${sid}/close`, "POST", null, adminToken);
   assert(close.ok, "chiusura sessione");
 
+  // PDF blocchetti
+  const pdfRes = await fetch(`${base}/api/lottery/extractions/${extId}/booklets/pdf`, { headers: { Authorization: `Bearer ${adminToken}` } });
+  assert(pdfRes.ok, "download PDF blocchetti ok");
+  const pdfBuf = await pdfRes.arrayBuffer();
+  const pdfText = new TextDecoder().decode(pdfBuf.slice(0, 5));
+  assert(pdfText === "%PDF-", "PDF valido");
+
   child.kill();
   await mongod.stop();
   console.log("\n✓ TUTTI I TEST SUPERATI");

@@ -8,6 +8,7 @@ import {
   generateTicketsForExtraction,
   listTickets,
   listBooklets,
+  buildBookletsPdf,
   markTicketsSold,
   createPrize,
   listPrizes,
@@ -200,6 +201,18 @@ router.get("/draw/sessions/:id/winners", authenticate, async (req, res) => {
     res.json({ ok: true, data: await listWinners(req.params.id) });
   } catch (e) {
     res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+// Download PDF dei blocchetti
+router.get("/extractions/:id/booklets/pdf", authenticate, async (req, res) => {
+  try {
+    const buf = await buildBookletsPdf(req.params.id, req.query.booklet);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="blocchetti-${req.params.id}.pdf"`);
+    res.send(buf);
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
   }
 });
 

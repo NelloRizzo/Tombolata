@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { apiRequest } from "../api.js";
+import { apiRequest, authHeaders } from "../api.js";
+import { apiUrl } from "../hooks/useWebSocket.js";
 
 export default function LotteryPanel() {
   const [extractions, setExtractions] = useState([]);
@@ -202,6 +203,17 @@ function ConfigTab({ extractionId, onError, onMsg }) {
         <ul style={{ maxHeight: 120, overflow: "auto" }}>
           {booklets.slice(0, 20).map((b) => <li key={b._id}>#{b.number}: {b.fromNum}-{b.toNum}</li>)}
         </ul>
+        <button onClick={async () => {
+          try {
+            const res = await fetch(apiUrl(`/api/lottery/extractions/${extractionId}/booklets/pdf`), { headers: authHeaders() });
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url; a.download = `blocchetti-${extractionId}.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+          } catch (e) { onError(e); }
+        }}>Scarica PDF blocchetti</button>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   generateTicketsForExtraction,
   listTickets,
   listBooklets,
+  buildTicketsPdf,
   buildBookletsPdf,
   markTicketsSold,
   createPrize,
@@ -207,9 +208,10 @@ router.get("/draw/sessions/:id/winners", authenticate, async (req, res) => {
 // Download PDF dei blocchetti
 router.get("/extractions/:id/booklets/pdf", authenticate, async (req, res) => {
   try {
-    const buf = await buildBookletsPdf(req.params.id, req.query.booklet);
+    const buf = await buildTicketsPdf(req.params.id, req.query.booklet);
+    const suffix = req.query.booklet ? `-blocchetto-${req.query.booklet}` : "";
     res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Disposition", `attachment; filename="blocchetti-${req.params.id}.pdf"`);
+    res.setHeader("Content-Disposition", `attachment; filename="lotteria-${req.params.id}${suffix}.pdf"`);
     res.send(buf);
   } catch (e) {
     res.status(400).json({ ok: false, message: e.message });

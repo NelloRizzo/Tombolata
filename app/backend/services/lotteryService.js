@@ -268,14 +268,199 @@ export async function listBooklets(extractionId) {
   return LotteryBooklet.find({ extractionId }).sort({ number: 1 }).lean();
 }
 
+const MM_TO_PT = 2.834645669;
+
+export async function buildTicketsPdf(extractionId, bookletNumber) {
+  const fsMod = await import("fs");
+  const pathMod = await import("path");
+  const fs = fsMod.default || fsMod;
+  const path = pathMod.default || pathMod;
+
+  const PDFDocument = (await import("pdfkit")).default;
+  const booklets = await listBooklets(extractionId);
+  const filteredBooklets = bookletNumber != null
+    ? booklets.filter((b) => b.number === Number(bookletNumber))
+    : booklets;
+
+  // Determine which tickets to print
+  let ticketNumbers = [];
+  if (bookletNumber != null && filteredBooklets.length) {
+    ticketNumbers = filteredBooklets[0].ticketNumbers || [];
+  } else {
+    // all tickets of extraction
+    const all = await listTickets(extractionId);
+    ticketNumbers = all.map((t) => t.number);
+  }
+
+  const tickets = await listTickets(extractionId);
+  const byNumber = new Map(tickets.map((t) => [t.number, t]));
+  const symbols = await listSymbols(extractionId);
+  const symbolById = new Map(symbols.map((s) => [s.id, s]));
+
+  // Resolve assets dir
+  const assetCandidates = [
+    process.env.LOTTERY_ASSETS_DIR,
+    process.env.ASSETS_DIR,
+    path.resolve(process.cwd(), "assets"),
+    path.resolve(process.cwd(), "..", "assets"),
+    path.resolve(process.cwd(), "..", "..", "assets"),
+    "E:/UtentiLocali/Nello/Desktop/Uniamoci/AspettandoLaBefana/assets"
+  ].filter(Boolean);
+  let baseDir = null;
+  for (const c of assetCandidates) {
+    if (fs.existsSync(c)) { baseDir = c; break; }
+  }
+  if (!baseDir) baseDir = path.resolve(process.cwd(), "assets");
+
+  function tryGetImagePath(symbolCode) {
+    const exts = [".jpeg", ".jpg", ".png", ".webp"];
+    for (const ext of exts) {
+      const imgPath = path.join(baseDir, "symbols", symbolCode + ext);
+      if (fs.existsSync(imgPath)) return imgPath;
+    }
+    return null;
+  }
+  function tryGetBackgroundPath() {
+    const cands = ["background.png", "sfondo.png", "sfondo.jpg", "background.jpg"];
+    for (const c of cands) {
+      const p = path.join(baseDir, "branding", c);
+      if (fs.existsSync(p)) return p;
+    }
+    // also flat
+    for (const c of cands) {
+      const p = path.join(baseDir, c);
+      if (fs.existsSync(p)) return p;
+    }
+    return null;
+  }
+  function loadConfig() {
+    try {
+      const cands = [
+        path.resolve(baseDir, "config", "app.json"),
+        path.resolve(baseDir, "..", "config", "app.json"),
+        path.resolve(baseDir, "..", "..", "config", "app.json")
+      ];
+      for (const cp of cands) {
+        if (fs.existsSync(cp)) {
+          return JSON.parse(fs.readFileSync(cp, "utf8"));
+        }
+      }
+    } catch {}
+    return {};
+  }
+
+  const bgPath = tryGetBackgroundPath();
+  const config = loadConfig();
+  const toPrint = ticketNumbers.map((n) => byNumber.get(n)).filter(Boolean);
+
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ size: "A3", layout: "portrait", margin: 0 });
+    const chunks = [];
+    doc.on("data", (c) => chunks.push(c));
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    const cols = 2;
+    const rows = 5;
+    const perPage = cols * rows;
+    const ticketWidth = 120 * MM_TO_PT;
+    const ticketHeight = 65 * MM_TO_PT;
+    const gapX = 5 * MM_TO_PT;
+    const gapY = 5 * MM_TO_PT;
+    const pageWidth = doc.page.width;
+    const pageHeight = doc.page.height;
+    const totalWidth = cols * ticketWidth + (cols - 1) * gapX;
+    const totalHeight = rows * ticketHeight + (rows - 1) * gapY;
+    const marginX = (pageWidth - totalWidth) / 2;
+    const marginY = (pageHeight - totalHeight) / 2;
+
+    for (let i = 0; i < toPrint.length; i += perPage) {
+      if (i > 0) doc.addPage();
+      for (let j = 0; j < perPage && i + j < toPrint.length; j++) {
+        const t = toPrint[i + j];
+        const col = j % cols;
+        const row = Math.floor(j / cols);
+        const x = marginX + col * (ticketWidth + gapX);
+        const y = marginY + row * (ticketHeight + gapY);
+
+        doc.rect(x, y, ticketWidth, ticketHeight).lineWidth(0.4).stroke();
+
+        const matrixWidth = ticketWidth / 4;
+        const splitX = x + matrixWidth;
+
+        doc.save();
+        doc.lineWidth(0.4);
+        doc.dash(2, { space: 2 });
+        doc.moveTo(splitX, y).lineTo(splitX, y + ticketHeight).stroke();
+        doc.undash();
+        doc.restore();
+
+        const ticketSymbols = (t.symbols || [])
+          .map((sid) => symbolById.get(sid))
+          .filter(Boolean);
+
+        // MATRICE: 3 immagini in verticale + numero sotto
+        const matrixImgSize = Math.min(matrixWidth - 4, (ticketHeight - 16) / 3);
+        ticketSymbols.forEach((sym, idx) => {
+          const imgPath = tryGetImagePath(sym.code);
+          const imgX = x + (matrixWidth - matrixImgSize) / 2;
+          const imgY = y + 2 + idx * (matrixImgSize + 1);
+          if (imgPath) {
+            try { doc.image(imgPath, imgX, imgY, { width: matrixImgSize, height: matrixImgSize }); } catch {}
+          }
+        });
+        doc.fontSize(12).text(t.serial, x + 1, y + ticketHeight - 14, { width: matrixWidth - 2, align: "center" });
+
+        // FIGLIA: sfondo
+        const figliaWidth = ticketWidth - matrixWidth;
+        if (bgPath) {
+          try { doc.image(bgPath, splitX, y, { width: figliaWidth, height: ticketHeight }); } catch {}
+        }
+
+        // FIGLIA: titolo
+        if (config.title) {
+          doc.fontSize(8).text(config.title, splitX + 2, y + 10, { width: figliaWidth - 4, align: "center" });
+        }
+
+        // FIGLIA: 3 immagini in orizzontale
+        const figliaImgSize = Math.min((figliaWidth - 12) / 3, ticketHeight - 38);
+        const figliaImgY = y + 18 + (ticketHeight - 18 - 24 - figliaImgSize) / 2;
+        ticketSymbols.forEach((sym, idx) => {
+          const imgPath = tryGetImagePath(sym.code);
+          const imgX = splitX + 2 + idx * (figliaImgSize + 2);
+          const imgY = figliaImgY;
+          if (imgPath) {
+            try { doc.image(imgPath, imgX, imgY, { width: figliaImgSize, height: figliaImgSize }); } catch {}
+          }
+        });
+
+        // FIGLIA: numero sotto le immagini
+        doc.save();
+        const numY = figliaImgY + figliaImgSize + 2;
+        const numW = figliaWidth * 0.75;
+        const numH = 12;
+        doc.rect(splitX + (figliaWidth - numW) / 2, numY, numW, numH).fillAndStroke("white", "white");
+        doc.fillColor("black");
+        doc.fontSize(10).text(t.serial, splitX + (figliaWidth - numW) / 2, numY + 2, { width: numW, align: "center", lineBreak: false });
+        doc.restore();
+      }
+    }
+
+    if (toPrint.length === 0) {
+      doc.fontSize(12).text("Nessun biglietto da stampare.");
+    }
+
+    doc.end();
+  });
+}
+
+// Keep a simple booklet-list PDF helper (legacy)
 export async function buildBookletsPdf(extractionId, bookletNumber) {
   const PDFDocument = (await import("pdfkit")).default;
   const booklets = await listBooklets(extractionId);
   const filtered = bookletNumber != null
     ? booklets.filter((b) => b.number === Number(bookletNumber))
     : booklets;
-  const tickets = await listTickets(extractionId);
-  const byNumber = new Map(tickets.map((t) => [t.number, t]));
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A4", margin: 40 });
@@ -287,28 +472,9 @@ export async function buildBookletsPdf(extractionId, bookletNumber) {
     filtered.forEach((bk, idx) => {
       if (idx > 0) doc.addPage();
       doc.fontSize(16).text(`Blocchetto n. ${bk.number}`, { align: "center" });
-      doc.fontSize(10).text(`Biglietti ${bk.fromNum} - ${bk.toNum}  (${(bk.ticketNumbers || []).length} bigl.)`, { align: "center" });
-      doc.moveDown(0.5);
-
-      const nums = bk.ticketNumbers || [];
-      doc.fontSize(9).font("Courier");
-      let line = [];
-      for (const n of nums) {
-        const t = byNumber.get(n);
-        line.push(`${String(n).padStart(5)} ${t?.serial || ""}`);
-        if (line.length === 4) {
-          doc.text(line.join("     "));
-          line = [];
-        }
-      }
-      if (line.length) doc.text(line.join("     "));
-      doc.font("Helvetica");
+      doc.fontSize(10).text(`Biglietti ${bk.fromNum} - ${bk.toNum}`, { align: "center" });
     });
-
-    if (filtered.length === 0) {
-      doc.fontSize(12).text("Nessun blocchetto trovato.");
-    }
-
+    if (filtered.length === 0) doc.fontSize(12).text("Nessun blocchetto trovato.");
     doc.end();
   });
 }

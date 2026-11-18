@@ -397,8 +397,6 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
         const x = marginX + col * (ticketWidth + gapX);
         const y = marginY + row * (ticketHeight + gapY);
 
-        doc.rect(x, y, ticketWidth, ticketHeight).lineWidth(0.4).stroke();
-
         const matrixWidth = ticketWidth / 4;
         const splitX = x + matrixWidth;
 
@@ -453,6 +451,8 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
         doc.fillColor("black");
         doc.fontSize(10).text(t.serial, splitX + (figliaWidth - numW) / 2, numY + 2, { width: numW, align: "center", lineBreak: false });
         doc.restore();
+        // perimetro del biglietto disegnato per ultimo, per racchiudere tutto
+        doc.lineWidth(0.4).rect(x, y, ticketWidth, ticketHeight).stroke();
       }
     }
 

@@ -31,20 +31,21 @@ export default function LotteryPanel() {
   function fail(e) { setError(e?.message || String(e)); setMsg(null); }
 
   return (
-    <div className="lottery-panel">
-      <div className="lottery-toolbar">
+    <div className="admin-section lottery-panel">
+      <div className="admin-form">
+        <h3>Estrazione attiva</h3>
         <label>
-          Estrazione:
+          Estrazione
           <select value={selectedId} onChange={(e) => setSelectedId(e.target.value)}>
-            <option value="">-- nuova --</option>
+            <option value="">-- nuova estrazione --</option>
             {extractions.map((e) => (
               <option key={e._id} value={e._id}>
-                {e.name} ({e.ticketCount || 0} bigl.)
+                {e.name} ({e.ticketCount || 0} biglietti)
               </option>
             ))}
           </select>
         </label>
-        <button onClick={loadExtractions}>Aggiorna</button>
+        <button className="btn-sm btn-ghost" onClick={loadExtractions}>Aggiorna elenco</button>
       </div>
 
       {error && <div className="error-text">{error}</div>}
@@ -100,12 +101,21 @@ function CreateExtractionForm({ onCreated, onError }) {
   }
 
   return (
-    <div className="admin-form" style={{ marginTop: 12 }}>
+    <div className="admin-form">
       <h3>Nuova estrazione</h3>
-      <input placeholder="Nome" value={name} onChange={(e) => setName(e.target.value)} />
-      <input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
-      <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
-      <button onClick={create} disabled={busy}>Crea</button>
+      <label>
+        Nome estrazione
+        <input placeholder="Es. Lotteria Natale 2026" value={name} onChange={(e) => setName(e.target.value)} />
+      </label>
+      <label>
+        Data inizio
+        <input type="date" value={start} onChange={(e) => setStart(e.target.value)} />
+      </label>
+      <label>
+        Data fine
+        <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} />
+      </label>
+      <button className="btn-sm btn-accent" onClick={create} disabled={busy}>Crea estrazione</button>
     </div>
   );
 }
@@ -126,7 +136,7 @@ function ConfigTab({ extractionId, onError, onMsg }) {
         method: "POST",
         body: JSON.stringify({ count: symbolsCount })
       });
-      onMsg(`Simbolo ${json.data?.count || 0} seminati`);
+      onMsg(`Semina completata: ${json.data?.count || 0} simbolo`);
       await loadSymbols();
     } catch (e) { onError(e); }
     finally { setBusy(false); }
@@ -165,7 +175,7 @@ function ConfigTab({ extractionId, onError, onMsg }) {
   async function markAllSold() {
     setBusy(true);
     try {
-      const json = await apiRequest(`/api/lottery/extractions/${extractionId}/tickets/sell`, {
+      await apiRequest(`/api/lottery/extractions/${extractionId}/tickets/sell`, {
         method: "POST",
         body: JSON.stringify({ all: true })
       });
@@ -174,22 +184,50 @@ function ConfigTab({ extractionId, onError, onMsg }) {
     finally { setBusy(false); }
   }
 
+  async function downloadPdf() {
+    try {
+      const res = await fetch(apiUrl(`/api/lottery/extractions/${extractionId}/booklets/pdf`), { headers: authHeaders() });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `blocchetti-${extractionId}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) { onError(e); }
+  }
+
   useEffect(() => { loadSymbols(); loadBooklets(); }, [extractionId]);
 
   return (
     <div>
       <div className="admin-form">
         <h3>Simbolo</h3>
-        <button onClick={seed} disabled={busy}>Semina simbolo ({symbolsCount})</button>
-        <span> ({symbols.length} presenti)</span>
+        <label>
+          Numero simbolo
+          <input type="number" value={symbolsCount} onChange={(e) => setSymbolsCount(Number(e.target.value))} />
+        </label>
+        <button className="btn-sm btn-accent" onClick={seed} disabled={busy}>Semina simbolo</button>
+        <span className="tab-sub">Presenti: {symbols.length}</span>
       </div>
       <div className="admin-form">
         <h3>Generazione biglietti</h3>
-        <label>Quantità <input type="number" value={count} onChange={(e) => setCount(Number(e.target.value))} /></label>
-        <label>Simbolo <input type="number" value={symbolsCount} onChange={(e) => setSymbolsCount(Number(e.target.value))} /></label>
-        <label>Blocchetto <input type="number" value={bookletSize} onChange={(e) => setBookletSize(Number(e.target.value))} /></label>
-        <button onClick={generate} disabled={busy}>Genera</button>
-        <button onClick={markAllSold} disabled={busy}>Segna tutti venduti</button>
+        <label>
+          Quantità biglietti
+          <input type="number" value={count} onChange={(e) => setCount(Number(e.target.value))} />
+        </label>
+        <label>
+          Simbolo
+          <input type="number" value={symbolsCount} onChange={(e) => setSymbolsCount(Number(e.target.value))} />
+        </label>
+        <label>
+          Biglietti per blocchetto
+          <input type="number" value={bookletSize} onChange={(e) => setBookletSize(Number(e.target.value))} />
+        </label>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn-sm btn-accent" onClick={generate} disabled={busy}>Genera biglietti</button>
+          <button className="btn-sm btn-ghost" onClick={markAllSold} disabled={busy}>Segna tutti venduti</button>
+          <button className="btn-sm btn-ghost" onClick={downloadPdf}>Scarica PDF blocchetti</button>
+        </div>
       </div>
       {report && (
         <div className="admin-form">
@@ -200,20 +238,16 @@ function ConfigTab({ extractionId, onError, onMsg }) {
       )}
       <div className="admin-form">
         <h3>Blocchetti ({booklets.length})</h3>
-        <ul style={{ maxHeight: 120, overflow: "auto" }}>
-          {booklets.slice(0, 20).map((b) => <li key={b._id}>#{b.number}: {b.fromNum}-{b.toNum}</li>)}
+        <ul className="tab-list" style={{ maxHeight: 160, overflow: "auto" }}>
+          {booklets.map((b) => (
+            <li className="tab-item" key={b._id}>
+              <div className="tab-item-info">
+                <span className="tab-name">Blocchetto #{b.number}</span>
+                <span className="tab-sub">Biglietti {b.fromNum} - {b.toNum}</span>
+              </div>
+            </li>
+          ))}
         </ul>
-        <button onClick={async () => {
-          try {
-            const res = await fetch(apiUrl(`/api/lottery/extractions/${extractionId}/booklets/pdf`), { headers: authHeaders() });
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url; a.download = `blocchetti-${extractionId}.pdf`;
-            a.click();
-            URL.revokeObjectURL(url);
-          } catch (e) { onError(e); }
-        }}>Scarica PDF blocchetti</button>
       </div>
     </div>
   );
@@ -240,7 +274,7 @@ function TicketsTab({ extractionId, onError, onMsg }) {
         method: "POST",
         body: JSON.stringify({ bookletNumber: Number(bookletNo) })
       });
-      onMsg(`Aggiornati ${json.data?.updated}`);
+      onMsg(`Aggiornati ${json.data?.updated} biglietti`);
       load();
     } catch (e) { onError(e); }
   }
@@ -248,7 +282,8 @@ function TicketsTab({ extractionId, onError, onMsg }) {
   return (
     <div>
       <div className="admin-form">
-        <label>Stato
+        <label>
+          Filtra per stato
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">tutti</option>
             <option value="available">disponibili</option>
@@ -256,16 +291,24 @@ function TicketsTab({ extractionId, onError, onMsg }) {
             <option value="winning">vincenti</option>
           </select>
         </label>
-        <button onClick={load}>Aggiorna</button>
-        <span> ({tickets.length} biglietti)</span>
+        <button className="btn-sm btn-ghost" onClick={load}>Aggiorna</button>
+        <span className="tab-sub">Totale: {tickets.length}</span>
       </div>
       <div className="admin-form">
-        <label>Blocchetto n. <input value={bookletNo} onChange={(e) => setBookletNo(e.target.value)} /></label>
-        <button onClick={markBooklet}>Segna blocchetto venduto</button>
+        <label>
+          Blocchetto n.
+          <input value={bookletNo} onChange={(e) => setBookletNo(e.target.value)} placeholder="Es. 1" />
+        </label>
+        <button className="btn-sm btn-accent" onClick={markBooklet}>Segna blocchetto venduto</button>
       </div>
-      <ul style={{ maxHeight: 200, overflow: "auto" }}>
-        {tickets.slice(0, 50).map((t) => (
-          <li key={t._id}>#{t.number} {t.serial} [{(t.symbols || []).join(",")}] {t.status}</li>
+      <ul className="tab-list" style={{ maxHeight: 240, overflow: "auto" }}>
+        {tickets.slice(0, 80).map((t) => (
+          <li className="tab-item" key={t._id}>
+            <div className="tab-item-info">
+              <span className="tab-name">#{t.number} — {t.serial}</span>
+              <span className="tab-sub">{(t.symbols || []).join(", ")} · {t.status}</span>
+            </div>
+          </li>
         ))}
       </ul>
     </div>
@@ -308,15 +351,29 @@ function PrizesTab({ extractionId, onError, onMsg }) {
   return (
     <div>
       <div className="admin-form">
-        <input placeholder="Nome premio" value={name} onChange={(e) => setName(e.target.value)} />
-        <input placeholder="Simbolo (id)" value={symbolId} onChange={(e) => setSymbolId(e.target.value)} />
-        <input placeholder="Valore" value={value} onChange={(e) => setValue(e.target.value)} />
-        <button onClick={add}>Aggiungi premio</button>
+        <h3>Nuovo premio</h3>
+        <label>
+          Nome premio
+          <input placeholder="Es. Primo premio" value={name} onChange={(e) => setName(e.target.value)} />
+        </label>
+        <label>
+          ID simbolo
+          <input placeholder="Es. 7" value={symbolId} onChange={(e) => setSymbolId(e.target.value)} />
+        </label>
+        <label>
+          Valore
+          <input placeholder="Es. 500 €" value={value} onChange={(e) => setValue(e.target.value)} />
+        </label>
+        <button className="btn-sm btn-accent" onClick={add}>Aggiungi premio</button>
       </div>
-      <ul>
+      <ul className="tab-list">
         {prizes.map((p) => (
-          <li key={p._id}>
-            {p.name} (simbolo {p.symbolId ?? "-"}) {p.value} <button onClick={() => remove(p._id)}>Elimina</button>
+          <li className="tab-item" key={p._id}>
+            <div className="tab-item-info">
+              <span className="tab-name">{p.name}</span>
+              <span className="tab-sub">Simbolo {p.symbolId ?? "-"} · {p.value}</span>
+            </div>
+            <button className="btn-sm btn-ghost" onClick={() => remove(p._id)}>Elimina</button>
           </li>
         ))}
       </ul>
@@ -327,7 +384,6 @@ function PrizesTab({ extractionId, onError, onMsg }) {
 function DrawTab({ extractionId, onError, onMsg }) {
   const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState("");
-  const [drawn, setDrawn] = useState(null);
   const [finalists, setFinalists] = useState([]);
   const [prizes, setPrizes] = useState([]);
   const [prizeId, setPrizeId] = useState("");
@@ -370,7 +426,6 @@ function DrawTab({ extractionId, onError, onMsg }) {
     try {
       const json = await apiRequest(`/api/lottery/draw/sessions/${sessionId}/draw-cards`, { method: "POST" });
       if (json.ok) {
-        setDrawn(json.data.drawn);
         setFinalists(json.data.finalists || []);
         onMsg("Carte estratte");
       }
@@ -404,32 +459,40 @@ function DrawTab({ extractionId, onError, onMsg }) {
   return (
     <div>
       <div className="admin-form">
-        <label>Sessione
+        <h3>Sessione di estrazione</h3>
+        <label>
+          Sessione
           <select value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
-            <option value="">--</option>
+            <option value="">-- seleziona --</option>
             {sessions.map((s) => <option key={s._id} value={s._id}>{s._id} {s.closed ? "(chiusa)" : ""}</option>)}
           </select>
         </label>
-        <button onClick={createSession} disabled={busy}>Nuova sessione</button>
-        <button onClick={draw} disabled={busy || !sessionId}>Estrai 40 carte</button>
-        <button onClick={close} disabled={!sessionId}>Chiudi sessione</button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button className="btn-sm btn-accent" onClick={createSession} disabled={busy}>Nuova sessione</button>
+          <button className="btn-sm btn-accent" onClick={draw} disabled={busy || !sessionId}>Estrai 40 carte</button>
+          <button className="btn-sm btn-ghost" onClick={close} disabled={!sessionId}>Chiudi sessione</button>
+        </div>
       </div>
       {finalists.length > 0 && (
         <div className="admin-form">
-          <h3>5 finaliste</h3>
-          <p>{finalists.map((f) => f.id ?? f).join(", ")}</p>
+          <h3>5 carte finaliste</h3>
+          <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>{finalists.map((f) => (f.id ?? f)).join("  ·  ")}</p>
         </div>
       )}
       <div className="admin-form">
         <h3>Assegna premio</h3>
-        <label>Premio
+        <label>
+          Premio
           <select value={prizeId} onChange={(e) => setPrizeId(e.target.value)}>
-            <option value="">--</option>
+            <option value="">-- seleziona premio --</option>
             {prizes.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
           </select>
         </label>
-        <label>Simbolo <input value={symbolId} onChange={(e) => setSymbolId(e.target.value)} placeholder="id simbolo" /></label>
-        <button onClick={assign} disabled={busy}>Assegna</button>
+        <label>
+          ID simbolo
+          <input value={symbolId} onChange={(e) => setSymbolId(e.target.value)} placeholder="Es. 7" />
+        </label>
+        <button className="btn-sm btn-accent" onClick={assign} disabled={busy || !prizeId || !symbolId}>Assegna premio</button>
       </div>
     </div>
   );
@@ -452,6 +515,7 @@ function WinnersTab({ extractionId, onError }) {
     if (!sessionId) return;
     try {
       const json = await apiRequest(`/api/lottery/draw/sessions/${sessionId}/winners`);
+      // winners endpoint requires auth; apiRequest already sends token
       if (json.ok) setWinners(json.data || []);
     } catch (e) { onError(e); }
   }
@@ -460,18 +524,25 @@ function WinnersTab({ extractionId, onError }) {
   return (
     <div>
       <div className="admin-form">
-        <label>Sessione
+        <label>
+          Sessione
           <select value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
-            <option value="">--</option>
+            <option value="">-- seleziona --</option>
             {sessions.map((s) => <option key={s._id} value={s._id}>{s._id}</option>)}
           </select>
         </label>
-        <button onClick={loadWinners}>Aggiorna</button>
+        <button className="btn-sm btn-ghost" onClick={loadWinners}>Aggiorna vincitori</button>
       </div>
-      <ul>
+      <ul className="tab-list">
         {winners.map((w, i) => (
-          <li key={i}>Premio {w.prizeId} — Biglietto #{w.ticketNumber} {w.serial} (simbolo {w.symbolId}, candidati {w.candidateCount})</li>
+          <li className="tab-item" key={i}>
+            <div className="tab-item-info">
+              <span className="tab-name">Premio {String(w.prizeId).slice(-6)}</span>
+              <span className="tab-sub">Biglietto #{w.ticketNumber} — {w.serial} · Simbolo {w.symbolId} · Candidati {w.candidateCount}</span>
+            </div>
+          </li>
         ))}
+        {winners.length === 0 && <li className="tab-sub">Nessun vincitore registrato.</li>}
       </ul>
     </div>
   );

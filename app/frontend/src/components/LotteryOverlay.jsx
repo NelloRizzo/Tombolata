@@ -23,8 +23,6 @@ export default function LotteryOverlay({ lottery }) {
     return () => clearInterval(timer);
   }, [lottery?.status, lottery?.revealSerial, lottery?.revealBooklet]);
 
-  console.log("LotteryOverlay render", lottery && lottery.active, lottery && lottery.status, lottery && (lottery.drawn || []).length);
-
   if (!lottery || !lottery.active) return null;
 
   const drawn = Array.isArray(lottery.drawn) ? lottery.drawn : [];

@@ -499,7 +499,66 @@ export async function setLotteryDisplay(data) {
 }
 
 export async function clearLotteryDisplay() {
-  return setLotteryDisplay({ active: false, drawn: [], eliminated: [], finalists: [], winnerSerial: "", winnerNumber: null, prizeName: "", status: "idle" });
+  return setLotteryDisplay({ active: false, drawn: [], eliminated: [], finalists: [], winnerSerial: "", winnerNumber: null, prizeName: "", status: "idle", pool: [], batchSize: 5, revealSerial: "", revealBooklet: "", revealIndex: 0 });
+}
+
+export async function prepareLotteryDraw(sessionId, batchSize) {
+  const n = Number(batchSize) || 5;
+  const symbols = await LotterySymbol.find({ extractionId: (await LotteryDrawSession.findById(sessionId))?.extractionId }).lean();
+  const ids = symbols.length ? symbols.map((s) => s.id) : Array.from({ length: 40 }, (_, i) => i + 1);
+  // shuffle
+  const pool = [...ids];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(0, i + 1);
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return setLotteryDisplay({
+    active: true,
+    sessionId,
+    batchSize: n,
+    pool,
+    drawn: [],
+    eliminated: [],
+    finalists: [],
+    winnerSerial: "",
+    winnerNumber: null,
+    prizeName: "",
+    status: "drawing",
+    revealSerial: "",
+    revealBooklet: "",
+    revealIndex: 0
+  });
+}
+
+export async function drawLotteryBatch() {
+  const doc = await getLotteryDisplay();
+  if (!doc.active || doc.status !== "drawing") return doc;
+  const pool = doc.pool || [];
+  const batchSize = doc.batchSize || 5;
+  const remaining = pool.slice(doc.drawn.length);
+  const next = remaining.slice(0, batchSize);
+  const newDrawn = [...doc.drawn, ...next];
+  const done = newDrawn.length >= pool.length;
+
+  const update = { drawn: newDrawn };
+  if (done) {
+    // finalists = last 5 drawn
+    const finalists = newDrawn.slice(-5);
+    const eliminated = newDrawn.slice(0, newDrawn.length - 5);
+    update.finalists = finalists;
+    update.eliminated = eliminated;
+    update.status = "finalists";
+  }
+  return setLotteryDisplay(update);
+}
+
+export async function setLotteryReveal(serial, booklet) {
+  return setLotteryDisplay({
+    status: "reveal",
+    revealSerial: String(serial || ""),
+    revealBooklet: String(booklet || ""),
+    revealIndex: 0
+  });
 }
 
 // Keep a simple booklet-list PDF helper (legacy)

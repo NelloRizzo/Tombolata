@@ -384,11 +384,13 @@ function PrizesTab({ extractionId, onError, onMsg }) {
 function DrawTab({ extractionId, onError, onMsg }) {
   const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState("");
-  const [drawnData, setDrawnData] = useState(null);
-  const [finalists, setFinalists] = useState([]);
+  const [batchSize, setBatchSize] = useState(5);
+  const [display, setDisplay] = useState(null);
   const [prizes, setPrizes] = useState([]);
   const [prizeId, setPrizeId] = useState("");
   const [symbolId, setSymbolId] = useState("");
+  const [revealSerial, setRevealSerial] = useState("");
+  const [revealBooklet, setRevealBooklet] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function loadSessions() {
@@ -403,7 +405,13 @@ function DrawTab({ extractionId, onError, onMsg }) {
       if (json.ok) setPrizes(json.data || []);
     } catch (e) { onError(e); }
   }
-  useEffect(() => { loadSessions(); loadPrizes(); }, [extractionId]);
+  async function loadDisplay() {
+    try {
+      const json = await apiRequest("/api/lottery/display");
+      if (json.ok) setDisplay(json.data);
+    } catch (e) { onError(e); }
+  }
+  useEffect(() => { loadSessions(); loadPrizes(); loadDisplay(); }, [extractionId]);
 
   async function createSession() {
     setBusy(true);
@@ -421,15 +429,31 @@ function DrawTab({ extractionId, onError, onMsg }) {
     finally { setBusy(false); }
   }
 
-  async function draw() {
+  async function prepare() {
     if (!sessionId) return;
     setBusy(true);
     try {
-      const json = await apiRequest(`/api/lottery/draw/sessions/${sessionId}/draw-cards`, { method: "POST" });
+      const json = await apiRequest("/api/lottery/display/prepare", {
+        method: "POST",
+        body: JSON.stringify({ sessionId, batchSize })
+      });
       if (json.ok) {
-        setDrawnData(json.data);
-        setFinalists(json.data.finalists || []);
-        onMsg("Carte estratte");
+        setDisplay(json.data);
+        onMsg(`Estrazione preparata (batch di ${batchSize})`);
+      }
+    } catch (e) { onError(e); }
+    finally { setBusy(false); }
+  }
+
+  async function nextBatch() {
+    setBusy(true);
+    try {
+      const json = await apiRequest("/api/lottery/display/batch", { method: "POST" });
+      if (json.ok) {
+        setDisplay(json.data);
+        const drawn = (json.data.drawn || []).length;
+        const total = (json.data.pool || []).length || 40;
+        onMsg(drawn >= total ? "Estrazione simbodo completata" : `Estratti ${drawn}/${total}`);
       }
     } catch (e) { onError(e); }
     finally { setBusy(false); }
@@ -446,22 +470,18 @@ function DrawTab({ extractionId, onError, onMsg }) {
       if (json.ok) {
         onMsg(`Vincitore: ${json.data.winner.serial} (candidati: ${json.data.candidateCount})`);
         const prize = prizes.find((p) => String(p._id) === String(prizeId));
-        try {
-          await apiRequest("/api/lottery/display", {
-            method: "POST",
-            body: JSON.stringify({
-              active: true,
-              sessionId,
-              drawn: drawnData?.drawn?.map((c) => c.id ?? c) || [],
-              eliminated: drawnData?.eliminated?.map((c) => c.id ?? c) || [],
-              finalists: drawnData?.finalists?.map((c) => c.id ?? c) || [],
-              winnerSerial: json.data.winner.serial,
-              winnerNumber: json.data.winner.number,
-              prizeName: prize?.name || "",
-              status: "winner"
-            })
-          });
-        } catch (e) { onError(e); }
+        await apiRequest("/api/lottery/display", {
+          method: "POST",
+          body: JSON.stringify({
+            active: true,
+            sessionId,
+            winnerSerial: json.data.winner.serial,
+            winnerNumber: json.data.winner.number,
+            prizeName: prize?.name || "",
+            status: "winner"
+          })
+        });
+        loadDisplay();
       }
     } catch (e) { onError(e); }
     finally { setBusy(false); }
@@ -475,6 +495,10 @@ function DrawTab({ extractionId, onError, onMsg }) {
     } catch (e) { onError(e); }
   }
 
+  const drawnCount = (display?.drawn || []).length;
+  const total = (display?.pool || []).length || 40;
+  const done = display && drawnCount >= total && total > 0;
+
   return (
     <div>
       <div className="admin-form">
@@ -486,41 +510,39 @@ function DrawTab({ extractionId, onError, onMsg }) {
             {sessions.map((s) => <option key={s._id} value={s._id}>{s._id} {s.closed ? "(chiusa)" : ""}</option>)}
           </select>
         </label>
+        <label>
+          Simbodo per estrazione (N)
+          <input type="number" value={batchSize} onChange={(e) => setBatchSize(Number(e.target.value))} min={1} max={40} />
+        </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn-sm btn-accent" onClick={createSession} disabled={busy}>Nuova sessione</button>
-          <button className="btn-sm btn-accent" onClick={draw} disabled={busy || !sessionId}>Estrai 40 carte</button>
+          <button className="btn-sm btn-accent" onClick={prepare} disabled={busy || !sessionId}>Prepara estrazione</button>
+          <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>Estrai prossimi {batchSize}</button>
           <button className="btn-sm btn-ghost" onClick={async () => {
-            if (!drawnData) return;
             try {
               await apiRequest("/api/lottery/display", {
                 method: "POST",
-                body: JSON.stringify({
-                  active: true,
-                  sessionId,
-                  drawn: drawnData.drawn.map((c) => c.id ?? c),
-                  eliminated: drawnData.eliminated.map((c) => c.id ?? c),
-                  finalists: drawnData.finalists.map((c) => c.id ?? c),
-                  status: "finalists"
-                })
+                body: JSON.stringify({ active: true, sessionId, status: "finalists" })
               });
-              onMsg("Estrazione presentata sul tabellone");
+              onMsg("Finaliste presentate sul tabellone");
             } catch (e) { onError(e); }
-          }} disabled={!drawnData}>Presenta su tabellone</button>
+          }} disabled={!done}>Presenta finaliste</button>
           <button className="btn-sm btn-ghost" onClick={async () => {
             try {
               await apiRequest("/api/lottery/display/clear", { method: "POST" });
+              setDisplay(null);
               onMsg("Presentazione rimossa dal tabellone");
             } catch (e) { onError(e); }
           }}>Nascondi dal tabellone</button>
           <button className="btn-sm btn-ghost" onClick={close} disabled={!sessionId}>Chiudi sessione</button>
         </div>
+        {display?.active && (
+          <div className="tab-sub" style={{ marginTop: 8 }}>
+            Estratti {drawnCount}/{total} {done ? "— FINALISTI: " + (display.finalists || []).join(", ") : ""}
+          </div>
+        )}
       </div>
-      {finalists.length > 0 && (
-        <div className="admin-form">
-          <h3>5 carte finaliste</h3>
-          <p style={{ fontSize: "1.1rem", fontWeight: 600 }}>{finalists.map((f) => (f.id ?? f)).join("  ·  ")}</p>
-        </div>
-      )}
+
       <div className="admin-form">
         <h3>Assegna premio</h3>
         <label>
@@ -531,15 +553,36 @@ function DrawTab({ extractionId, onError, onMsg }) {
           </select>
         </label>
         <label>
-          ID simbolo
+          ID simbodo
           <input value={symbolId} onChange={(e) => setSymbolId(e.target.value)} placeholder="Es. 7" />
         </label>
         <button className="btn-sm btn-accent" onClick={assign} disabled={busy || !prizeId || !symbolId}>Assegna premio</button>
       </div>
+
+      <div className="admin-form">
+        <h3>Reveal cifra a cifra (biglietto / blocchetto)</h3>
+        <label>
+          Numero biglietto (seriale)
+          <input value={revealSerial} onChange={(e) => setRevealSerial(e.target.value)} placeholder="Es. AAB-012" />
+        </label>
+        <label>
+          Numero blocchetto
+          <input value={revealBooklet} onChange={(e) => setRevealBooklet(e.target.value)} placeholder="Es. 7" />
+        </label>
+        <button className="btn-sm btn-accent" onClick={async () => {
+          try {
+            await apiRequest("/api/lottery/display/reveal", {
+              method: "POST",
+              body: JSON.stringify({ serial: revealSerial, booklet: revealBooklet })
+            });
+            onMsg("Reveal avviato sul tabellone");
+          } catch (e) { onError(e); }
+        }} disabled={!revealSerial && !revealBooklet}>Avvia reveal cifre</button>
+        <span className="tab-sub">Il tabellone rivelerà il seriale e il blocchetto cifra a cifra.</span>
+      </div>
     </div>
   );
 }
-
 function WinnersTab({ extractionId, onError }) {
   const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState("");

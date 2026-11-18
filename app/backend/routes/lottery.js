@@ -6,6 +6,9 @@ import {
   getLotteryDisplay,
   setLotteryDisplay,
   clearLotteryDisplay,
+  prepareLotteryDraw,
+  drawLotteryBatch,
+  setLotteryReveal,
   seedSymbols,
   listSymbols,
   generateTicketsForExtraction,
@@ -234,6 +237,50 @@ router.get("/display", async (req, res) => {
 router.post("/display", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const doc = await setLotteryDisplay(req.body || {});
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", doc, null);
+    }
+    res.json({ ok: true, data: doc });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
+router.post("/display/prepare", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const { sessionId, batchSize } = req.body || {};
+    const doc = await prepareLotteryDraw(sessionId, batchSize);
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", doc, null);
+    }
+    res.json({ ok: true, data: doc });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
+router.post("/display/batch", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const doc = await drawLotteryBatch();
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", doc, null);
+    }
+    res.json({ ok: true, data: doc });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
+router.post("/display/reveal", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const { serial, booklet } = req.body || {};
+    const doc = await setLotteryReveal(serial, booklet);
     const wss = req.app.get("wss");
     if (wss) {
       const { broadcastToClients } = await import("../services/broadcast.js");

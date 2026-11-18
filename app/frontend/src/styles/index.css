@@ -1540,6 +1540,46 @@ h3 {
   color: #ffd700;
   letter-spacing: 0.15em;
 }
+.lottery-reveal-banner {
+  margin-top: 16px;
+  text-align: center;
+  padding: 24px 40px;
+  border: 3px solid #ff6b6b;
+  border-radius: 12px;
+  background: rgba(255, 107, 107, 0.1);
+}
+.lottery-reveal-label {
+  font-size: 1.2rem;
+  color: #ff6b6b;
+  letter-spacing: 0.2em;
+  margin-bottom: 12px;
+}
+.lottery-reveal-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+.lottery-reveal-tag {
+  font-size: 1.2rem;
+  color: #aaa;
+  min-width: 120px;
+  text-align: right;
+}
+.lottery-reveal-value {
+  font-family: monospace;
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+}
+.lottery-reveal-value span.hidden {
+  color: #444;
+}
+.lottery-reveal-value span.revealed {
+  color: #fff;
+  text-shadow: 0 0 8px #ff6b6b;
+}
 
 /* ---------- Loading ---------- */
 .loading {

@@ -355,6 +355,20 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
 
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: "A3", layout: "portrait", margin: 0 });
+
+    function drawRoundedImage(imgPath, x, y, size, radius = 6) {
+      if (!imgPath) return;
+      // ombra
+      doc.save();
+      doc.fillColor("#000000").opacity(0.22);
+      doc.roundedRect(x + 2, y + 2, size, size, radius).fill();
+      doc.restore();
+      // immagine ritagliata con angoli arrotondati
+      doc.save();
+      doc.roundedRect(x, y, size, size, radius).clip();
+      try { doc.image(imgPath, x, y, { width: size, height: size }); } catch {}
+      doc.restore();
+    }
     const chunks = [];
     doc.on("data", (c) => chunks.push(c));
     doc.on("end", () => resolve(Buffer.concat(chunks)));
@@ -405,9 +419,7 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
           const imgPath = tryGetImagePath(sym.code);
           const imgX = x + (matrixWidth - matrixImgSize) / 2;
           const imgY = y + 2 + idx * (matrixImgSize + 1);
-          if (imgPath) {
-            try { doc.image(imgPath, imgX, imgY, { width: matrixImgSize, height: matrixImgSize }); } catch {}
-          }
+          drawRoundedImage(imgPath, imgX, imgY, matrixImgSize, 6);
         });
         doc.fontSize(12).text(t.serial, x + 1, y + ticketHeight - 14, { width: matrixWidth - 2, align: "center" });
 
@@ -429,9 +441,7 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
           const imgPath = tryGetImagePath(sym.code);
           const imgX = splitX + 2 + idx * (figliaImgSize + 2);
           const imgY = figliaImgY;
-          if (imgPath) {
-            try { doc.image(imgPath, imgX, imgY, { width: figliaImgSize, height: figliaImgSize }); } catch {}
-          }
+          drawRoundedImage(imgPath, imgX, imgY, figliaImgSize, 6);
         });
 
         // FIGLIA: numero sotto le immagini

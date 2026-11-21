@@ -543,14 +543,18 @@ export async function drawLotteryBatch() {
   const batchSize = doc.batchSize || 5;
   const remaining = pool.slice(doc.drawn.length);
   const next = remaining.slice(0, batchSize);
-  const newDrawn = [...doc.drawn, ...next];
-  const done = newDrawn.length >= pool.length;
+  // Lascia gli ultimi 3 simbodo come finalisti: si estraggono tutti gli altri.
+  const targetDrawn = Math.max(0, pool.length - 3);
+  const cap = Math.max(0, targetDrawn - doc.drawn.length);
+  const cappedNext = next.slice(0, cap);
+  const newDrawn = [...doc.drawn, ...cappedNext];
+  const done = newDrawn.length >= targetDrawn;
 
   const update = { drawn: newDrawn };
   if (done) {
-    // finalists = last 5 drawn
-    const finalists = newDrawn.slice(-5);
-    const eliminated = newDrawn.slice(0, newDrawn.length - 5);
+    // finalisti = gli ultimi 3 simbodo rimasti nel pool (non estratti)
+    const finalists = pool.slice(newDrawn.length);
+    const eliminated = newDrawn;
     update.finalists = finalists;
     update.eliminated = eliminated;
     update.status = "finalists";

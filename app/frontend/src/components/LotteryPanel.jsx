@@ -66,7 +66,9 @@ export default function LotteryPanel({ mode = "all" }) {
       {error && <div className="error-text">{error}</div>}
       {msg && <div className="success-text">{msg}</div>}
 
+      {!isDrawOnly && (
       <CreateExtractionForm onCreated={(doc) => { loadExtractions(); setSelectedId(doc._id); notify("Estrazione creata"); }} onError={fail} />
+      )}
 
       {selectedId && (
         <>
@@ -531,7 +533,9 @@ function DrawTab({ extractionId, onError, onMsg }) {
             if (!window.confirm("Preparare una nuova estrazione sul tabellone? Questo resetta l'estrazione in corso.")) return;
             prepare();
           }} disabled={busy}>Prepara estrazione</button>
+          {display?.status === "drawing" && (
           <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbodo" : `Estrai prossimi ${batchSize} simbodo`}</button>
+          )}
           <button className="btn-sm btn-accent" onClick={async () => {
             setBusy(true);
             try {
@@ -577,6 +581,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
         <button className="btn-sm btn-accent" onClick={assign} disabled={busy || !prizeId || !symbolId}>Assegna premio</button>
       </div>
 
+      {display?.status === "finalists" && (
       <div className="admin-form">
         <h3>Reveal cifra a cifra (biglietto / blocchetto)</h3>
         <label>
@@ -616,6 +621,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
           }} disabled={!revealSerial}>Estrai cifre biglietto</button>
         <span className="tab-sub">Il tabellone rivelerà il seriale e il blocchetto cifra a cifra.</span>
       </div>
+      )}
     </div>
   );
 }

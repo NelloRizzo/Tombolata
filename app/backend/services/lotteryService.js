@@ -572,6 +572,64 @@ export async function setLotteryReveal(serial, booklet) {
   });
 }
 
+// ---------- Estrazione casuale di blocchetto e biglietto ----------
+async function getValidLotteryCandidates(doc) {
+  const sess = doc?.sessionId ? await LotteryDrawSession.findById(doc.sessionId) : null;
+  const extractionId = sess?.extractionId;
+  if (!extractionId) throw new Error("Sessione/estrazione non valida");
+  const finalists = Array.isArray(doc?.finalists) ? doc.finalists : [];
+  const sold = await LotteryTicket.find({ extractionId, status: "sold" }).lean();
+  let candidates = sold;
+  if (finalists.length) {
+    candidates = sold.filter((t) => (t.symbols || []).some((s) => finalists.includes(s)));
+  }
+  if (!candidates.length) {
+    // fallback: tutti i venduti
+    candidates = sold;
+  }
+  return candidates;
+}
+
+export async function drawLotteryBooklet() {
+  const doc = await getLotteryDisplay();
+  const candidates = await getValidLotteryCandidates(doc);
+  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto");
+  const booklets = [...new Set(candidates.map((t) => String(t.serial || "").split("-")[0]).filter(Boolean))];
+  if (!booklets.length) throw new Error("Nessun blocchetto valido");
+  const pick = booklets[Math.floor(Math.random() * booklets.length)];
+  return setLotteryDisplay({
+    active: true,
+    status: "reveal",
+    revealBooklet: pick,
+    revealSerial: "",
+    revealIndex: 0
+  });
+}
+
+export async function drawLotteryTicket() {
+  const doc = await getLotteryDisplay();
+  let candidates = await getValidLotteryCandidates(doc);
+  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto");
+  const booklet = doc?.revealBooklet;
+  if (booklet) {
+    const filtered = candidates.filter((t) => String(t.serial || "").split("-")[0] === String(booklet));
+    if (filtered.length) candidates = filtered;
+  }
+  const ticket = candidates[Math.floor(Math.random() * candidates.length)];
+  const parts = String(ticket.serial || "").split("-");
+  const serial = parts.length > 1 ? parts[1] : String(ticket.number);
+  const bk = parts.length > 1 ? parts[0] : (doc?.revealBooklet || "");
+  // marca il biglietto come vincente
+  await LotteryTicket.updateOne({ _id: ticket._id }, { $set: { status: "winning" } });
+  return setLotteryDisplay({
+    active: true,
+    status: "reveal",
+    revealSerial: serial,
+    revealBooklet: bk,
+    revealIndex: 0
+  });
+}
+
 // Keep a simple booklet-list PDF helper (legacy)
 export async function buildBookletsPdf(extractionId, bookletNumber) {
   const PDFDocument = (await import("pdfkit")).default;

@@ -9,6 +9,8 @@ import {
   prepareLotteryDraw,
   drawLotteryBatch,
   setLotteryReveal,
+  drawLotteryBooklet,
+  drawLotteryTicket,
   seedSymbols,
   listSymbols,
   generateTicketsForExtraction,
@@ -281,6 +283,34 @@ router.post("/display/reveal", authenticate, requireRoles("director", "admin"), 
   try {
     const { serial, booklet } = req.body || {};
     const doc = await setLotteryReveal(serial, booklet);
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", doc, null);
+    }
+    res.json({ ok: true, data: doc });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
+router.post("/display/draw-booklet", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const doc = await drawLotteryBooklet();
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", doc, null);
+    }
+    res.json({ ok: true, data: doc });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
+router.post("/display/draw-ticket", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const doc = await drawLotteryTicket();
     const wss = req.app.get("wss");
     if (wss) {
       const { broadcastToClients } = await import("../services/broadcast.js");

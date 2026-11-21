@@ -603,22 +603,16 @@ function DrawTab({ extractionId, onError, onMsg }) {
         }} disabled={!revealSerial && !revealBooklet}>Avvia reveal completo</button>
         <button className="btn-sm btn-accent" onClick={async () => {
             try {
-              await apiRequest("/api/lottery/display/reveal", {
-                method: "POST",
-                body: JSON.stringify({ serial: "", booklet: revealBooklet })
-              });
-              onMsg("Reveal blocchetto avviato");
+              const json = await apiRequest("/api/lottery/display/draw-booklet", { method: "POST" });
+              if (json.ok) { setDisplay(json.data); onMsg("Blocchetto estratto casualmente"); }
             } catch (e) { onError(e); }
-          }} disabled={!revealBooklet}>Estrai blocchetto</button>
+          }}>Estrai blocchetto</button>
         <button className="btn-sm btn-accent" onClick={async () => {
             try {
-              await apiRequest("/api/lottery/display/reveal", {
-                method: "POST",
-                body: JSON.stringify({ serial: revealSerial, booklet: "" })
-              });
-              onMsg("Reveal cifre biglietto avviato");
+              const json = await apiRequest("/api/lottery/display/draw-ticket", { method: "POST" });
+              if (json.ok) { setDisplay(json.data); onMsg("Cifre biglietto estratte casualmente"); }
             } catch (e) { onError(e); }
-          }} disabled={!revealSerial}>Estrai cifre biglietto</button>
+          }}>Estrai cifre biglietto</button>
         <span className="tab-sub">Il tabellone rivelerà il seriale e il blocchetto cifra a cifra.</span>
       </div>
       )}

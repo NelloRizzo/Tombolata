@@ -22,6 +22,7 @@ import {
   createPrize,
   listPrizes,
   deletePrize,
+  deleteExtraction,
   createDrawSession,
   drawCards,
   assignPrize,
@@ -63,6 +64,15 @@ router.get("/extractions/:id", authenticate, async (req, res) => {
     res.json({ ok: true, data: doc });
   } catch (e) {
     res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+router.delete("/extractions/:id", authenticate, requireRoles(...STAFF), async (req, res) => {
+  try {
+    const r = await deleteExtraction(req.params.id);
+    res.json({ ok: true, data: r });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
   }
 });
 

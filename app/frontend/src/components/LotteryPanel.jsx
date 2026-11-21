@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { apiRequest, authHeaders } from "../api.js";
+import ConfirmModal from "./ConfirmModal.jsx";
 import { apiUrl } from "../hooks/useWebSocket.js";
 
 export default function LotteryPanel({ mode = "all" }) {
@@ -14,6 +15,7 @@ export default function LotteryPanel({ mode = "all" }) {
   const [tab, setTab] = useState(isDrawOnly ? "draw" : "config");
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
+  const [confirm, setConfirm] = useState({ open: false, title: "", message: "", onConfirm: null });
 
   const selected = extractions.find((e) => String(e._id) === String(selectedId));
 
@@ -61,6 +63,24 @@ export default function LotteryPanel({ mode = "all" }) {
           </select>
         </label>
         <button className="btn-sm btn-ghost" onClick={loadExtractions}>Aggiorna elenco</button>
+        {selectedId && (
+          <button className="btn-sm btn-danger" onClick={() => {
+            setConfirm({
+              open: true,
+              title: "Elimina estrazione",
+              message: "Eliminare l'estrazione selezionata e tutti i dati collegati?",
+              onConfirm: async () => {
+                setConfirm((c) => ({ ...c, open: false }));
+                try {
+                  await apiRequest(`/api/lottery/extractions/${selectedId}`, { method: "DELETE" });
+                  notify("Estrazione eliminata");
+                  setSelectedId("");
+                  loadExtractions();
+                } catch (e) { fail(e); }
+              }
+            });
+          }}>Elimina estrazione</button>
+        )}
       </div>
 
       {error && <div className="error-text">{error}</div>}
@@ -93,6 +113,14 @@ export default function LotteryPanel({ mode = "all" }) {
           </div>
         </>
       )}
+      <ConfirmModal
+        open={confirm.open}
+        title={confirm.title}
+        message={confirm.message}
+        danger
+        onConfirm={confirm.onConfirm || (() => setConfirm((c) => ({ ...c, open: false })))}
+        onCancel={() => setConfirm((c) => ({ ...c, open: false }))}
+      />
     </div>
   );
 }
@@ -530,8 +558,12 @@ function DrawTab({ extractionId, onError, onMsg }) {
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn-sm btn-accent" onClick={() => {
-            if (!window.confirm("Preparare una nuova estrazione sul tabellone? Questo resetta l'estrazione in corso.")) return;
-            prepare();
+            setConfirm({
+              open: true,
+              title: "Prepara estrazione",
+              message: "Preparare una nuova estrazione sul tabellone? Questo resetta l'estrazione in corso.",
+              onConfirm: () => { setConfirm((c) => ({ ...c, open: false })); prepare(); }
+            });
           }} disabled={busy}>Prepara estrazione</button>
           {display?.status === "drawing" && (
           <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbodo" : `Estrai prossimi ${batchSize} simbodo`}</button>

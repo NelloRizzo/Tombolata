@@ -164,6 +164,31 @@ export async function createExtraction({ name, startDate, endDate }) {
   return LotteryExtraction.create({ name, startDate: startDate ? new Date(startDate) : null, endDate: endDate ? new Date(endDate) : null });
 }
 
+export async function deleteExtraction(id) {
+  const ext = await LotteryExtraction.findById(id);
+  if (!ext) throw new Error("Estrazione non trovata");
+  // rimuovi dati collegati
+  await LotteryTicket.deleteMany({ extractionId: id });
+  await LotterySymbol.deleteMany({ extractionId: id });
+  await LotteryBooklet.deleteMany({ extractionId: id });
+  await LotteryPrize.deleteMany({ extractionId: id });
+  const sessions = await LotteryDrawSession.find({ extractionId: id }).lean();
+  const sessionIds = sessions.map((s) => s._id);
+  if (sessionIds.length) {
+    await LotteryDrawEvent.deleteMany({ sessionId: { $in: sessionIds } });
+    await LotteryPrizeWinner.deleteMany({ eventId: { $in: (await LotteryDrawEvent.find({ sessionId: { $in: sessionIds } }).distinct("_id")) } });
+    await LotteryDrawSession.deleteMany({ extractionId: id });
+  }
+  await LotteryPrizeWinner.deleteMany({ prizeId: { $in: (await LotteryPrize.find({ extractionId: id }).distinct("_id")) } });
+  // reset display se collegato a una sessione di questa estrazione
+  const display = await LotteryDisplay.findOne({ key: "main" });
+  if (display && display.sessionId && sessionIds.some((s) => String(s) === String(display.sessionId))) {
+    await setLotteryDisplay({ active: false, sessionId: null, status: "idle", drawn: [], eliminated: [], finalists: [], pool: [], winnerSerial: "", winnerNumber: null, prizeName: "", revealSerial: "", revealBooklet: "", revealIndex: 0 });
+  }
+  await LotteryExtraction.findByIdAndDelete(id);
+  return { deleted: true };
+}
+
 export async function listExtractions() {
   const exts = await LotteryExtraction.find().sort({ createdAt: -1 }).lean();
   const out = [];

@@ -581,7 +581,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
         <button className="btn-sm btn-accent" onClick={assign} disabled={busy || !prizeId || !symbolId}>Assegna premio</button>
       </div>
 
-      {display?.status === "finalists" && (
+      {(display?.status === "finalists" || display?.status === "reveal") && (
       <div className="admin-form">
         <h3>Reveal cifra a cifra (biglietto / blocchetto)</h3>
         <label>
@@ -601,18 +601,20 @@ function DrawTab({ extractionId, onError, onMsg }) {
             onMsg("Reveal avviato sul tabellone");
           } catch (e) { onError(e); }
         }} disabled={!revealSerial && !revealBooklet}>Avvia reveal completo</button>
+        {(!display?.revealBooklet) && (
         <button className="btn-sm btn-accent" onClick={async () => {
             try {
               const json = await apiRequest("/api/lottery/display/draw-booklet", { method: "POST" });
               if (json.ok) { setDisplay(json.data); onMsg("Blocchetto estratto casualmente"); }
             } catch (e) { onError(e); }
           }}>Estrai blocchetto</button>
+        )}
         <button className="btn-sm btn-accent" onClick={async () => {
             try {
               const json = await apiRequest("/api/lottery/display/draw-ticket", { method: "POST" });
               if (json.ok) { setDisplay(json.data); onMsg("Cifre biglietto estratte casualmente"); }
             } catch (e) { onError(e); }
-          }}>Estrai cifre biglietto</button>
+          }} disabled={!display?.revealBooklet}>Estrai cifre biglietto</button>
         <span className="tab-sub">Il tabellone rivelerà il seriale e il blocchetto cifra a cifra.</span>
       </div>
       )}

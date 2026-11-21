@@ -68,10 +68,6 @@ export default function LotteryPanel({ mode = "all" }) {
 
       <CreateExtractionForm onCreated={(doc) => { loadExtractions(); setSelectedId(doc._id); notify("Estrazione creata"); }} onError={fail} />
 
-      {!isDrawOnly && (
-      <CreateExtractionForm onCreated={(doc) => { loadExtractions(); setSelectedId(doc._id); notify("Estrazione creata"); }} onError={fail} />
-      )}
-
       {selectedId && (
         <>
           <nav className="page-tabs">

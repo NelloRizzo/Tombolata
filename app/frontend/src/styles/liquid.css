@@ -1,0 +1,714 @@
+/* ============================================================
+   Design system "Liquid Glass" — restyling moderno/immersive
+   Sovrascrive e arricchisce styles/index.css senza rompere layout.
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+
+:root {
+  /* ---- Glass tokens ---- */
+  --glass-bg: rgba(22, 33, 62, 0.55);
+  --glass-bg-strong: rgba(22, 33, 62, 0.78);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-border-strong: rgba(255, 255, 255, 0.22);
+  --glass-blur: 14px;
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2);
+  --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+
+  /* ---- Gradients (natalizi) ---- */
+  --grad-liquid: linear-gradient(135deg, #ff4d6d 0%, #c62828 35%, #8e1b1b 70%, #ffd700 100%);
+  --grad-liquid-cool: linear-gradient(135deg, #2e7d32 0%, #1b5e20 50%, #ffd700 100%);
+  --grad-liquid-gold: linear-gradient(135deg, #ffd700 0%, #ff6f00 50%, #fff176 100%);
+  --grad-liquid-green: linear-gradient(135deg, #2e7d32 0%, #1b5e20 60%, #ffd700 100%);
+  --grad-bg: radial-gradient(1200px 600px at 10% -10%, rgba(198, 40, 40, 0.30), transparent 60%),
+             radial-gradient(900px 500px at 90% 10%, rgba(255, 215, 0, 0.16), transparent 60%),
+             radial-gradient(700px 400px at 50% 110%, rgba(27, 94, 32, 0.30), transparent 60%),
+             var(--bg);
+
+  /* ---- Motion ---- */
+  --ease-liquid: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 160ms;
+  --dur-med: 320ms;
+  --dur-slow: 600ms;
+
+  /* ---- Radius ---- */
+  --r-sm: 10px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-xl: 32px;
+  --r-pill: 999px;
+
+  /* ---- Typography ---- */
+  --font-ui: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+/* ---- Base typography ---- */
+body {
+  font-family: var(--font-ui);
+  background: var(--grad-bg);
+  background-attachment: fixed;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ---- Neve natalizia (layer decorativo) ---- */
+body::before,
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  animation: snow-fall 20s linear infinite;
+}
+body::before {
+  background-image:
+    radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.9), transparent 60%),
+    radial-gradient(1.5px 1.5px at 60px 80px, rgba(255,255,255,0.7), transparent 60%),
+    radial-gradient(2px 2px at 100px 40px, rgba(255,255,255,0.8), transparent 60%),
+    radial-gradient(1px 1px at 140px 110px, rgba(255,255,255,0.6), transparent 60%),
+    radial-gradient(2px 2px at 180px 70px, rgba(255,255,255,0.9), transparent 60%);
+}
+body::after {
+  background-size: 320px 320px;
+  opacity: 0.22;
+  animation: snow-fall 32s linear infinite;
+  background-image:
+    radial-gradient(1.5px 1.5px at 40px 60px, rgba(255,215,0,0.7), transparent 60%),
+    radial-gradient(1px 1px at 120px 140px, rgba(255,255,255,0.6), transparent 60%),
+    radial-gradient(2px 2px at 200px 80px, rgba(255,255,255,0.8), transparent 60%),
+    radial-gradient(1.5px 1.5px at 280px 220px, rgba(255,255,255,0.7), transparent 60%);
+}
+@keyframes snow-fall {
+  0%   { background-position: 0 0; }
+  100% { background-position: 60px 400px; }
+}
+/* Assicura che il contenuto stia sopra la neve */
+#root { position: relative; z-index: 1; }
+
+/* ---- Scrollbar ---- */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 8px; }
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.06));
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); background-clip: padding-box; }
+
+/* ---- Focus ring ---- */
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ============================================================
+   LIQUID BUTTONS
+   ============================================================ */
+button,
+.btn,
+.btn-extract,
+.btn-sm,
+.btn-accent,
+.btn-ghost,
+.btn-danger,
+.phase-btn,
+.sound-card-btn {
+  font-family: var(--font-ui);
+  transition: transform var(--dur-fast) var(--ease-liquid),
+              box-shadow var(--dur-fast) var(--ease-liquid),
+              background var(--dur-med) var(--ease-liquid),
+              border-color var(--dur-med) var(--ease-liquid),
+              filter var(--dur-fast) var(--ease-liquid);
+  will-change: transform;
+}
+
+button:not(:disabled):hover,
+.btn:not(:disabled):hover,
+.btn-extract:not(:disabled):hover,
+.btn-sm:not(:disabled):hover,
+.btn-accent:not(:disabled):hover,
+.phase-btn:not(:disabled):hover,
+.sound-card-btn:not(:disabled):hover {
+  transform: translateY(-2px) scale(1.02);
+  filter: brightness(1.08) saturate(1.1);
+}
+
+button:not(:disabled):active,
+.btn:not(:disabled):active,
+.btn-extract:not(:disabled):active,
+.btn-sm:not(:disabled):active,
+.btn-accent:not(:disabled):active,
+.phase-btn:not(:disabled):active,
+.sound-card-btn:not(:disabled):active {
+  transform: translateY(0) scale(0.97);
+  transition-duration: 80ms;
+}
+
+/* Liquid shimmer on primary extract button */
+.btn-extract {
+  position: relative;
+  overflow: hidden;
+  background: var(--grad-liquid);
+  border: none;
+  border-radius: var(--r-md);
+  box-shadow: 0 10px 30px rgba(198, 40, 40, 0.45), var(--glass-inset);
+  letter-spacing: 0.5px;
+}
+.btn-extract::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.35) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.7s var(--ease-liquid);
+  pointer-events: none;
+}
+.btn-extract:hover:not(:disabled)::before {
+  transform: translateX(120%);
+}
+.btn-extract:disabled {
+  background: rgba(255,255,255,0.08);
+  box-shadow: none;
+}
+
+/* Liquid pill buttons */
+.btn-sm,
+.btn-ghost {
+  border-radius: var(--r-sm);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.btn-sm {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+.btn-sm:hover {
+  background: var(--glass-bg-strong);
+  border-color: var(--glass-border-strong);
+}
+.btn-accent {
+  background: var(--grad-liquid-gold);
+  border: none;
+  color: #1a1a2e;
+  font-weight: 700;
+  box-shadow: 0 6px 20px rgba(255, 179, 0, 0.35);
+}
+.btn-danger {
+  background: linear-gradient(135deg, #ff1744, #c62828);
+  border: none;
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(255, 23, 68, 0.35);
+}
+
+.phase-btn {
+  border-radius: var(--r-pill);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.phase-btn.active {
+  background: var(--grad-liquid);
+  border-color: transparent;
+  box-shadow: 0 4px 16px rgba(198, 40, 40, 0.45);
+  color: #fff;
+}
+
+/* ============================================================
+   GLASS PANELS / CARDS
+   ============================================================ */
+.panel-block,
+.game-manager-panel,
+.gm-new input,
+.draw-list-scroll {
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+}
+
+.panel-block {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--glass-shadow), var(--glass-inset);
+  transition: border-color var(--dur-med) var(--ease-liquid),
+              box-shadow var(--dur-med) var(--ease-liquid),
+              transform var(--dur-med) var(--ease-liquid);
+}
+.panel-block:hover {
+  border-color: var(--glass-border-strong);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.4), var(--glass-inset);
+}
+
+.game-manager-panel {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-shadow);
+}
+
+.gm-new input,
+.gm-new select,
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="email"],
+select,
+textarea {
+  background: rgba(15, 26, 51, 0.6) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: border-color var(--dur-fast) var(--ease-liquid),
+              box-shadow var(--dur-fast) var(--ease-liquid),
+              background var(--dur-fast) var(--ease-liquid);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--gold) !important;
+  box-shadow: 0 0 0 3px rgba(255, 179, 0, 0.18), var(--glass-inset);
+  background: rgba(15, 26, 51, 0.8) !important;
+  outline: none;
+}
+
+/* ============================================================
+   SIDEBAR / NAV (glass)
+   ============================================================ */
+.app-sidebar {
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+  box-shadow: 4px 0 24px rgba(0,0,0,0.3);
+}
+.sidebar-brand .navbar-logo {
+  background: var(--grad-liquid);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.nav-link {
+  border-radius: var(--r-sm);
+  transition: transform var(--dur-fast) var(--ease-liquid),
+              background var(--dur-fast) var(--ease-liquid),
+              color var(--dur-fast) var(--ease-liquid);
+}
+.nav-link:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateX(4px);
+}
+.nav-link.active {
+  background: var(--grad-liquid);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(198, 40, 40, 0.35);
+}
+.game-selector select {
+  background: rgba(15,26,51,0.6) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--r-sm);
+  color: var(--text);
+  backdrop-filter: blur(6px);
+}
+.sidebar-group-label {
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  color: var(--muted);
+}
+.navbar-logout {
+  background: var(--grad-liquid) !important;
+  border: none !important;
+  border-radius: var(--r-sm);
+  color: #fff;
+  font-weight: 700;
+  padding: 8px 14px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(198,40,40,0.3);
+}
+.navbar-logout:hover { transform: translateY(-1px) scale(1.03); }
+
+/* ============================================================
+   ANIMATIONS / IMMERSIVE
+   ============================================================ */
+@keyframes liquid-fade-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); filter: blur(4px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes liquid-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(198, 40, 40, 0.35); }
+  50%      { box-shadow: 0 0 40px rgba(255, 179, 0, 0.45); }
+}
+@keyframes liquid-float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+@keyframes liquid-shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes liquid-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.05); opacity: 0.85; }
+}
+
+.liquid-fade-in { animation: liquid-fade-in var(--dur-slow) var(--ease-liquid) both; }
+.liquid-glow     { animation: liquid-glow 3s ease-in-out infinite; }
+.liquid-float    { animation: liquid-float 4s ease-in-out infinite; }
+.liquid-pulse    { animation: liquid-pulse 2s ease-in-out infinite; }
+
+/* Staggered entrance for panel children */
+.panel-block,
+.game-manager-panel {
+  animation: liquid-fade-in var(--dur-slow) var(--ease-liquid) both;
+}
+
+/* ============================================================
+   UTILITY CLASSES
+   ============================================================ */
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-md);
+  box-shadow: var(--glass-shadow);
+}
+.glass-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-shadow);
+}
+.liquid-btn {
+  position: relative;
+  overflow: hidden;
+  background: var(--grad-liquid);
+  color: #fff;
+  border: none;
+  border-radius: var(--r-pill);
+  padding: 12px 28px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  box-shadow: 0 8px 24px rgba(198, 40, 40, 0.4);
+  cursor: pointer;
+}
+.liquid-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform 0.6s var(--ease-liquid);
+  pointer-events: none;
+}
+.liquid-btn:hover::before { transform: translateX(120%); }
+.liquid-btn:hover { transform: translateY(-2px) scale(1.03); }
+.liquid-btn:active { transform: scale(0.96); }
+
+.immersive-title {
+  background: linear-gradient(120deg, #fff, var(--gold), #fff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: liquid-shimmer 4s linear infinite;
+  font-weight: 900;
+}
+
+/* ============================================================
+   RESPONSIVE / MOBILE POLISH
+   ============================================================ */
+@media (max-width: 640px) {
+  button, .btn, .btn-extract, .btn-sm {
+    min-height: 44px;
+  }
+  .panel-block {
+    border-radius: var(--r-md);
+  }
+}
+
+/* ============================================================
+   BOARD / TABellone pubblico / proiettore (immersive)
+   ============================================================ */
+.board-page {
+  background:
+    radial-gradient(1200px 700px at 50% -10%, rgba(198, 40, 40, 0.28), transparent 60%),
+    radial-gradient(900px 600px at 100% 110%, rgba(255, 215, 0, 0.18), transparent 60%),
+    radial-gradient(700px 400px at 0% 100%, rgba(27, 94, 32, 0.25), transparent 60%),
+    var(--bg);
+}
+.board-title {
+  background: linear-gradient(120deg, var(--gold), #fff, var(--gold));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: liquid-shimmer 5s linear infinite;
+  text-shadow: 0 0 24px rgba(255, 179, 0, 0.25);
+}
+.board-card {
+  border: 1px solid rgba(201, 164, 84, 0.5) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.06);
+  transition: transform var(--dur-med) var(--ease-liquid), box-shadow var(--dur-med) var(--ease-liquid);
+  background: transparent !important;
+}
+.board-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1);
+}
+/* Numeri estratti: nessuna animazione glow (evita alone nero attorno al bussolotto) */
+.grid-cell.extracted .cell-num {
+  text-shadow: 0 0 8px rgba(255, 179, 0, 0.35);
+}
+.last-number {
+  background: radial-gradient(circle at 30% 30%, rgba(255,179,0,0.18), var(--card)) !important;
+  box-shadow: 0 0 24px rgba(255,179,0,0.18), var(--glass-inset);
+  border-width: 2px !important;
+}
+.last-number.active {
+  box-shadow: 0 0 40px rgba(255,179,0,0.55), 0 0 80px rgba(198,40,40,0.25);
+  animation: pop 0.5s var(--ease-bounce), liquid-glow 2s ease-in-out infinite;
+}
+.extracted-numbers {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--glass-shadow), var(--glass-inset);
+}
+.extracted-numbers h2 {
+  background: linear-gradient(120deg, var(--gold), #fff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+}
+.extracted-item {
+  border-radius: var(--r-sm);
+  transition: transform var(--dur-fast) var(--ease-liquid), background var(--dur-fast) var(--ease-liquid);
+}
+.extracted-item:hover { transform: translateX(3px); }
+.extracted-item.last {
+  background: var(--grad-liquid) !important;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(198,40,40,0.4);
+}
+.win-overlay {
+  background: radial-gradient(circle at center, rgba(198,40,40,0.35), rgba(0,0,0,0.85)) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.win-card {
+  background: linear-gradient(145deg, rgba(198,40,40,0.9), rgba(142,27,27,0.95)) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid var(--gold) !important;
+  border-radius: 32px !important;
+  box-shadow: 0 0 60px rgba(255,179,0,0.45), 0 20px 60px rgba(0,0,0,0.5);
+  animation: pop 0.5s var(--ease-bounce), liquid-glow 2s ease-in-out infinite;
+}
+.win-type {
+  background: linear-gradient(120deg, var(--gold), #fff, var(--gold));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: liquid-shimmer 3s linear infinite;
+}
+.board-vertical-title {
+  background: linear-gradient(120deg, var(--gold), #fff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 900;
+}
+.status-dot.connected {
+  animation: liquid-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================================
+   CONSOLE REGIA (immersive)
+   ============================================================ */
+.console-grid,
+.director-panel {
+  gap: 20px;
+}
+.sound-card-btn {
+  background: var(--glass-bg) !important;
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--r-md) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: var(--glass-shadow);
+  transition: transform var(--dur-fast) var(--ease-liquid),
+              box-shadow var(--dur-fast) var(--ease-liquid),
+              border-color var(--dur-fast) var(--ease-liquid);
+}
+.sound-card-btn:hover {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--glass-border-strong) !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.4);
+}
+.panel-title,
+.panel-block h2,
+.panel-block-head h2,
+.panel-block-head h3 {
+  background: linear-gradient(120deg, var(--gold), #fff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+.panel-block-head {
+  border-bottom: 1px solid var(--glass-border);
+  padding-bottom: 10px;
+  margin-bottom: 12px;
+}
+.game-manager {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  padding: 16px;
+  box-shadow: var(--glass-shadow);
+}
+/* Card delle cartelle in gioco */
+.board-card-mini,
+.card-row-mini {
+  border-radius: var(--r-sm);
+}
+/* Estrazione: bussolotti già gestiti; aggiunge glow al pannello */
+.drawer-panel .panel-block {
+  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(255,179,0,0.06);
+}
+/* Minigame overlays: glass */
+.minigame-overlay,
+.public-game-overlay {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+/* Confirm modal */
+.confirm-modal,
+.confirm-modal .modal-card {
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--glass-shadow);
+}
+
+/* ============================================================
+   LOGIN + HOME (immersive)
+   ============================================================ */
+.login-page {
+  background:
+    radial-gradient(900px 600px at 20% 20%, rgba(198,40,40,0.4), transparent 60%),
+    radial-gradient(700px 500px at 80% 80%, rgba(255,215,0,0.25), transparent 60%),
+    radial-gradient(600px 400px at 50% 100%, rgba(27,94,32,0.25), transparent 60%),
+    var(--bg);
+}
+.login-card {
+  background: var(--glass-bg-strong) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border-strong) !important;
+  border-radius: var(--r-xl) !important;
+  box-shadow: var(--glass-shadow), 0 0 40px rgba(198,40,40,0.15);
+  animation: liquid-fade-in var(--dur-slow) var(--ease-liquid) both;
+}
+.login-card h1 {
+  background: linear-gradient(120deg, var(--gold), #fff, var(--gold));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: liquid-shimmer 4s linear infinite;
+  font-weight: 900;
+}
+.home-page {
+  background:
+    radial-gradient(1000px 600px at 10% -10%, rgba(198,40,40,0.28), transparent 60%),
+    radial-gradient(900px 500px at 90% 0%, rgba(255,215,0,0.18), transparent 60%),
+    radial-gradient(700px 400px at 50% 100%, rgba(27,94,32,0.22), transparent 60%),
+    var(--bg);
+}
+.home-brand {
+  background: var(--grad-liquid);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+.home-title {
+  background: linear-gradient(120deg, #fff, var(--gold), #fff);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: liquid-shimmer 5s linear infinite;
+  font-weight: 900;
+}
+.home-open-board {
+  background: var(--grad-liquid) !important;
+  border: none !important;
+  border-radius: var(--r-pill) !important;
+  color: #fff;
+  font-weight: 700;
+  padding: 12px 28px;
+  box-shadow: 0 8px 24px rgba(198,40,40,0.4);
+  transition: transform var(--dur-fast) var(--ease-liquid);
+}
+.home-open-board:hover { transform: translateY(-2px) scale(1.03); }
+.program-card {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: var(--glass-shadow);
+  transition: transform var(--dur-med) var(--ease-liquid), box-shadow var(--dur-med) var(--ease-liquid);
+  animation: liquid-fade-in var(--dur-slow) var(--ease-liquid) both;
+}
+.program-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  border-color: var(--glass-border-strong) !important;
+}
+.program-badge {
+  background: var(--grad-liquid) !important;
+  color: #fff;
+  border-radius: var(--r-pill);
+  padding: 4px 12px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(198,40,40,0.35);
+}
+
+/* Reduce motion respect */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

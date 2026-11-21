@@ -111,7 +111,6 @@ export default function BoardView({ showChrome = true, gameId = null }) {
     <div className={showChrome ? "board-page" : "board-page board-fullscreen"}>
       {showChrome && (
         <header className="board-header">
-          <h1 className="board-title">{game?.name || "Tombolata"}</h1>
           <div className="board-status">
             {connected ? (
               <span className="status-dot connected" />
@@ -124,11 +123,9 @@ export default function BoardView({ showChrome = true, gameId = null }) {
       )}
 
       <main className="board-main">
-        {!showChrome && (
-          <div className="board-vertical-title" title={game?.name || "Tombolata"}>
-            {game?.name || "Tombolata"}
-          </div>
-        )}
+        <div className="board-vertical-title" title={game?.name || "Tombolata"}>
+          {game?.name || "Tombolata"}
+        </div>
         <div className="board-left">
           <NumberGrid extracted={game?.extractedNumbers || []} fill />
         </div>

@@ -2,13 +2,16 @@ import { useEffect, useState } from "react";
 import { apiRequest, authHeaders } from "../api.js";
 import { apiUrl } from "../hooks/useWebSocket.js";
 
-export default function LotteryPanel() {
-  const [view, setView] = useState("prep"); // "prep" | "draw"
-  const isPrep = view === "prep";
-  const isDraw = view === "draw";
+export default function LotteryPanel({ mode = "all" }) {
+  const isPrepOnly = mode === "prep";
+  const isDrawOnly = mode === "draw";
+  const showToggle = mode === "all";
+  const [view, setView] = useState(isDrawOnly ? "draw" : "prep"); // "prep" | "draw"
+  const isPrep = isPrepOnly || (showToggle && view === "prep");
+  const isDraw = isDrawOnly || (showToggle && view === "draw");
   const [extractions, setExtractions] = useState([]);
   const [selectedId, setSelectedId] = useState("");
-  const [tab, setTab] = useState("config");
+  const [tab, setTab] = useState(isDrawOnly ? "draw" : "config");
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
 
@@ -35,6 +38,7 @@ export default function LotteryPanel() {
 
   return (
     <div className="admin-section lottery-panel">
+      {showToggle && (
       <div className="admin-form">
         <h3>Modalità</h3>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -42,6 +46,7 @@ export default function LotteryPanel() {
           <button className={`btn-sm ${isDraw ? "btn-accent" : "btn-ghost"}`} onClick={() => { setView("draw"); setTab("draw"); }}>Estrazione</button>
         </div>
       </div>
+      )}
       <div className="admin-form">
         <h3>Estrazione attiva</h3>
         <label>
@@ -62,6 +67,10 @@ export default function LotteryPanel() {
       {msg && <div className="success-text">{msg}</div>}
 
       <CreateExtractionForm onCreated={(doc) => { loadExtractions(); setSelectedId(doc._id); notify("Estrazione creata"); }} onError={fail} />
+
+      {!isDrawOnly && (
+      <CreateExtractionForm onCreated={(doc) => { loadExtractions(); setSelectedId(doc._id); notify("Estrazione creata"); }} onError={fail} />
+      )}
 
       {selectedId && (
         <>
@@ -397,9 +406,8 @@ function PrizesTab({ extractionId, onError, onMsg }) {
 }
 
 function DrawTab({ extractionId, onError, onMsg }) {
-  const [sessions, setSessions] = useState([]);
   const [sessionId, setSessionId] = useState("");
-  const [batchSize, setBatchSize] = useState(5);
+  const [batchSize, setBatchSize] = useState(1);
   const [display, setDisplay] = useState(null);
   const [prizes, setPrizes] = useState([]);
   const [prizeId, setPrizeId] = useState("");
@@ -408,12 +416,21 @@ function DrawTab({ extractionId, onError, onMsg }) {
   const [revealBooklet, setRevealBooklet] = useState("");
   const [busy, setBusy] = useState(false);
 
-  async function loadSessions() {
+  async function ensureSession() {
+    if (sessionId) return sessionId;
     try {
-      const json = await apiRequest(`/api/lottery/draw/sessions?extractionId=${extractionId}`);
-      if (json.ok) setSessions(json.data || []);
+      const json = await apiRequest("/api/lottery/draw/sessions", {
+        method: "POST",
+        body: JSON.stringify({ extractionId })
+      });
+      if (json.ok) {
+        setSessionId(json.data._id);
+        return json.data._id;
+      }
     } catch (e) { onError(e); }
+    return null;
   }
+
   async function loadPrizes() {
     try {
       const json = await apiRequest(`/api/lottery/extractions/${extractionId}/prizes`);
@@ -426,31 +443,20 @@ function DrawTab({ extractionId, onError, onMsg }) {
       if (json.ok) setDisplay(json.data);
     } catch (e) { onError(e); }
   }
-  useEffect(() => { loadSessions(); loadPrizes(); loadDisplay(); }, [extractionId]);
-
-  async function createSession() {
-    setBusy(true);
-    try {
-      const json = await apiRequest("/api/lottery/draw/sessions", {
-        method: "POST",
-        body: JSON.stringify({ extractionId })
-      });
-      if (json.ok) {
-        setSessionId(json.data._id);
-        onMsg("Sessione creata");
-        loadSessions();
-      }
-    } catch (e) { onError(e); }
-    finally { setBusy(false); }
-  }
+  useEffect(() => { loadPrizes(); loadDisplay(); }, [extractionId]);
+  useEffect(() => {
+    if (display?.winnerSerial && !revealSerial) setRevealSerial(display.winnerSerial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [display?.winnerSerial]);
 
   async function prepare() {
-    if (!sessionId) return;
     setBusy(true);
     try {
+      const sid = await ensureSession();
+      if (!sid) return;
       const json = await apiRequest("/api/lottery/display/prepare", {
         method: "POST",
-        body: JSON.stringify({ sessionId, batchSize })
+        body: JSON.stringify({ sessionId: sid, batchSize })
       });
       if (json.ok) {
         setDisplay(json.data);
@@ -475,10 +481,12 @@ function DrawTab({ extractionId, onError, onMsg }) {
   }
 
   async function assign() {
-    if (!sessionId || !prizeId || !symbolId) return;
+    if (!prizeId || !symbolId) return;
     setBusy(true);
     try {
-      const json = await apiRequest(`/api/lottery/draw/sessions/${sessionId}/assign-prize`, {
+      const sid = await ensureSession();
+      if (!sid) return;
+      const json = await apiRequest(`/api/lottery/draw/sessions/${sid}/assign-prize`, {
         method: "POST",
         body: JSON.stringify({ prizeId, symbolId: Number(symbolId) })
       });
@@ -489,7 +497,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
           method: "POST",
           body: JSON.stringify({
             active: true,
-            sessionId,
+            sessionId: sid,
             winnerSerial: json.data.winner.serial,
             winnerNumber: json.data.winner.number,
             prizeName: prize?.name || "",
@@ -517,35 +525,43 @@ function DrawTab({ extractionId, onError, onMsg }) {
   return (
     <div>
       <div className="admin-form">
-        <h3>Sessione di estrazione</h3>
-        <label>
-          Sessione
-          <select value={sessionId} onChange={(e) => setSessionId(e.target.value)}>
-            <option value="">-- seleziona --</option>
-            {sessions.map((s) => <option key={s._id} value={s._id}>Estrazione #{s.number || "?"} {s.closed ? "(chiusa)" : ""}</option>)}
-          </select>
-        </label>
+        <h3>Estrazione simbodo</h3>
         <label>
           Simbodo per estrazione (N)
           <input type="number" value={batchSize} onChange={(e) => setBatchSize(Number(e.target.value))} min={1} max={40} />
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn-sm btn-accent" onClick={createSession} disabled={busy}>Nuova sessione</button>
-          <button className="btn-sm btn-accent" onClick={prepare} disabled={busy || !sessionId}>Prepara estrazione</button>
-          <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>Estrai prossimi {batchSize}</button>
-
+          <button className="btn-sm btn-accent" onClick={() => {
+            if (!window.confirm("Preparare una nuova estrazione sul tabellone? Questo resetta l'estrazione in corso.")) return;
+            prepare();
+          }} disabled={busy}>Prepara estrazione</button>
+          <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbodo" : `Estrai prossimi ${batchSize} simbodo`}</button>
+          <button className="btn-sm btn-accent" onClick={async () => {
+            if (!window.confirm("Mostrare l'estrazione sul tabellone?")) return;
+            setBusy(true);
+            try {
+              const json = await apiRequest("/api/lottery/display", {
+                method: "POST",
+                body: JSON.stringify({ active: true })
+              });
+              if (json.ok) { setDisplay(json.data); onMsg("Estrazione mostrata sul tabellone"); }
+            } catch (e) { onError(e); }
+            finally { setBusy(false); }
+          }} disabled={busy || !display || display.active}>Mostra sul tabellone</button>
+ 
           <button className="btn-sm btn-ghost" onClick={async () => {
             try {
-              await apiRequest("/api/lottery/display/clear", { method: "POST" });
-              setDisplay(null);
-              onMsg("Presentazione rimossa dal tabellone");
+              const json = await apiRequest("/api/lottery/display", {
+                method: "POST",
+                body: JSON.stringify({ active: false })
+              });
+              if (json.ok) { setDisplay(json.data); onMsg("Presentazione nascosta dal tabellone"); }
             } catch (e) { onError(e); }
           }}>Nascondi dal tabellone</button>
-          <button className="btn-sm btn-ghost" onClick={close} disabled={!sessionId}>Chiudi sessione</button>
         </div>
         {display?.active && (
           <div className="tab-sub" style={{ marginTop: 8 }}>
-            Estratti {drawnCount}/{total} {done ? "— FINALISTI: " + (display.finalists || []).join(", ") : ""}
+            Estratti {drawnCount}/{total} {done ? "— FINALISTI: " + (display.finalists || []).map((n) => "S" + String(n).padStart(2, "0")).join(", ") : ""}
           </div>
         )}
       </div>
@@ -584,7 +600,25 @@ function DrawTab({ extractionId, onError, onMsg }) {
             });
             onMsg("Reveal avviato sul tabellone");
           } catch (e) { onError(e); }
-        }} disabled={!revealSerial && !revealBooklet}>Avvia reveal cifre</button>
+        }} disabled={!revealSerial && !revealBooklet}>Avvia reveal completo</button>
+        <button className="btn-sm btn-accent" onClick={async () => {
+            try {
+              await apiRequest("/api/lottery/display/reveal", {
+                method: "POST",
+                body: JSON.stringify({ serial: "", booklet: revealBooklet })
+              });
+              onMsg("Reveal blocchetto avviato");
+            } catch (e) { onError(e); }
+          }} disabled={!revealBooklet}>Estrai blocchetto</button>
+        <button className="btn-sm btn-accent" onClick={async () => {
+            try {
+              await apiRequest("/api/lottery/display/reveal", {
+                method: "POST",
+                body: JSON.stringify({ serial: revealSerial, booklet: "" })
+              });
+              onMsg("Reveal cifre biglietto avviato");
+            } catch (e) { onError(e); }
+          }} disabled={!revealSerial}>Estrai cifre biglietto</button>
         <span className="tab-sub">Il tabellone rivelerà il seriale e il blocchetto cifra a cifra.</span>
       </div>
     </div>

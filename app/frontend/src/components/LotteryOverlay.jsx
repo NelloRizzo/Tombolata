@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { getBackendUrl } from "../hooks/useWebSocket.js";
 
 function pad(n) {
   return String(n).padStart(2, "0");
@@ -31,9 +32,10 @@ export default function LotteryOverlay({ lottery }) {
   const winnerNum = lottery.winnerNumber;
   const drawnSet = new Set(drawn);
 
-  const cards = drawn.length ? drawn : Array.from({ length: 40 }, (_, i) => i + 1);
-  // During drawing, show all 40; drawn ones highlighted
-  const allCards = Array.from({ length: 40 }, (_, i) => i + 1);
+  const pool = Array.isArray(lottery.pool) && lottery.pool.length ? lottery.pool : [];
+  // Visualizzazione in ordine crescente dei simbodo, evidenziando quelli estratti
+  const allCards = pool.length ? [...pool].sort((a, b) => a - b) : Array.from({ length: 40 }, (_, i) => i + 1);
+  const backendUrl = getBackendUrl().replace(/\/$/, "");
 
   return (
     <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 16, color: "#fff" }}>
@@ -65,9 +67,10 @@ export default function LotteryOverlay({ lottery }) {
             if (isFinal) { border = "2px solid #ffd700"; bg = "#3a2e00"; }
             if (isWinner) { border = "3px solid #00ff88"; bg = "#003a1f"; }
           }
+          const code = `S${String(n).padStart(2, "0")}`;
           return (
-            <div key={n} style={{ minHeight: 70, border, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", opacity, transition: "all 0.4s ease" }}>
-              <span style={{ fontSize: "1.4rem", fontWeight: 800, color: "#fff" }}>S{pad(n)}</span>
+            <div key={n} style={{ minHeight: 70, border, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", opacity, transition: "all 0.4s ease", overflow: "hidden" }}>
+              <img src={`${backendUrl}/lottery-assets/symbols/${code}.jpeg`} alt={code} style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={(e) => { e.currentTarget.style.display = "none"; }} />
             </div>
           );
         })}
@@ -105,7 +108,19 @@ export default function LotteryOverlay({ lottery }) {
       )}
 
       {lottery.status === "finalists" && (lottery.finalists || []).length > 0 && (
-        <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#ffd700", letterSpacing: "0.15em" }}>5 CARTE FINALISTE: {(lottery.finalists || []).join(" · ")}</div>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: "1.5rem", fontWeight: 700, color: "#ffd700", letterSpacing: "0.15em", marginBottom: 12 }}>5 CARTE FINALISTE</div>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+            {(lottery.finalists || []).map((n) => {
+              const code = `S${String(n).padStart(2, "0")}`;
+              return (
+                <div key={n} style={{ width: 90, height: 90, border: "3px solid #ffd700", borderRadius: 10, background: "#3a2e00", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
+                  <img src={`${backendUrl}/lottery-assets/symbols/${code}.jpeg`} alt={code} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
     </div>
   );

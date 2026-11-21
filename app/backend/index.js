@@ -15,7 +15,6 @@ import minigameRoutes from "./routes/games.js";
 import lotteryRoutes from "./routes/lottery.js";
 import { getGameState } from "./services/gameService.js";
 import { getNarrationState } from "./services/triggerService.js";
-import { getLotteryDisplay } from "./services/lotteryService.js";
 import { getColorGameState } from "./services/colorGameService.js";
 import { bootstrap } from "./services/bootstrap.js";
 import { broadcastToClients } from "./services/broadcast.js";
@@ -105,12 +104,9 @@ wss.on("connection", async (ws) => {
     console.error("Errore nell'inviare lo stato minigioco:", error.message);
   }
 
-  try {
-    const lotteryDisplay = await getLotteryDisplay();
-    ws.send(JSON.stringify({ type: "lottery:state", payload: lotteryDisplay }));
-  } catch (error) {
-    console.error("Errore nell'inviare lo stato lotteria:", error.message);
-  }
+  // Nota: lo stato della lotteria NON viene inviato automaticamente all'apertura
+  // del tabellone: l'estrazione viene mostrata solo a seguito di una scelta
+  // esplicita dalla console di admin (che genera un evento lottery:update).
 
   ws.on("message", (raw) => {
     try {

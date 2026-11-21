@@ -94,6 +94,17 @@ export default function Sidebar() {
           </NavLink>
         )}
 
+        {(hasRole("admin") || hasRole("director") || hasRole("drawer")) && (
+          <NavLink
+            to="/lottery"
+            className={({ isActive }) => `nav-link ${isActive ? "active" : ""}`}
+            title="Estrazione lotteria"
+          >
+            <span className="nav-icon">🎰</span>
+            <span className="nav-label">Lotteria</span>
+          </NavLink>
+        )}
+
         {isLogged && (roleSezioni.length > 0 || isAdmin) && (
           <div className="sidebar-divider" />
         )}

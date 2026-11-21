@@ -519,7 +519,7 @@ export async function prepareLotteryDraw(sessionId, batchSize) {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   return setLotteryDisplay({
-    active: true,
+    active: false,
     sessionId,
     batchSize: n,
     pool,
@@ -560,6 +560,7 @@ export async function drawLotteryBatch() {
 
 export async function setLotteryReveal(serial, booklet) {
   return setLotteryDisplay({
+    active: true,
     status: "reveal",
     revealSerial: String(serial || ""),
     revealBooklet: String(booklet || ""),

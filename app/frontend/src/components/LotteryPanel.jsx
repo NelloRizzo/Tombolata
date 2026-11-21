@@ -533,7 +533,6 @@ function DrawTab({ extractionId, onError, onMsg }) {
           }} disabled={busy}>Prepara estrazione</button>
           <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbodo" : `Estrai prossimi ${batchSize} simbodo`}</button>
           <button className="btn-sm btn-accent" onClick={async () => {
-            if (!window.confirm("Mostrare l'estrazione sul tabellone?")) return;
             setBusy(true);
             try {
               const json = await apiRequest("/api/lottery/display", {

@@ -565,9 +565,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
               onConfirm: () => { setConfirm((c) => ({ ...c, open: false })); prepare(); }
             });
           }} disabled={busy}>Prepara estrazione</button>
-          {display?.status === "drawing" && (
           <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbodo" : `Estrai prossimi ${batchSize} simbodo`}</button>
-          )}
           <button className="btn-sm btn-accent" onClick={async () => {
             setBusy(true);
             try {

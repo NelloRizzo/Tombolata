@@ -531,6 +531,7 @@ export async function setLotteryDisplay(data) {
   if (data.revealBooklet != null) doc.revealBooklet = data.revealBooklet;
   if (data.revealIndex != null) doc.revealIndex = data.revealIndex;
   if (data.status != null) doc.status = data.status;
+  if (data.validTickets != null) doc.validTickets = data.validTickets;
   await doc.save();
   return doc;
 }
@@ -542,10 +543,6 @@ export async function clearLotteryDisplay() {
 export async function prepareLotteryDraw(sessionId, batchSize) {
   const n = Number(batchSize) || 5;
   const sess = await LotteryDrawSession.findById(sessionId);
-  console.log("DEBUG prepare sessionId=", sessionId, "sess=", !!sess, "extractionId=", sess?.extractionId);
-  const cnt = sess?.extractionId ? await LotteryTicket.countDocuments({ extractionId: sess.extractionId, status: "sold" }) : -1;
-  const cntStr = sess?.extractionId ? await LotteryTicket.countDocuments({ extractionId: String(sess.extractionId), status: "sold" }) : -2;
-  console.log("DEBUG soldCount ObjectId=", cnt, "String=", cntStr);
   // Resetta l'assegnazione dei premi della estrazione precedente
   if (sess?.extractionId) {
     const prizeIds = await LotteryPrize.find({ extractionId: sess.extractionId }).distinct("_id");

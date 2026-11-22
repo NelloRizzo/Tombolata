@@ -403,10 +403,13 @@ export async function buildTicketsPdf(extractionId, bookletNumber) {
     const cols = 2;
     const rows = 5;
     const perPage = cols * rows;
-    const ticketWidth = 120 * MM_TO_PT;
-    const ticketHeight = 65 * MM_TO_PT;
-    const gapX = 5 * MM_TO_PT;
-    const gapY = 5 * MM_TO_PT;
+    // Allarga il biglietto per coprire il più possibile la pagina A3,
+    // lasciando un margine sufficiente per il taglio (crop/bleed).
+    const pageMargin = 8 * MM_TO_PT;
+    const gapX = 4 * MM_TO_PT;
+    const gapY = 4 * MM_TO_PT;
+    const ticketWidth = ((doc.page.width - 2 * pageMargin) - (cols - 1) * gapX) / cols;
+    const ticketHeight = ((doc.page.height - 2 * pageMargin) - (rows - 1) * gapY) / rows;
     const pageWidth = doc.page.width;
     const pageHeight = doc.page.height;
     const totalWidth = cols * ticketWidth + (cols - 1) * gapX;

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 
 import { useWebSocket } from "../hooks/useWebSocket.js";
+import { apiRequest } from "../api.js";
 import NumberGrid from "./NumberGrid.jsx";
 import ExtractedNumbers from "./ExtractedNumbers.jsx";
 import LastNumber from "./LastNumber.jsx";
@@ -21,6 +22,16 @@ export default function BoardView({ showChrome = true, gameId = null }) {
   const [lastWin, setLastWin] = useState(null);
   const [minigame, setMinigame] = useState(null);
   const [lottery, setLottery] = useState(null);
+
+  // Ripristina lo stato lotteria al montaggio (es. dopo refresh della pagina)
+  useEffect(() => {
+    (async () => {
+      try {
+        const json = await apiRequest("/api/lottery/display");
+        if (json.ok && json.data) setLottery(json.data);
+      } catch {}
+    })();
+  }, []);
   const prevNumberRef = useRef(null);
 
   const gameMatches = (item) => {

@@ -602,6 +602,10 @@ function DrawTab({ extractionId, onError, onMsg }) {
         <button className="btn-sm btn-accent" onClick={async () => {
           setBusy(true);
           try {
+            if (!display?.active) {
+              const show = await apiRequest("/api/lottery/display", { method: "POST", body: JSON.stringify({ active: true }) });
+              if (show.ok) setDisplay(show.data);
+            }
             const json = await apiRequest("/api/lottery/display/draw-prize", { method: "POST" });
             if (json.ok) { setDisplay(json.data); onMsg(`Premio estratto: ${json.data.prizeName}`); }
           } catch (e) { onError(e); }

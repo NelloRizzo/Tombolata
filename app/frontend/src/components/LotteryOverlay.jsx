@@ -43,6 +43,7 @@ export default function LotteryOverlay({ lottery }) {
     : { position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 16, color: "#fff" };
   return (
     <div style={containerStyle}>
+    <div style={isReveal ? { background: "#1a1a2e", padding: 24, borderRadius: 12, border: "2px solid #ff6b6b", maxWidth: "90vw", maxHeight: "80vh", overflow: "auto" } : {}}>
       <div style={{ fontSize: "3rem", fontWeight: 800, color: "#ff6b6b", letterSpacing: "0.2em" }}>ESTRAZIONE LOTTERIA</div>
       {lottery.prizeName && <div style={{ fontSize: "1.4rem", color: "#ffd700" }}>{lottery.prizeName}</div>}
 
@@ -128,6 +129,7 @@ export default function LotteryOverlay({ lottery }) {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }

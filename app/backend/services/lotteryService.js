@@ -605,7 +605,6 @@ export async function drawLotteryBatch() {
     update.eliminated = eliminated;
     update.status = "finalists";
   }
-  }
   return setLotteryDisplay(update);
 }
 

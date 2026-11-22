@@ -52,6 +52,12 @@ router.post("/extractions", authenticate, requireRoles(...STAFF), async (req, re
     const { name, startDate, endDate } = req.body || {};
     if (!name) return res.status(400).json({ ok: false, message: "name richiesto" });
     const doc = await createExtraction({ name, startDate, endDate });
+    const display = await getLotteryDisplay();
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", display, null);
+    }
     res.status(201).json({ ok: true, data: doc });
   } catch (e) {
     res.status(400).json({ ok: false, message: e.message });

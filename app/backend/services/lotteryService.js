@@ -161,7 +161,11 @@ export function generateBooklets(tickets, perBooklet = 100) {
 // ---------- CRUD / business logic ----------
 
 export async function createExtraction({ name, startDate, endDate }) {
-  return LotteryExtraction.create({ name, startDate: startDate ? new Date(startDate) : null, endDate: endDate ? new Date(endDate) : null });
+  const doc = await LotteryExtraction.create({ name, startDate: startDate ? new Date(startDate) : null, endDate: endDate ? new Date(endDate) : null });
+  // Resetta il display del tabellone per la nuova estrazione
+  await clearLotteryDisplay();
+  const wss = null;
+  return doc;
 }
 
 export async function deleteExtraction(id) {

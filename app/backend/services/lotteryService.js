@@ -547,7 +547,7 @@ export async function prepareLotteryDraw(sessionId, batchSize) {
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   return setLotteryDisplay({
-    active: false,
+    active: true,
     sessionId,
     batchSize: n,
     pool,

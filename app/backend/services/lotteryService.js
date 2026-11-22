@@ -633,7 +633,7 @@ async function getValidLotteryCandidates(doc) {
 export async function drawLotteryBooklet() {
   const doc = await getLotteryDisplay();
   const candidates = await getValidLotteryCandidates(doc);
-  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto");
+  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto (verifica che i biglietti siano segnati come venduti)");
   const booklets = [...new Set(candidates.map((t) => String(t.serial || "").split("-")[0]).filter(Boolean))];
   if (!booklets.length) throw new Error("Nessun blocchetto valido");
   const pick = booklets[Math.floor(Math.random() * booklets.length)];
@@ -649,7 +649,7 @@ export async function drawLotteryBooklet() {
 export async function drawLotteryTicket() {
   const doc = await getLotteryDisplay();
   let candidates = await getValidLotteryCandidates(doc);
-  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto");
+  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto (verifica che i biglietti siano segnati come venduti)");
   const booklet = doc?.revealBooklet;
   if (booklet) {
     const filtered = candidates.filter((t) => String(t.serial || "").split("-")[0] === String(booklet));
@@ -795,7 +795,7 @@ export async function drawNextPrize() {
     const f = sold.filter((t) => (t.symbols || []).some((s) => finalists.includes(s)));
     if (f.length) candidates = f;
   }
-  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto");
+  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto (verifica che i biglietti siano segnati come venduti)");
 
   const ticket = candidates[Math.floor(Math.random() * candidates.length)];
   await LotteryTicket.updateOne({ _id: ticket._id }, { $set: { status: "winning" } });

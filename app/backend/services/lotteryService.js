@@ -216,8 +216,8 @@ export async function getExtraction(id) {
 
 export async function seedSymbols(extractionId, count = 40) {
   const existing = await LotterySymbol.countDocuments({ extractionId });
-  if (existing > 0) return { seeded: false, count: existing };
-  const symbols = [];
+  if (existing > 0 && existing === count) return { seeded: false, count: existing };
+  if (existing > 0) await LotterySymbol.deleteMany({ extractionId });
   for (let i = 1; i <= count; i++) {
     symbols.push({ extractionId, id: i, code: `S${String(i).padStart(2, "0")}`, name: `Simbolo ${i}` });
   }
@@ -594,20 +594,17 @@ export async function drawLotteryBatch() {
   const done = newDrawn.length >= targetDrawn;
 
   const sess = doc.sessionId ? await LotteryDrawSession.findById(doc.sessionId) : null;
-  const soldTotal = sess?.extractionId ? await LotteryTicket.countDocuments({ extractionId: sess.extractionId, status: "sold" }) : 0;
-  let validCount = soldTotal;
+  const sold = sess?.extractionId ? await LotteryTicket.find({ extractionId: sess.extractionId, status: "sold" }).lean() : [];
+  const drawnSet = new Set(newDrawn);
+  const validCount = sold.filter((t) => (t.symbols || []).every((s) => !drawnSet.has(s))).length;
   const update = { drawn: newDrawn, active: true, validTickets: validCount };
   if (done) {
-    // finalisti = gli ultimi 3 simbodo rimasti nel pool (non estratti)
     const finalists = pool.slice(newDrawn.length);
     const eliminated = newDrawn;
     update.finalists = finalists;
     update.eliminated = eliminated;
     update.status = "finalists";
-    if (sess?.extractionId) {
-      const sold = await LotteryTicket.find({ extractionId: sess.extractionId, status: "sold" }).lean();
-      update.validTickets = sold.filter((t) => (t.symbols || []).some((s) => finalists.includes(s))).length;
-    }
+  }
   }
   return setLotteryDisplay(update);
 }
@@ -706,9 +703,10 @@ export async function buildBookletsPdf(extractionId, bookletNumber) {
 }
 
 export async function markTicketsSold(extractionId, payload = {}) {
-  const { ticketNumbers, bookletNumber, all } = payload;
+  const { ticketNumbers, bookletNumber, all, status } = payload;
+  const newStatus = status === "available" ? "available" : "sold";
   if (all) {
-    await LotteryTicket.updateMany({ extractionId }, { $set: { status: "sold" } });
+    await LotteryTicket.updateMany({ extractionId }, { $set: { status: newStatus } });
     return { updated: "all" };
   }
   if (bookletNumber != null) {
@@ -716,14 +714,14 @@ export async function markTicketsSold(extractionId, payload = {}) {
     if (!booklet) throw new Error("Blocchetto non trovato");
     await LotteryTicket.updateMany(
       { extractionId, number: { $in: booklet.ticketNumbers } },
-      { $set: { status: "sold" } }
+      { $set: { status: newStatus } }
     );
     return { updated: booklet.ticketNumbers.length };
   }
   if (Array.isArray(ticketNumbers) && ticketNumbers.length) {
     await LotteryTicket.updateMany(
       { extractionId, number: { $in: ticketNumbers.map(Number) } },
-      { $set: { status: "sold" } }
+      { $set: { status: newStatus } }
     );
     return { updated: ticketNumbers.length };
   }
@@ -802,8 +800,8 @@ export async function drawNextPrize() {
   const sold = await LotteryTicket.find({ extractionId, status: "sold" }).lean();
   let candidates = sold;
   if (finalists.length) {
-    const f = sold.filter((t) => (t.symbols || []).some((s) => finalists.includes(s)));
-    if (f.length) candidates = f;
+    const drawnSet2 = new Set(Array.isArray(doc?.drawn) ? doc.drawn : []);
+    const f = sold.filter((t) => (t.symbols || []).every((s) => !drawnSet2.has(s)));
   }
   if (!candidates.length) throw new Error("Nessun biglietto valido rimasto (verifica che i biglietti siano segnati come venduti)");
 
@@ -834,9 +832,7 @@ export async function drawNextPrize() {
   if (sess2?.extractionId) {
     const finalists = Array.isArray(doc?.finalists) ? doc.finalists : [];
     const sold = await LotteryTicket.find({ extractionId: sess2.extractionId, status: "sold" }).lean();
-    validCount = finalists.length
-      ? sold.filter((t) => (t.symbols || []).some((s) => finalists.includes(s))).length
-      : sold.length;
+    const drawnSet3 = new Set(Array.isArray(doc?.drawn) ? doc.drawn : []);\n    validCount = sold.filter((t) => (t.symbols || []).every((s) => !drawnSet3.has(s))).length;
   }
   return setLotteryDisplay({
     validTickets: validCount,

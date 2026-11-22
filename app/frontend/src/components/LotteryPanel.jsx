@@ -310,6 +310,7 @@ function TicketsTab({ extractionId, onError, onMsg }) {
   const [sellMode, setSellMode] = useState("all"); // all | booklet | manual
   const [sellInput, setSellInput] = useState("");
   const [sellBusy, setSellBusy] = useState(false);
+  const [sellStatus, setSellStatus] = useState("sold"); // sold | available
 
   async function load() {
     try {
@@ -367,37 +368,46 @@ function TicketsTab({ extractionId, onError, onMsg }) {
       </ul>
       {sellModal && (
         <div className="modal-overlay" onClick={() => setSellModal(false)}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>
+          <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 420, width: "90%" }}>
             <h3 className="modal-title">Gestisci vendite</h3>
-            <label>
-              Modalità
-              <select value={sellMode} onChange={(e) => setSellMode(e.target.value)}>
-                <option value="all">Tutto venduto</option>
-                <option value="booklet">Per blocchetto</option>
-                <option value="manual">Selezione manuale (numeri)</option>
-              </select>
-            </label>
-            {sellMode === "booklet" && (
-              <label>
-                Numero blocchetto
-                <input value={sellInput} onChange={(e) => setSellInput(e.target.value)} placeholder="Es. 1" />
-              </label>
-            )}
-            {sellMode === "manual" && (
-              <label>
-                Numeri biglietto (separati da virgola)
-                <input value={sellInput} onChange={(e) => setSellInput(e.target.value)} placeholder="Es. 1,2,3" />
-              </label>
-            )}
-            <div className="modal-actions">
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div>
+                <div style={{ fontSize: "0.8rem", color: "#aaa", marginBottom: 4 }}>Modalità</div>
+                <select value={sellMode} onChange={(e) => setSellMode(e.target.value)} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #444", background: "#1a1a2e", color: "#fff" }}>
+                  <option value="all">Tutto venduto / invenduto</option>
+                  <option value="booklet">Per blocchetto</option>
+                  <option value="manual">Selezione manuale (numeri)</option>
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize: "0.8rem", color: "#aaa", marginBottom: 4 }}>Stato da impostare</div>
+                <select value={sellStatus} onChange={(e) => setSellStatus(e.target.value)} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #444", background: "#1a1a2e", color: "#fff" }}>
+                  <option value="sold">Venduto</option>
+                  <option value="available">Invenduto (disponibile)</option>
+                </select>
+              </div>
+              {sellMode === "booklet" && (
+                <div>
+                  <div style={{ fontSize: "0.8rem", color: "#aaa", marginBottom: 4 }}>Numero blocchetto</div>
+                  <input value={sellInput} onChange={(e) => setSellInput(e.target.value)} placeholder="Es. 1" style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #444", background: "#1a1a2e", color: "#fff" }} />
+                </div>
+              )}
+              {sellMode === "manual" && (
+                <div>
+                  <div style={{ fontSize: "0.8rem", color: "#aaa", marginBottom: 4 }}>Numeri biglietto (separati da virgola)</div>
+                  <textarea value={sellInput} onChange={(e) => setSellInput(e.target.value)} placeholder="Es. 1,2,3" rows={3} style={{ width: "100%", padding: "8px 10px", borderRadius: 8, border: "1px solid #444", background: "#1a1a2e", color: "#fff", resize: "vertical" }} />
+                </div>
+              )}
+            </div>
+            <div className="modal-actions" style={{ marginTop: 12 }}>
               <button className="btn-sm btn-ghost" onClick={() => setSellModal(false)}>Annulla</button>
               <button className="btn-sm btn-accent" disabled={sellBusy} onClick={async () => {
                 setSellBusy(true);
                 try {
-                  let body = {};
-                  if (sellMode === "all") body = { all: true };
-                  else if (sellMode === "booklet") body = { bookletNumber: Number(sellInput) };
-                  else body = { ticketNumbers: sellInput.split(",").map((s) => Number(s.trim())).filter(Boolean) };
+                  let body = { status: sellStatus };
+                  if (sellMode === "all") body = { ...body, all: true };
+                  else if (sellMode === "booklet") body = { ...body, bookletNumber: Number(sellInput) };
+                  else body = { ...body, ticketNumbers: sellInput.split(",").map((s) => Number(s.trim())).filter(Boolean) };
                   const json = await apiRequest(`/api/lottery/extractions/${extractionId}/tickets/sell`, {
                     method: "POST",
                     body: JSON.stringify(body)
@@ -418,8 +428,7 @@ function TicketsTab({ extractionId, onError, onMsg }) {
 
 function PrizesTab({ extractionId, onError, onMsg }) {
   const [prizes, setPrizes] = useState([]);
-  const [name, setName] = useState("");
-  const [value, setValue] = useState("");
+  const [count, setCount] = useState(1);
 
   async function load() {
     try {
@@ -429,21 +438,21 @@ function PrizesTab({ extractionId, onError, onMsg }) {
   }
   useEffect(() => { load(); }, [extractionId]);
 
-  async function add() {
+  async function setPrizeCount() {
+    const n = Math.max(1, Math.min(5, Number(count) || 1));
     try {
-      await apiRequest(`/api/lottery/extractions/${extractionId}/prizes`, {
-        method: "POST",
-        body: JSON.stringify({ name, value })
-      });
-      setName(""); setValue("");
-      onMsg("Premio creato");
-      load();
-    } catch (e) { onError(e); }
-  }
-
-  async function remove(id) {
-    try {
-      await apiRequest(`/api/lottery/prizes/${id}`, { method: "DELETE" });
+      // rimuovi premi esistenti
+      for (const p of prizes) {
+        await apiRequest(`/api/lottery/prizes/${p._id}`, { method: "DELETE" });
+      }
+      // crea N premi senza nome/valore
+      for (let i = 1; i <= n; i++) {
+        await apiRequest(`/api/lottery/extractions/${extractionId}/prizes`, {
+          method: "POST",
+          body: JSON.stringify({ name: `Premio ${i}`, value: "" })
+        });
+      }
+      onMsg(`Configurati ${n} premi`);
       load();
     } catch (e) { onError(e); }
   }
@@ -451,25 +460,20 @@ function PrizesTab({ extractionId, onError, onMsg }) {
   return (
     <div>
       <div className="admin-form">
-        <h3>Nuovo premio</h3>
+        <h3>Numero premi in palio</h3>
         <label>
-          Nome premio
-          <input placeholder="Es. Primo premio" value={name} onChange={(e) => setName(e.target.value)} />
+          Quantità (1-5)
+          <input type="number" min={1} max={5} value={count} onChange={(e) => setCount(Number(e.target.value))} />
         </label>
-        <label>
-          Valore
-          <input placeholder="Es. 500 €" value={value} onChange={(e) => setValue(e.target.value)} />
-        </label>
-        <button className="btn-sm btn-accent" onClick={add}>Aggiungi premio</button>
+        <button className="btn-sm btn-accent" onClick={setPrizeCount}>Imposta numero premi</button>
+        <span className="tab-sub">Premi configurati: {prizes.length}</span>
       </div>
       <ul className="tab-list">
         {prizes.map((p) => (
           <li className="tab-item" key={p._id}>
             <div className="tab-item-info">
               <span className="tab-name">{p.name}</span>
-              <span className="tab-sub">{p.value}</span>
             </div>
-            <button className="btn-sm btn-ghost" onClick={() => remove(p._id)}>Elimina</button>
           </li>
         ))}
       </ul>

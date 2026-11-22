@@ -275,7 +275,6 @@ function ConfigTab({ extractionId, onError, onMsg }) {
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn-sm btn-accent" onClick={generate} disabled={busy}>Genera biglietti</button>
-          <button className="btn-sm btn-ghost" onClick={markAllSold} disabled={busy}>Segna tutti venduti</button>
           <button className="btn-sm btn-ghost" onClick={downloadPdf}>Scarica PDF blocchetti</button>
         </div>
       </div>
@@ -307,6 +306,10 @@ function TicketsTab({ extractionId, onError, onMsg }) {
   const [tickets, setTickets] = useState([]);
   const [status, setStatus] = useState("");
   const [bookletNo, setBookletNo] = useState("");
+  const [sellModal, setSellModal] = useState(false);
+  const [sellMode, setSellMode] = useState("all"); // all | booklet | manual
+  const [sellInput, setSellInput] = useState("");
+  const [sellBusy, setSellBusy] = useState(false);
 
   async function load() {
     try {
@@ -343,6 +346,7 @@ function TicketsTab({ extractionId, onError, onMsg }) {
         </label>
         <button className="btn-sm btn-ghost" onClick={load}>Aggiorna</button>
         <span className="tab-sub">Totale: {tickets.length}</span>
+        <button className="btn-sm btn-accent" onClick={() => setSellModal(true)}>Gestisci vendite</button>
       </div>
       <div className="admin-form">
         <label>
@@ -361,6 +365,53 @@ function TicketsTab({ extractionId, onError, onMsg }) {
           </li>
         ))}
       </ul>
+      {sellModal && (
+        <div className="modal-overlay" onClick={() => setSellModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h3 className="modal-title">Gestisci vendite</h3>
+            <label>
+              Modalità
+              <select value={sellMode} onChange={(e) => setSellMode(e.target.value)}>
+                <option value="all">Tutto venduto</option>
+                <option value="booklet">Per blocchetto</option>
+                <option value="manual">Selezione manuale (numeri)</option>
+              </select>
+            </label>
+            {sellMode === "booklet" && (
+              <label>
+                Numero blocchetto
+                <input value={sellInput} onChange={(e) => setSellInput(e.target.value)} placeholder="Es. 1" />
+              </label>
+            )}
+            {sellMode === "manual" && (
+              <label>
+                Numeri biglietto (separati da virgola)
+                <input value={sellInput} onChange={(e) => setSellInput(e.target.value)} placeholder="Es. 1,2,3" />
+              </label>
+            )}
+            <div className="modal-actions">
+              <button className="btn-sm btn-ghost" onClick={() => setSellModal(false)}>Annulla</button>
+              <button className="btn-sm btn-accent" disabled={sellBusy} onClick={async () => {
+                setSellBusy(true);
+                try {
+                  let body = {};
+                  if (sellMode === "all") body = { all: true };
+                  else if (sellMode === "booklet") body = { bookletNumber: Number(sellInput) };
+                  else body = { ticketNumbers: sellInput.split(",").map((s) => Number(s.trim())).filter(Boolean) };
+                  const json = await apiRequest(`/api/lottery/extractions/${extractionId}/tickets/sell`, {
+                    method: "POST",
+                    body: JSON.stringify(body)
+                  });
+                  onMsg(`Aggiornati ${json.data?.updated ?? "ok"} biglietti`);
+                  setSellModal(false);
+                  load();
+                } catch (e) { onError(e); }
+                finally { setSellBusy(false); }
+              }}>Conferma</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

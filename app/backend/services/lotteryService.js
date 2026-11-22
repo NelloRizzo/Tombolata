@@ -542,6 +542,7 @@ export async function clearLotteryDisplay() {
 export async function prepareLotteryDraw(sessionId, batchSize) {
   const n = Number(batchSize) || 5;
   const sess = await LotteryDrawSession.findById(sessionId);
+  console.log("DEBUG prepare sessionId=", sessionId, "sess=", !!sess, "extractionId=", sess?.extractionId);
   // Resetta l'assegnazione dei premi della estrazione precedente
   if (sess?.extractionId) {
     const prizeIds = await LotteryPrize.find({ extractionId: sess.extractionId }).distinct("_id");

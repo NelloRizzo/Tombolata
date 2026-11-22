@@ -582,10 +582,10 @@ function DrawTab({ extractionId, onError, onMsg }) {
             } catch (e) { onError(e); }
           }}>Nascondi dal tabellone</button>
         </div>
-        {display?.active && (
+        {display && (
           <div className="tab-sub" style={{ marginTop: 8 }}>
-            Estratti {drawnCount}/{total} {done ? "— FINALISTI: " + (display.finalists || []).map((n) => "S" + String(n).padStart(2, "0")).join(", ") : ""}
-            <br />Biglietti in gioco: {display?.validTickets ?? 0}
+            {display.active && <>Estratti {drawnCount}/{total} {done ? "— FINALISTI: " + (display.finalists || []).map((n) => "S" + String(n).padStart(2, "0")).join(", ") : ""}<br /></>}
+            Biglietti in gioco: {display?.validTickets ?? 0}
           </div>
         )}
       </div>

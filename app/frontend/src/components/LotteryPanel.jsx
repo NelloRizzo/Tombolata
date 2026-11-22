@@ -465,11 +465,6 @@ function DrawTab({ extractionId, onError, onMsg }) {
     } catch (e) { onError(e); }
   }
   useEffect(() => { loadPrizes(); loadDisplay(); }, [extractionId]);
-  // Cambiando estrazione dalla combo, prepara/attiva quella estrazione sul tabellone
-  useEffect(() => {
-    if (extractionId) prepare();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extractionId]);
   useEffect(() => {
     if (display?.winnerSerial && !revealSerial) setRevealSerial(display.winnerSerial);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -565,7 +560,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
               onConfirm: () => { setConfirm((c) => ({ ...c, open: false })); prepare(); }
             });
           }} disabled={busy}>Prepara estrazione</button>
-          <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbolo" : `Estrai prossimi ${batchSize} simbolo`}</button>
+           <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbolo" : `Estrai prossimi ${batchSize} simbolo`}</button>
           <button className="btn-sm btn-accent" onClick={async () => {
             setBusy(true);
             try {

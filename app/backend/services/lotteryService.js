@@ -831,7 +831,8 @@ export async function drawNextPrize() {
   if (sess2?.extractionId) {
     const finalists = Array.isArray(doc?.finalists) ? doc.finalists : [];
     const sold = await LotteryTicket.find({ extractionId: sess2.extractionId, status: "sold" }).lean();
-    const drawnSet3 = new Set(Array.isArray(doc?.drawn) ? doc.drawn : []);\n    validCount = sold.filter((t) => (t.symbols || []).every((s) => !drawnSet3.has(s))).length;
+    const drawnSet3 = new Set(Array.isArray(doc?.drawn) ? doc.drawn : []);
+    validCount = sold.filter((t) => (t.symbols || []).every((s) => !drawnSet3.has(s))).length;
   }
   return setLotteryDisplay({
     validTickets: validCount,

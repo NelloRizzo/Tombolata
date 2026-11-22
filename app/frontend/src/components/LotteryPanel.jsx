@@ -558,7 +558,20 @@ function DrawTab({ extractionId, onError, onMsg }) {
           <input type="number" value={batchSize} onChange={(e) => setBatchSize(Number(e.target.value))} min={1} max={40} />
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-           <button className="btn-sm btn-accent" onClick={() => { if (!extractionId) { onError(new Error("Seleziona una estrazione dalla lista")); return; } prepare(); }} disabled={busy || !extractionId}>Prepara estrazione</button>
+           <button className="btn-sm btn-accent" onClick={() => {
+            if (!extractionId) { onError(new Error("Seleziona una estrazione dalla lista")); return; }
+            const already = display && (display.active || display.status !== "idle");
+            if (already) {
+              setConfirm({
+                open: true,
+                title: "Prepara estrazione",
+                message: "Preparare una nuova estrazione sul tabellone? Questo resetta l'estrazione in corso.",
+                onConfirm: () => { setConfirm((c) => ({ ...c, open: false })); prepare(); }
+              });
+            } else {
+              prepare();
+            }
+          }} disabled={busy || !extractionId}>Prepara estrazione</button>
            <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbolo" : `Estrai prossimi ${batchSize} simbolo`}</button>
           <button className="btn-sm btn-accent" onClick={async () => {
             setBusy(true);

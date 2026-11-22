@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiRequest, authHeaders } from "../api.js";
 import ConfirmModal from "./ConfirmModal.jsx";
 import { apiUrl } from "../hooks/useWebSocket.js";
@@ -517,9 +517,13 @@ function DrawTab({ extractionId, onError, onMsg }) {
     } catch (e) { onError(e); }
   }
   useEffect(() => { loadPrizes(); loadDisplay(); }, [extractionId]);
-  // Cambiando estrazione dalla combo, prepara/attiva quella estrazione sul tabellone
+  const prevExtractionRef = useRef(extractionId);
+  // Cambiando estrazione dalla combo (non al primo mount), prepara/attiva quella estrazione sul tabellone
   useEffect(() => {
-    if (extractionId) prepare();
+    if (extractionId && prevExtractionRef.current && extractionId !== prevExtractionRef.current) {
+      prepare();
+    }
+    prevExtractionRef.current = extractionId;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [extractionId]);
   useEffect(() => {

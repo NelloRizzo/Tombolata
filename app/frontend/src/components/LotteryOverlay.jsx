@@ -33,7 +33,7 @@ export default function LotteryOverlay({ lottery }) {
   const drawnSet = new Set(drawn);
 
   const pool = Array.isArray(lottery.pool) && lottery.pool.length ? lottery.pool : [];
-  // Visualizzazione in ordine crescente dei simbodo, evidenziando quelli estratti
+  // Visualizzazione in ordine crescente dei simboli, evidenziando quelli estratti
   const allCards = pool.length ? [...pool].sort((a, b) => a - b) : Array.from({ length: 40 }, (_, i) => i + 1);
   const backendUrl = getBackendUrl().replace(/\/$/, "");
 
@@ -43,7 +43,7 @@ export default function LotteryOverlay({ lottery }) {
       {lottery.prizeName && <div style={{ fontSize: "1.4rem", color: "#ffd700" }}>{lottery.prizeName}</div>}
 
       <div style={{ fontSize: "1.2rem", color: "#aaa", marginBottom: 8 }}>
-        {lottery.status === "drawing" && `Estrazione in corso: ${drawn.length}/40 simbodo`}
+        {lottery.status === "drawing" && `Estrazione in corso: ${drawn.length}/40 simboli`}
         {lottery.status === "finalists" && "5 CARTE FINALISTE"}
         {lottery.status === "reveal" && "REVEAL IN CORSO"}
         {lottery.status === "winner" && "BIGLIETTO VINCENTE"}

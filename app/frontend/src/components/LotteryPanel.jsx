@@ -495,7 +495,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
         setDisplay(json.data);
         const drawn = (json.data.drawn || []).length;
         const total = (json.data.pool || []).length || 40;
-        onMsg(drawn >= total ? "Estrazione simbodo completata" : `Estratti ${drawn}/${total}`);
+        onMsg(drawn >= total ? "Estrazione simbolo completata" : `Estratti ${drawn}/${total}`);
       }
     } catch (e) { onError(e); }
     finally { setBusy(false); }
@@ -546,9 +546,9 @@ function DrawTab({ extractionId, onError, onMsg }) {
   return (
     <div>
       <div className="admin-form">
-        <h3>Estrazione simbodo</h3>
+        <h3>Estrazione simbolo</h3>
         <label>
-          simbodo per estrazione (N)
+          simbolo per estrazione (N)
           <input type="number" value={batchSize} onChange={(e) => setBatchSize(Number(e.target.value))} min={1} max={40} />
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -560,7 +560,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
               onConfirm: () => { setConfirm((c) => ({ ...c, open: false })); prepare(); }
             });
           }} disabled={busy}>Prepara estrazione</button>
-          <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbodo" : `Estrai prossimi ${batchSize} simbodo`}</button>
+          <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || !display?.active || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbolo" : `Estrai prossimi ${batchSize} simbolo`}</button>
           <button className="btn-sm btn-accent" onClick={async () => {
             setBusy(true);
             try {

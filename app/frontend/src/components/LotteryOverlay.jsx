@@ -43,7 +43,7 @@ export default function LotteryOverlay({ lottery }) {
       {lottery.prizeName && <div style={{ fontSize: "1.4rem", color: "#ffd700" }}>{lottery.prizeName}</div>}
 
       <div style={{ fontSize: "1.2rem", color: "#aaa", marginBottom: 8 }}>
-        {lottery.status === "drawing" && `Estrazione in corso: ${drawn.length}/40 simboli`}
+        {lottery.status === "drawing" && `Estrazione in corso: ${drawn.length}/${(lottery.pool || []).length || 40} simbodo`}
         {lottery.status === "finalists" && "5 CARTE FINALISTE"}
         {lottery.status === "reveal" && "REVEAL IN CORSO"}
         {lottery.status === "winner" && "BIGLIETTO VINCENTE"}

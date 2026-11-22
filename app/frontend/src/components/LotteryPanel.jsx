@@ -553,12 +553,17 @@ function DrawTab({ extractionId, onError, onMsg }) {
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn-sm btn-accent" onClick={() => {
-            setConfirm({
-              open: true,
-              title: "Prepara estrazione",
-              message: "Preparare una nuova estrazione sul tabellone? Questo resetta l'estrazione in corso.",
-              onConfirm: () => { setConfirm((c) => ({ ...c, open: false })); prepare(); }
-            });
+            const already = display && (display.active || display.status !== "idle");
+            if (already) {
+              setConfirm({
+                open: true,
+                title: "Prepara estrazione",
+                message: "Preparare una nuova estrazione sul tabellone? Questo resetta l'estrazione in corso.",
+                onConfirm: () => { setConfirm((c) => ({ ...c, open: false })); prepare(); }
+              });
+            } else {
+              prepare();
+            }
           }} disabled={busy}>Prepara estrazione</button>
            <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbolo" : `Estrai prossimi ${batchSize} simbolo`}</button>
           <button className="btn-sm btn-accent" onClick={async () => {

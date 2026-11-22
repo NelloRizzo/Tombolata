@@ -429,6 +429,7 @@ function PrizesTab({ extractionId, onError, onMsg }) {
 function DrawTab({ extractionId, onError, onMsg }) {
   const [sessionId, setSessionId] = useState("");
   const [batchSize, setBatchSize] = useState(1);
+  const [confirm, setConfirm] = useState({ open: false, title: "", message: "", onConfirm: null });
   const [display, setDisplay] = useState(null);
   const [prizes, setPrizes] = useState([]);
   const [prizeId, setPrizeId] = useState("");
@@ -553,7 +554,17 @@ function DrawTab({ extractionId, onError, onMsg }) {
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button className="btn-sm btn-accent" onClick={() => {
-            prepare();
+            const already = display && (display.active || display.status !== "idle");
+            if (already) {
+              setConfirm({
+                open: true,
+                title: "Prepara estrazione",
+                message: "Preparare una nuova estrazione sul tabellone? Questo resetta l'estrazione in corso.",
+                onConfirm: () => { setConfirm((c) => ({ ...c, open: false })); prepare(); }
+              });
+            } else {
+              prepare();
+            }
           }} disabled={busy}>Prepara estrazione</button>
            <button className="btn-sm btn-accent" onClick={nextBatch} disabled={busy || display?.status !== "drawing"}>{batchSize === 1 ? "Estrai prossimo simbolo" : `Estrai prossimi ${batchSize} simbolo`}</button>
           <button className="btn-sm btn-accent" onClick={async () => {
@@ -598,6 +609,14 @@ function DrawTab({ extractionId, onError, onMsg }) {
         }} disabled={busy}>Estrai prossimo premio</button>
       </div>
 
+    <ConfirmModal
+      open={confirm.open}
+      title={confirm.title}
+      message={confirm.message}
+      danger
+      onConfirm={confirm.onConfirm || (() => setConfirm((c) => ({ ...c, open: false })))}
+      onCancel={() => setConfirm((c) => ({ ...c, open: false }))}
+    />
     </div>
   );
 }

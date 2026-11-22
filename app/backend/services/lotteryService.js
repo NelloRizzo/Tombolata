@@ -542,6 +542,14 @@ export async function clearLotteryDisplay() {
 export async function prepareLotteryDraw(sessionId, batchSize) {
   const n = Number(batchSize) || 5;
   const sess = await LotteryDrawSession.findById(sessionId);
+  // Resetta l'assegnazione dei premi della estrazione precedente
+  if (sess?.extractionId) {
+    const prizeIds = await LotteryPrize.find({ extractionId: sess.extractionId }).distinct("_id");
+    if (prizeIds.length) {
+      await LotteryPrizeWinner.deleteMany({ prizeId: { $in: prizeIds } });
+    }
+    await LotteryTicket.updateMany({ extractionId: sess.extractionId, status: "winning" }, { $set: { status: "sold" } });
+  }
   const symbols = await LotterySymbol.find({ extractionId: sess?.extractionId }).lean();
   const ids = symbols.length ? symbols.map((s) => s.id) : Array.from({ length: 40 }, (_, i) => i + 1);
   // shuffle

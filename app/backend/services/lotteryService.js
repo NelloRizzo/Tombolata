@@ -578,7 +578,7 @@ export async function drawLotteryBatch() {
   const newDrawn = [...doc.drawn, ...cappedNext];
   const done = newDrawn.length >= targetDrawn;
 
-  const update = { drawn: newDrawn };
+  const update = { drawn: newDrawn, active: true };
   if (done) {
     // finalisti = gli ultimi 3 simbodo rimasti nel pool (non estratti)
     const finalists = pool.slice(newDrawn.length);

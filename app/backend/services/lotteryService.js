@@ -566,7 +566,7 @@ export async function prepareLotteryDraw(sessionId, batchSize) {
 
 export async function drawLotteryBatch() {
   const doc = await getLotteryDisplay();
-  if (!doc.active || doc.status !== "drawing") return doc;
+  if (doc.status !== "drawing") return doc;
   const pool = doc.pool || [];
   const batchSize = doc.batchSize || 5;
   const remaining = pool.slice(doc.drawn.length);

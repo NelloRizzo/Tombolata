@@ -800,6 +800,7 @@ export async function drawNextPrize() {
   if (finalists.length) {
     const drawnSet2 = new Set(Array.isArray(doc?.drawn) ? doc.drawn : []);
     const f = sold.filter((t) => (t.symbols || []).every((s) => !drawnSet2.has(s)));
+    if (f.length) candidates = f;
   }
   if (!candidates.length) throw new Error("Nessun biglietto valido rimasto (verifica che i biglietti siano segnati come venduti)");
 

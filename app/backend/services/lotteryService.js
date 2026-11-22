@@ -591,13 +591,12 @@ export async function drawLotteryBatch() {
   const cap = Math.max(0, targetDrawn - doc.drawn.length);
   const cappedNext = next.slice(0, cap);
   const newDrawn = [...doc.drawn, ...cappedNext];
-  const done = newDrawn.length >= targetDrawn;
-
-  const sess = doc.sessionId ? await LotteryDrawSession.findById(doc.sessionId) : null;
-  const sold = sess?.extractionId ? await LotteryTicket.find({ extractionId: sess.extractionId, status: "sold" }).lean() : [];
-  const drawnSet = new Set(newDrawn);
-  const validCount = sold.filter((t) => (t.symbols || []).every((s) => !drawnSet.has(s))).length;
-  const update = { drawn: newDrawn, active: true, validTickets: validCount };
+   const sess = doc.sessionId ? await LotteryDrawSession.findById(doc.sessionId) : null;
+   const sold = sess?.extractionId ? await LotteryTicket.find({ extractionId: sess.extractionId, status: "sold" }).lean() : [];
+   const drawnSet = new Set(newDrawn);
+   const validCount = sold.filter((t) => (t.symbols || []).every((s) => !drawnSet.has(s))).length;
+   const done = validCount < 10 || newDrawn.length >= targetDrawn;
+   const update = { drawn: newDrawn, active: true, validTickets: validCount };
   if (done) {
     const finalists = pool.slice(newDrawn.length);
     const eliminated = newDrawn;

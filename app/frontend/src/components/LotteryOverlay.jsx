@@ -46,6 +46,7 @@ export default function LotteryOverlay({ lottery }) {
     <div style={isReveal ? { background: "#1a1a2e", padding: 24, borderRadius: 12, border: "2px solid #ff6b6b", maxWidth: "90vw", maxHeight: "80vh", overflow: "auto" } : {}}>
       <div style={{ fontSize: "3rem", fontWeight: 800, color: "#ff6b6b", letterSpacing: "0.2em" }}>ESTRAZIONE LOTTERIA</div>
       {lottery.prizeName && <div style={{ fontSize: "1.4rem", color: "#ffd700" }}>{lottery.prizeName}</div>}
+      {lottery.validTickets != null && <div style={{ fontSize: "1.2rem", color: "#00ff88" }}>{lottery.validTickets} biglietti in concorso!</div>}
 
       <div style={{ fontSize: "1.2rem", color: "#aaa", marginBottom: 8 }}>
         {lottery.status === "drawing" && `Estrazione in corso: ${drawn.length}/${(lottery.pool || []).length || 40} simbodo`}

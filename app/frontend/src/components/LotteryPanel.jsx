@@ -465,6 +465,11 @@ function DrawTab({ extractionId, onError, onMsg }) {
     } catch (e) { onError(e); }
   }
   useEffect(() => { loadPrizes(); loadDisplay(); }, [extractionId]);
+  // Cambiando estrazione dalla combo, prepara/attiva quella estrazione sul tabellone
+  useEffect(() => {
+    if (extractionId) prepare();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extractionId]);
   useEffect(() => {
     if (display?.winnerSerial && !revealSerial) setRevealSerial(display.winnerSerial);
     // eslint-disable-next-line react-hooks/exhaustive-deps

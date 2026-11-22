@@ -762,6 +762,63 @@ export async function drawCards(sessionId) {
   return { drawn, eliminated, finalists };
 }
 
+export async function drawNextPrize() {
+  const doc = await getLotteryDisplay();
+  const sess = doc?.sessionId ? await LotteryDrawSession.findById(doc.sessionId) : null;
+  const extractionId = sess?.extractionId;
+  if (!extractionId) throw new Error("Sessione/estrazione non valida");
+
+  const prizes = await LotteryPrize.find({ extractionId }).sort({ order: -1, createdAt: -1 }).lean();
+  if (!prizes.length) throw new Error("Nessun premio configurato");
+
+  const winners = await LotteryPrizeWinner.find().lean();
+  const wonPrizeIds = new Set(winners.map((w) => String(w.prizeId)));
+  const nextPrize = prizes.find((p) => !wonPrizeIds.has(String(p._id)));
+  if (!nextPrize) throw new Error("Tutti i premi sono già stati estratti");
+
+  const finalists = Array.isArray(doc?.finalists) ? doc.finalists : [];
+  const sold = await LotteryTicket.find({ extractionId, status: "sold" }).lean();
+  let candidates = sold;
+  if (finalists.length) {
+    const f = sold.filter((t) => (t.symbols || []).some((s) => finalists.includes(s)));
+    if (f.length) candidates = f;
+  }
+  if (!candidates.length) throw new Error("Nessun biglietto valido rimasto");
+
+  const ticket = candidates[Math.floor(Math.random() * candidates.length)];
+  await LotteryTicket.updateOne({ _id: ticket._id }, { $set: { status: "winning" } });
+
+  const event = await LotteryDrawEvent.create({
+    sessionId: sess._id,
+    type: "PRIZE_ASSIGNED",
+    symbolId: null,
+    ticketId: ticket._id,
+    winnerTicketNumber: ticket.number,
+    winnerSerial: ticket.serial,
+    candidateTicketNumbers: candidates.map((c) => c.number),
+    prizeId: nextPrize._id
+  });
+  await LotteryPrizeWinner.create({
+    prizeId: nextPrize._id,
+    ticketId: ticket._id,
+    ticketNumber: ticket.number,
+    serial: ticket.serial,
+    eventId: event._id
+  });
+
+  const parts = String(ticket.serial || "").split("-");
+  return setLotteryDisplay({
+    active: true,
+    status: "winner",
+    winnerSerial: parts.length > 1 ? parts[1] : String(ticket.number),
+    winnerNumber: ticket.number,
+    prizeName: nextPrize.name || "",
+    revealSerial: parts.length > 1 ? parts[1] : String(ticket.number),
+    revealBooklet: parts.length > 1 ? parts[0] : (doc?.revealBooklet || ""),
+    revealIndex: 0
+  });
+}
+
 export async function assignPrize(sessionId, prizeId, symbolId) {
   const session = await LotteryDrawSession.findById(sessionId);
   if (!session) throw new Error("Sessione non trovata");

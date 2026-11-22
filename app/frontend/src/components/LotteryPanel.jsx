@@ -368,7 +368,6 @@ function TicketsTab({ extractionId, onError, onMsg }) {
 function PrizesTab({ extractionId, onError, onMsg }) {
   const [prizes, setPrizes] = useState([]);
   const [name, setName] = useState("");
-  const [symbolId, setSymbolId] = useState("");
   const [value, setValue] = useState("");
 
   async function load() {
@@ -383,9 +382,9 @@ function PrizesTab({ extractionId, onError, onMsg }) {
     try {
       await apiRequest(`/api/lottery/extractions/${extractionId}/prizes`, {
         method: "POST",
-        body: JSON.stringify({ name, symbolId: symbolId ? Number(symbolId) : null, value })
+        body: JSON.stringify({ name, value })
       });
-      setName(""); setSymbolId(""); setValue("");
+      setName(""); setValue("");
       onMsg("Premio creato");
       load();
     } catch (e) { onError(e); }
@@ -407,10 +406,6 @@ function PrizesTab({ extractionId, onError, onMsg }) {
           <input placeholder="Es. Primo premio" value={name} onChange={(e) => setName(e.target.value)} />
         </label>
         <label>
-          ID simbolo
-          <input placeholder="Es. 7" value={symbolId} onChange={(e) => setSymbolId(e.target.value)} />
-        </label>
-        <label>
           Valore
           <input placeholder="Es. 500 €" value={value} onChange={(e) => setValue(e.target.value)} />
         </label>
@@ -421,7 +416,7 @@ function PrizesTab({ extractionId, onError, onMsg }) {
           <li className="tab-item" key={p._id}>
             <div className="tab-item-info">
               <span className="tab-name">{p.name}</span>
-              <span className="tab-sub">Simbolo {p.symbolId ?? "-"} · {p.value}</span>
+              <span className="tab-sub">{p.value}</span>
             </div>
             <button className="btn-sm btn-ghost" onClick={() => remove(p._id)}>Elimina</button>
           </li>
@@ -553,7 +548,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
       <div className="admin-form">
         <h3>Estrazione simbodo</h3>
         <label>
-          Simbodo per estrazione (N)
+          simbodo per estrazione (N)
           <input type="number" value={batchSize} onChange={(e) => setBatchSize(Number(e.target.value))} min={1} max={40} />
         </label>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -596,19 +591,16 @@ function DrawTab({ extractionId, onError, onMsg }) {
       </div>
 
       <div className="admin-form">
-        <h3>Assegna premio</h3>
-        <label>
-          Premio
-          <select value={prizeId} onChange={(e) => setPrizeId(e.target.value)}>
-            <option value="">-- seleziona premio --</option>
-            {prizes.map((p) => <option key={p._id} value={p._id}>{p.name}</option>)}
-          </select>
-        </label>
-        <label>
-          ID simbodo
-          <input value={symbolId} onChange={(e) => setSymbolId(e.target.value)} placeholder="Es. 7" />
-        </label>
-        <button className="btn-sm btn-accent" onClick={assign} disabled={busy || !prizeId || !symbolId}>Assegna premio</button>
+        <h3>Estrazione premi (ordine inverso)</h3>
+        <p className="tab-sub">I premi vengono estratti dal più alto al più basso (es. dal 5° al 1°).</p>
+        <button className="btn-sm btn-accent" onClick={async () => {
+          setBusy(true);
+          try {
+            const json = await apiRequest("/api/lottery/display/draw-prize", { method: "POST" });
+            if (json.ok) { setDisplay(json.data); onMsg(`Premio estratto: ${json.data.prizeName}`); }
+          } catch (e) { onError(e); }
+          finally { setBusy(false); }
+        }} disabled={busy}>Estrai prossimo premio</button>
       </div>
 
       {(display?.status === "finalists" || display?.status === "reveal") && (

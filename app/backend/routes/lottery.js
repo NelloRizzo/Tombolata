@@ -11,6 +11,7 @@ import {
   setLotteryReveal,
   drawLotteryBooklet,
   drawLotteryTicket,
+  drawNextPrize,
   seedSymbols,
   listSymbols,
   generateTicketsForExtraction,
@@ -321,6 +322,20 @@ router.post("/display/draw-booklet", authenticate, requireRoles("director", "adm
 router.post("/display/draw-ticket", authenticate, requireRoles("director", "admin"), async (req, res) => {
   try {
     const doc = await drawLotteryTicket();
+    const wss = req.app.get("wss");
+    if (wss) {
+      const { broadcastToClients } = await import("../services/broadcast.js");
+      broadcastToClients(wss, "lottery:update", doc, null);
+    }
+    res.json({ ok: true, data: doc });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
+  }
+});
+
+router.post("/display/draw-prize", authenticate, requireRoles("director", "admin"), async (req, res) => {
+  try {
+    const doc = await drawNextPrize();
     const wss = req.app.get("wss");
     if (wss) {
       const { broadcastToClients } = await import("../services/broadcast.js");

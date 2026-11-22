@@ -809,7 +809,7 @@ export async function drawNextPrize() {
   const parts = String(ticket.serial || "").split("-");
   return setLotteryDisplay({
     active: true,
-    status: "winner",
+    status: "reveal",
     winnerSerial: parts.length > 1 ? parts[1] : String(ticket.number),
     winnerNumber: ticket.number,
     prizeName: nextPrize.name || "",

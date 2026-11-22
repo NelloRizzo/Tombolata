@@ -536,7 +536,7 @@ export async function setLotteryDisplay(data) {
 }
 
 export async function clearLotteryDisplay() {
-  return setLotteryDisplay({ active: false, drawn: [], eliminated: [], finalists: [], winnerSerial: "", winnerNumber: null, prizeName: "", status: "idle", pool: [], batchSize: 5, revealSerial: "", revealBooklet: "", revealIndex: 0 });
+  return setLotteryDisplay({ active: false, drawn: [], eliminated: [], finalists: [], winnerSerial: "", winnerNumber: null, prizeName: "", status: "idle", pool: [], batchSize: 5, revealSerial: "", revealBooklet: "", revealIndex: 0, validTickets: 0 });
 }
 
 export async function prepareLotteryDraw(sessionId, batchSize) {
@@ -558,10 +558,12 @@ export async function prepareLotteryDraw(sessionId, batchSize) {
     const j = crypto.randomInt(0, i + 1);
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
+  const soldCount = sess?.extractionId ? await LotteryTicket.countDocuments({ extractionId: sess.extractionId, status: "sold" }) : 0;
   return setLotteryDisplay({
     active: true,
     sessionId,
     batchSize: n,
+    validTickets: soldCount,
     pool,
     drawn: [],
     eliminated: [],
@@ -590,7 +592,10 @@ export async function drawLotteryBatch() {
   const newDrawn = [...doc.drawn, ...cappedNext];
   const done = newDrawn.length >= targetDrawn;
 
-  const update = { drawn: newDrawn, active: true };
+  const sess = doc.sessionId ? await LotteryDrawSession.findById(doc.sessionId) : null;
+  const soldTotal = sess?.extractionId ? await LotteryTicket.countDocuments({ extractionId: sess.extractionId, status: "sold" }) : 0;
+  let validCount = soldTotal;
+  const update = { drawn: newDrawn, active: true, validTickets: validCount };
   if (done) {
     // finalisti = gli ultimi 3 simbodo rimasti nel pool (non estratti)
     const finalists = pool.slice(newDrawn.length);
@@ -598,6 +603,10 @@ export async function drawLotteryBatch() {
     update.finalists = finalists;
     update.eliminated = eliminated;
     update.status = "finalists";
+    if (sess?.extractionId) {
+      const sold = await LotteryTicket.find({ extractionId: sess.extractionId, status: "sold" }).lean();
+      update.validTickets = sold.filter((t) => (t.symbols || []).some((s) => finalists.includes(s))).length;
+    }
   }
   return setLotteryDisplay(update);
 }
@@ -819,7 +828,17 @@ export async function drawNextPrize() {
   });
 
   const parts = String(ticket.serial || "").split("-");
+  const sess2 = doc?.sessionId ? await LotteryDrawSession.findById(doc.sessionId) : null;
+  let validCount = doc?.validTickets || 0;
+  if (sess2?.extractionId) {
+    const finalists = Array.isArray(doc?.finalists) ? doc.finalists : [];
+    const sold = await LotteryTicket.find({ extractionId: sess2.extractionId, status: "sold" }).lean();
+    validCount = finalists.length
+      ? sold.filter((t) => (t.symbols || []).some((s) => finalists.includes(s))).length
+      : sold.length;
+  }
   return setLotteryDisplay({
+    validTickets: validCount,
     active: true,
     status: "reveal",
     winnerSerial: parts.length > 1 ? parts[1] : String(ticket.number),

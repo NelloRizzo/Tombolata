@@ -12,6 +12,7 @@ const lotteryDisplaySchema = new mongoose.Schema(
     finalists: { type: [Number], default: [] },
     winnerSerial: { type: String, default: "" },
     winnerNumber: { type: Number, default: null },
+  validTickets: { type: Number, default: 0 },
     prizeName: { type: String, default: "" },
     status: { type: String, default: "idle" }, // idle | drawing | finalists | reveal | winner
     revealSerial: { type: String, default: "" },

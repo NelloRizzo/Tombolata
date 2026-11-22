@@ -597,6 +597,7 @@ function DrawTab({ extractionId, onError, onMsg }) {
         {display?.active && (
           <div className="tab-sub" style={{ marginTop: 8 }}>
             Estratti {drawnCount}/{total} {done ? "— FINALISTI: " + (display.finalists || []).map((n) => "S" + String(n).padStart(2, "0")).join(", ") : ""}
+            <br />Biglietti in gioco: {display?.validTickets ?? 0}
           </div>
         )}
       </div>

@@ -608,43 +608,6 @@ function DrawTab({ extractionId, onError, onMsg }) {
         }} disabled={busy}>Estrai prossimo premio</button>
       </div>
 
-      {(display?.status === "finalists" || display?.status === "reveal") && (
-      <div className="admin-form">
-        <h3>Reveal cifra a cifra (biglietto / blocchetto)</h3>
-        <label>
-          Numero biglietto (seriale)
-          <input value={revealSerial} onChange={(e) => setRevealSerial(e.target.value)} placeholder="Es. AAB-012" />
-        </label>
-        <label>
-          Numero blocchetto
-          <input value={revealBooklet} onChange={(e) => setRevealBooklet(e.target.value)} placeholder="Es. 7" />
-        </label>
-        <button className="btn-sm btn-accent" onClick={async () => {
-          try {
-            await apiRequest("/api/lottery/display/reveal", {
-              method: "POST",
-              body: JSON.stringify({ serial: revealSerial, booklet: revealBooklet })
-            });
-            onMsg("Reveal avviato sul tabellone");
-          } catch (e) { onError(e); }
-        }} disabled={!revealSerial && !revealBooklet}>Avvia reveal completo</button>
-        {(!display?.revealBooklet) && (
-        <button className="btn-sm btn-accent" onClick={async () => {
-            try {
-              const json = await apiRequest("/api/lottery/display/draw-booklet", { method: "POST" });
-              if (json.ok) { setDisplay(json.data); onMsg("Blocchetto estratto casualmente"); }
-            } catch (e) { onError(e); }
-          }}>Estrai blocchetto</button>
-        )}
-        <button className="btn-sm btn-accent" onClick={async () => {
-            try {
-              const json = await apiRequest("/api/lottery/display/draw-ticket", { method: "POST" });
-              if (json.ok) { setDisplay(json.data); onMsg("Cifre biglietto estratte casualmente"); }
-            } catch (e) { onError(e); }
-          }} disabled={!display?.revealBooklet}>Estrai cifre biglietto</button>
-        <span className="tab-sub">Il tabellone rivelerà il seriale e il blocchetto cifra a cifra.</span>
-      </div>
-      )}
     </div>
   );
 }

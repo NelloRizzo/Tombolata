@@ -13,7 +13,7 @@ export default function LotteryOverlay({ lottery }) {
       setRevealCount(0);
       return;
     }
-    const total = (lottery.revealSerial || "").length + (lottery.revealBooklet || "").length;
+    const total = (lottery.revealBooklet || "").length + (lottery.revealSerial || "").length;
     let i = 0;
     setRevealCount(0);
     const timer = setInterval(() => {
@@ -37,8 +37,12 @@ export default function LotteryOverlay({ lottery }) {
   const allCards = pool.length ? [...pool].sort((a, b) => a - b) : Array.from({ length: 40 }, (_, i) => i + 1);
   const backendUrl = getBackendUrl().replace(/\/$/, "");
 
+  const isReveal = lottery?.status === "reveal";
+  const containerStyle = isReveal
+    ? { position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, color: "#fff" }
+    : { position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 16, color: "#fff" };
   return (
-    <div style={{ position: "fixed", inset: 0, zIndex: 9999, background: "rgba(0,0,0,0.92)", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 24, gap: 16, color: "#fff" }}>
+    <div style={containerStyle}>
       <div style={{ fontSize: "3rem", fontWeight: 800, color: "#ff6b6b", letterSpacing: "0.2em" }}>ESTRAZIONE LOTTERIA</div>
       {lottery.prizeName && <div style={{ fontSize: "1.4rem", color: "#ffd700" }}>{lottery.prizeName}</div>}
 
@@ -49,6 +53,7 @@ export default function LotteryOverlay({ lottery }) {
         {lottery.status === "winner" && "BIGLIETTO VINCENTE"}
       </div>
 
+      {lottery.status !== "reveal" && (
       <div style={{ display: "grid", gridTemplateColumns: "repeat(8, 1fr)", gap: 10, maxWidth: "92vw" }}>
         {allCards.map((n) => {
           const isDrawn = drawnSet.has(n);
@@ -75,6 +80,7 @@ export default function LotteryOverlay({ lottery }) {
           );
         })}
       </div>
+      )}
 
       {lottery.status === "reveal" && (
         <div style={{ marginTop: 16, textAlign: "center", padding: "24px 40px", border: "3px solid #ff6b6b", borderRadius: 12, background: "rgba(255,107,107,0.1)" }}>
@@ -82,19 +88,19 @@ export default function LotteryOverlay({ lottery }) {
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, margin: "8px 0" }}>
             <span style={{ fontSize: "1.2rem", color: "#aaa", minWidth: 120, textAlign: "right" }}>Biglietto:</span>
             <span style={{ fontFamily: "monospace", fontSize: "2.5rem", fontWeight: 800, letterSpacing: "0.15em" }}>
-              {(lottery.revealSerial || "").split("").map((ch, idx) => (
-                <span key={idx} style={{ color: idx < revealCount ? "#fff" : "#444", textShadow: idx < revealCount ? "0 0 8px #ff6b6b" : "none" }}>{idx < revealCount ? ch : "_"}</span>
-              ))}
-            </span>
+               {(lottery.revealSerial || "").split("").map((ch, idx) => {
+                 const offset = (lottery.revealBooklet || "").length;
+                 return <span key={idx} style={{ color: offset + idx < revealCount ? "#fff" : "#444", textShadow: offset + idx < revealCount ? "0 0 8px #ff6b6b" : "none" }}>{offset + idx < revealCount ? ch : "_"}</span>;
+               })}
+              </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 12, margin: "8px 0" }}>
             <span style={{ fontSize: "1.2rem", color: "#aaa", minWidth: 120, textAlign: "right" }}>Blocchetto:</span>
             <span style={{ fontFamily: "monospace", fontSize: "2.5rem", fontWeight: 800, letterSpacing: "0.15em" }}>
-              {(lottery.revealBooklet || "").split("").map((ch, idx) => {
-                const offset = (lottery.revealSerial || "").length;
-                return <span key={idx} style={{ color: offset + idx < revealCount ? "#fff" : "#444", textShadow: offset + idx < revealCount ? "0 0 8px #ff6b6b" : "none" }}>{offset + idx < revealCount ? ch : "_"}</span>;
-              })}
-            </span>
+               {(lottery.revealBooklet || "").split("").map((ch, idx) => (
+                 <span key={idx} style={{ color: idx < revealCount ? "#fff" : "#444", textShadow: idx < revealCount ? "0 0 8px #ff6b6b" : "none" }}>{idx < revealCount ? ch : "_"}</span>
+               ))}
+             </span>
           </div>
         </div>
       )}

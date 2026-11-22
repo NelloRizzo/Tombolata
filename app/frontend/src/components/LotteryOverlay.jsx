@@ -70,7 +70,7 @@ export default function LotteryOverlay({ lottery }) {
           const code = `S${String(n).padStart(2, "0")}`;
           return (
             <div key={n} style={{ minHeight: 70, border, borderRadius: 8, background: bg, display: "flex", alignItems: "center", justifyContent: "center", opacity, transition: "all 0.4s ease", overflow: "hidden" }}>
-              <img src={`${backendUrl}/lottery-assets/symbols/${code}.jpeg`} alt={code} style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={(e) => { e.currentTarget.style.display = "none"; }} />
+              <img src={`${backendUrl}/lottery-assets/symbols/${code}.jpeg`} alt={code} style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={(e) => { const el = e.currentTarget.parentElement; if (el) el.style.display = "none"; }} />
             </div>
           );
         })}
@@ -115,7 +115,7 @@ export default function LotteryOverlay({ lottery }) {
               const code = `S${String(n).padStart(2, "0")}`;
               return (
                 <div key={n} style={{ width: 90, height: 90, border: "3px solid #ffd700", borderRadius: 10, background: "#3a2e00", display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-                  <img src={`${backendUrl}/lottery-assets/symbols/${code}.jpeg`} alt={code} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                  <img src={`${backendUrl}/lottery-assets/symbols/${code}.jpeg`} alt={code} style={{ width: "100%", height: "100%", objectFit: "contain" }} onError={(e) => { const el = e.currentTarget.parentElement; if (el) el.style.display = "none"; }} />
                 </div>
               );
             })}

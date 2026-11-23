@@ -449,7 +449,7 @@ function PrizesTab({ extractionId, onError, onMsg }) {
       for (let i = 1; i <= n; i++) {
         await apiRequest(`/api/lottery/extractions/${extractionId}/prizes`, {
           method: "POST",
-          body: JSON.stringify({ name: `Premio ${i}`, value: "" })
+          body: JSON.stringify({ name: `Premio ${i}`, value: "", order: i })
         });
       }
       onMsg(`Configurati ${n} premi`);

@@ -728,7 +728,12 @@ export async function markTicketsSold(extractionId, payload = {}) {
 }
 
 export async function createPrize(extractionId, { name, symbolId, value, order }) {
-  return LotteryPrize.create({ extractionId, name, symbolId: symbolId != null ? Number(symbolId) : null, value: value ?? "", order: order ?? 0 });
+  let finalOrder = order;
+  if (finalOrder == null || finalOrder === 0) {
+    const last = await LotteryPrize.findOne({ extractionId }).sort({ order: -1 }).lean();
+    finalOrder = (last?.order ?? 0) + 1;
+  }
+  return LotteryPrize.create({ extractionId, name, symbolId: symbolId != null ? Number(symbolId) : null, value: value ?? "", order: finalOrder });
 }
 
 export async function listPrizes(extractionId) {

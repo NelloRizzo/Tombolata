@@ -323,6 +323,7 @@ function TicketsTab({ extractionId, onError, onMsg }) {
   useEffect(() => { load(); }, [extractionId, status]);
 
   async function markBooklet() {
+    if (!bookletNo.trim()) { onError(new Error("Inserisci un numero di blocchetto")); return; }
     try {
       const json = await apiRequest(`/api/lottery/extractions/${extractionId}/tickets/sell`, {
         method: "POST",
@@ -354,7 +355,7 @@ function TicketsTab({ extractionId, onError, onMsg }) {
           Blocchetto n.
           <input value={bookletNo} onChange={(e) => setBookletNo(e.target.value)} placeholder="Es. 1" />
         </label>
-        <button className="btn-sm btn-accent" onClick={markBooklet}>Segna blocchetto venduto</button>
+        <button className="btn-sm btn-accent" onClick={markBooklet} disabled={!bookletNo.trim()}>Segna blocchetto venduto</button>
       </div>
       <ul className="tab-list" style={{ maxHeight: 240, overflow: "auto" }}>
         {tickets.slice(0, 80).map((t) => (
@@ -401,7 +402,7 @@ function TicketsTab({ extractionId, onError, onMsg }) {
             </div>
             <div className="modal-actions" style={{ marginTop: 12 }}>
               <button className="btn-sm btn-ghost" onClick={() => setSellModal(false)}>Annulla</button>
-              <button className="btn-sm btn-accent" disabled={sellBusy} onClick={async () => {
+              <button className="btn-sm btn-accent" disabled={sellBusy || (sellMode === "booklet" && !sellInput.trim()) || (sellMode === "manual" && !sellInput.trim())} onClick={async () => {
                 setSellBusy(true);
                 try {
                   let body = { status: sellStatus };

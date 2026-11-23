@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { importCards, listCards, deleteCards } from "../services/cardService.js";
+import { importCards, listCards, deleteCards, buildCardsPdf } from "../services/cardService.js";
 import { authenticate, requireRoles } from "../services/authMiddleware.js";
 
 const router = Router();
@@ -28,6 +28,21 @@ router.post("/delete", authenticate, requireRoles("drawer", "director", "admin")
   try {
     const result = await deleteCards(req.body?.cardIds);
     res.json({ ok: true, ...result });
+  } catch (error) {
+    res.status(400).json({ ok: false, message: error.message });
+  }
+});
+
+// Download PDF delle cartelle: una cartella dal primo gruppo e una dal secondo per foglio A4
+router.get("/pdf", authenticate, requireRoles("drawer", "director", "admin"), async (req, res) => {
+  try {
+    const group1 = req.query.group1;
+    const group2 = req.query.group2;
+    const buf = await buildCardsPdf(group1, group2);
+    const safe = (s) => String(s || "").replace(/[^a-zA-Z0-9_-]/g, "_");
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Disposition", `attachment; filename="cartelle-${safe(group1)}-${safe(group2)}.pdf"`);
+    res.send(buf);
   } catch (error) {
     res.status(400).json({ ok: false, message: error.message });
   }

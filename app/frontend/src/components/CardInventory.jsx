@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { apiRequest } from "../api.js";
+import { apiRequest, authHeaders } from "../api.js";
+import { apiUrl } from "../hooks/useWebSocket.js";
 import ConfirmModal from "./ConfirmModal.jsx";
 
 function cardLabel(card) {
@@ -49,7 +50,15 @@ export default function CardInventory({ game }) {
   const [error, setError] = useState(null);
   const [msg, setMsg] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [group1, setGroup1] = useState("");
+  const [group2, setGroup2] = useState("");
+  const [pdfBusy, setPdfBusy] = useState(false);
   const fileRef = useRef(null);
+
+  const distinctGroups = useMemo(() => {
+    const set = new Set(cards.map((c) => c.title).filter(Boolean));
+    return [...set].sort();
+  }, [cards]);
 
   async function refresh() {
     try {
@@ -210,6 +219,43 @@ export default function CardInventory({ game }) {
     }
   }
 
+  async function downloadCardsPdf() {
+    if (!group1 || !group2) {
+      setError("Seleziona entrambi i gruppi");
+      return;
+    }
+    if (group1 === group2) {
+      setError("I due gruppi devono essere diversi");
+      return;
+    }
+    setError(null);
+    setMsg(null);
+    setPdfBusy(true);
+    try {
+      const res = await fetch(
+        apiUrl(`/api/cards/pdf?group1=${encodeURIComponent(group1)}&group2=${encodeURIComponent(group2)}`),
+        { headers: authHeaders() }
+      );
+      if (!res.ok) {
+        let m = "Errore download PDF";
+        try { const j = await res.json(); if (j?.message) m = j.message; } catch {}
+        throw new Error(m);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `cartelle-${group1}-${group2}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setMsg("PDF cartelle generato");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   return (
     <div className="board-manager">
       <div className="bm-header">
@@ -277,6 +323,30 @@ export default function CardInventory({ game }) {
         >
           Elimina selezionate
         </button>
+      </div>
+
+      <div className="admin-form" style={{ marginTop: 12 }}>
+        <h3>Stampa PDF cartelle</h3>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <label>
+            Gruppo 1
+            <select value={group1} onChange={(e) => setGroup1(e.target.value)}>
+              <option value="">-- seleziona --</option>
+              {distinctGroups.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </label>
+          <label>
+            Gruppo 2
+            <select value={group2} onChange={(e) => setGroup2(e.target.value)}>
+              <option value="">-- seleziona --</option>
+              {distinctGroups.map((g) => <option key={g} value={g}>{g}</option>)}
+            </select>
+          </label>
+          <button className="btn-sm btn-accent" onClick={downloadCardsPdf} disabled={pdfBusy || !group1 || !group2 || group1 === group2}>
+            Scarica PDF cartelle
+          </button>
+        </div>
+        <span className="tab-sub">Un foglio A4 per coppia: una cartella dal gruppo 1 e una dal gruppo 2.</span>
       </div>
 
       {regexError && <div className="error-text">{regexError}</div>}

@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import fs from "fs";
+import path from "path";
 import Card from "../models/Card.js";
 import { parseTombolataCards, parseCardName, toRows } from "./tombolataCardsXml.js";
 
@@ -47,6 +49,132 @@ export async function importCards(xml) {
 
 export async function listCards() {
   return Card.find({}).sort({ boardNumber: 1 });
+}
+
+const MM_TO_PT = 2.834645669;
+
+function normalizeRows(rows) {
+  if (!Array.isArray(rows)) return Array.from({ length: 3 }, () => Array(9).fill(null));
+  return rows.map((row) => {
+    if (!Array.isArray(row)) return Array(9).fill(null);
+    if (row.length === 9) return row.slice();
+    const out = Array(9).fill(null);
+    for (const n of row) {
+      if (n == null) continue;
+      let col;
+      if (n <= 10) col = 0;
+      else if (n <= 19) col = 1;
+      else if (n <= 29) col = 2;
+      else if (n <= 39) col = 3;
+      else if (n <= 49) col = 4;
+      else if (n <= 59) col = 5;
+      else if (n <= 69) col = 6;
+      else if (n <= 79) col = 7;
+      else col = 8;
+      if (out[col] == null) out[col] = n;
+    }
+    return out;
+  });
+}
+
+function resolveAssetsDir() {
+  const candidates = [
+    process.env.CARDS_ASSETS_DIR,
+    process.env.LOTTERY_ASSETS_DIR,
+    process.env.ASSETS_DIR,
+    path.resolve(process.cwd(), "assets"),
+    path.resolve(process.cwd(), "..", "assets"),
+    path.resolve(process.cwd(), "..", "..", "assets"),
+    "E:/UtentiLocali/Nello/Desktop/Uniamoci/AspettandoLaBefana/assets"
+  ].filter(Boolean);
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return path.resolve(process.cwd(), "assets");
+}
+
+function tryGetCardsBackgroundPath(baseDir) {
+  const cands = ["sfondocartelle.png", "sfondocartelle.jpg", "cards-background.png", "sfondo-cartelle.png", "cartelle-bg.png", "background-cards.png"];
+  for (const c of cands) {
+    const p = path.join(baseDir, "branding", c);
+    if (fs.existsSync(p)) return p;
+  }
+  for (const c of cands) {
+    const p = path.join(baseDir, c);
+    if (fs.existsSync(p)) return p;
+  }
+  return null;
+}
+
+export async function buildCardsPdf(group1, group2) {
+  const g1 = String(group1 || "").trim();
+  const g2 = String(group2 || "").trim();
+  if (!g1 || !g2) throw new Error("Seleziona entrambi i gruppi");
+  if (g1 === g2) throw new Error("I due gruppi devono essere diversi");
+  const cards1 = await Card.find({ title: g1 }).sort({ boardNumber: 1 }).lean();
+  const cards2 = await Card.find({ title: g2 }).sort({ boardNumber: 1 }).lean();
+  if (!cards1.length) throw new Error(`Nessuna cartella nel gruppo "${g1}"`);
+  if (!cards2.length) throw new Error(`Nessuna cartella nel gruppo "${g2}"`);
+
+  const PDFDocument = (await import("pdfkit")).default;
+  const baseDir = resolveAssetsDir();
+  const bgPath = tryGetCardsBackgroundPath(baseDir);
+
+  const count = Math.min(cards1.length, cards2.length);
+
+  const doc = new PDFDocument({ size: "A4", layout: "portrait", margin: 0 });
+  const chunks = [];
+  doc.on("data", (c) => chunks.push(c));
+
+  const pageW = doc.page.width;
+  const pageH = doc.page.height;
+
+  const cellSize = 9 * MM_TO_PT; // ~9mm
+  const cardWidth = cellSize * 9;
+  const cardHeight = cellSize * 3;
+  const gap = 8 * MM_TO_PT;
+  const blockHeight = cardHeight * 2 + gap;
+  const startY = (pageH - blockHeight) / 2;
+  const x = (pageW - cardWidth) / 2;
+
+  function drawCard(card, y) {
+    const rows = normalizeRows(card.rows);
+    const label = [card.title, card.setNumber != null ? `S.${card.setNumber}` : null, card.cardNumber != null ? `n.${card.cardNumber}` : null].filter(Boolean).join(" · ");
+    if (label) {
+      doc.font("Helvetica-Bold").fontSize(10).fillColor("#000").text(label, x, y - 14, { width: cardWidth, align: "center" });
+    }
+    for (let r = 0; r < 3; r++) {
+      for (let c = 0; c < 9; c++) {
+        const cx = x + c * cellSize;
+        const cy = y + r * cellSize;
+        doc.rect(cx, cy, cellSize, cellSize).strokeColor("#333").lineWidth(0.6).stroke();
+        const n = rows[r]?.[c];
+        if (n != null) {
+          doc.font("Helvetica-Bold").fontSize(cellSize * 0.45).fillColor("#000")
+            .text(String(n), cx, cy + cellSize * 0.25, { width: cellSize, align: "center" });
+        }
+      }
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    doc.on("end", () => resolve(Buffer.concat(chunks)));
+    doc.on("error", reject);
+
+    for (let i = 0; i < count; i++) {
+      if (i > 0) doc.addPage();
+      if (bgPath) {
+        try { doc.image(bgPath, 0, 0, { width: pageW, height: pageH }); } catch {}
+      }
+      drawCard(cards1[i], startY);
+      drawCard(cards2[i], startY + cardHeight + gap);
+    }
+
+    if (count === 0) {
+      doc.fontSize(12).text("Nessuna coppia di cartelle da stampare.");
+    }
+    doc.end();
+  });
 }
 
 // Elimina dall'archivio le cartelle con gli id indicati.

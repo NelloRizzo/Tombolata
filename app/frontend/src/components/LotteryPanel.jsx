@@ -352,8 +352,9 @@ function TicketsTab({ extractionId, onError, onMsg }) {
       </div>
       <div className="admin-form">
         <label>
-          Blocchetto n.
+          Numero del blocchetto
           <input value={bookletNo} onChange={(e) => setBookletNo(e.target.value)} placeholder="Es. 1" />
+          <span className="tab-sub">Inserisci il numero del blocchetto stampato sul blocchetto (es. 1, 2, 3...).</span>
         </label>
         <button className="btn-sm btn-accent" onClick={markBooklet} disabled={!bookletNo.trim()}>Segna blocchetto venduto</button>
       </div>

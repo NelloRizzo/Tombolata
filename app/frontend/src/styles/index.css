@@ -1190,6 +1190,9 @@ h3 {
   aspect-ratio: 1 / 1;
   padding: 6px;
   width: 100%;
+  height: auto;
+  align-self: start;
+  justify-self: stretch;
 }
 .presenter-chat {
   flex: 0 0 50%;

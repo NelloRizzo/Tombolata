@@ -5,6 +5,7 @@ import Home from "./pages/Home.jsx";
 import Board from "./pages/Board.jsx";
 import Monitor from "./pages/Monitor.jsx";
 import PresenterPage from "./pages/PresenterPage.jsx";
+import ActorPage from "./pages/ActorPage.jsx";
 import Login from "./pages/Login.jsx";
 import ConsoleHome from "./pages/ConsoleHome.jsx";
 import BoardsPage from "./pages/BoardsPage.jsx";
@@ -36,6 +37,9 @@ export default function App() {
           <Route path="/monitor" element={<Monitor />} />
           <Route path="/presenter" element={<ProtectedRoute />}>
             <Route index element={<PresenterPage />} />
+          </Route>
+       <Route path="/actor" element={<ProtectedRoute />}>
+            <Route index element={<ActorPage />} />
           </Route>
 
           {/* Con navbar */}

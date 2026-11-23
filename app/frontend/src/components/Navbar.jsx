@@ -9,7 +9,7 @@ const ROLE_SEZIONI = [
   { key: "director", label: "Regia", icon: "🎬", to: "/console?tab=director" },
   { key: "video", label: "Video", icon: "📽️", to: "/console?tab=video" },
   { key: "audio", label: "Audio", icon: "🎧", to: "/console?tab=audio" },
-  { key: "actor", label: "Attore", icon: "🎭", to: "/console?tab=actor" },
+  { key: "actor", label: "Attore", icon: "🎭", to: "/actor" },
   { key: "presenter", label: "Presentatore", icon: "🎤", to: "/presenter" }
 ];
 
@@ -117,7 +117,7 @@ export default function Sidebar() {
               <Link
                 key={s.key}
                 to={s.to}
-                className={`nav-link ${(activeTab === s.key || (s.key === "presenter" && location.pathname === "/presenter")) ? "active" : ""}`}
+                className={`nav-link ${(activeTab === s.key || (s.key === "presenter" && location.pathname === "/presenter") || (s.key === "actor" && location.pathname === "/actor")) ? "active" : ""}`}
                 title={s.label}
               >
                 <span className="nav-icon">{s.icon}</span>

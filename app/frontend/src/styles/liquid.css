@@ -197,6 +197,16 @@ button:not(:disabled):active,
   background: var(--glass-bg-strong);
   border-color: var(--glass-border-strong);
 }
+.btn-sm.btn-accent:hover {
+  background: #1b5e20;
+  border-color: transparent;
+  color: #fff;
+}
+.btn-sm.btn-danger:hover {
+  background: #ff1744;
+  border-color: transparent;
+  color: #fff;
+}
 .btn-accent {
   background: var(--grad-liquid-gold);
   border: none;

@@ -64,15 +64,6 @@ export default function ActorPanel({ ws, gameId }) {
         </div>
       </div>
 
-      <div className="panel-block">
-        <h2>Eventi recenti della serata</h2>
-        {firedTriggers.length === 0 && <p className="empty">Nessun evento ancora</p>}
-        {firedTriggers.map((e, i) => (
-          <div className="fired-item" key={i}>
-            <span className="fired-name">{e.name || e.actionType}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

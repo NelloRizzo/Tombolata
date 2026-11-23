@@ -289,6 +289,19 @@ export async function generateTicketsForExtraction(extractionId, params = {}) {
   };
 }
 
+export async function deleteTicketsForExtraction(extractionId) {
+  const ext = await LotteryExtraction.findById(extractionId);
+  if (!ext) throw new Error("Estrazione non trovata");
+  const tRes = await LotteryTicket.deleteMany({ extractionId });
+  const bRes = await LotteryBooklet.deleteMany({ extractionId });
+  // Aggiorna il display se i biglietti in gioco appartenevano a questa estrazione
+  const display = await LotteryDisplay.findOne({ key: "main" });
+  if (display) {
+    await LotteryDisplay.updateOne({ key: "main" }, { $set: { validTickets: 0 } });
+  }
+  return { deletedTickets: tRes.deletedCount || 0, deletedBooklets: bRes.deletedCount || 0 };
+}
+
 export async function listTickets(extractionId, status) {
   const q = { extractionId };
   if (status) q.status = status;

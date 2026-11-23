@@ -16,6 +16,7 @@ import {
   listSymbols,
   generateTicketsForExtraction,
   listTickets,
+  deleteTicketsForExtraction,
   listBooklets,
   buildTicketsPdf,
   buildBookletsPdf,
@@ -117,6 +118,15 @@ router.get("/extractions/:id/tickets", authenticate, async (req, res) => {
     res.json({ ok: true, data: await listTickets(req.params.id, status) });
   } catch (e) {
     res.status(500).json({ ok: false, message: e.message });
+  }
+});
+
+router.delete("/extractions/:id/tickets", authenticate, requireRoles(...STAFF), async (req, res) => {
+  try {
+    const r = await deleteTicketsForExtraction(req.params.id);
+    res.json({ ok: true, data: r });
+  } catch (e) {
+    res.status(400).json({ ok: false, message: e.message });
   }
 });
 

@@ -336,6 +336,8 @@ function TicketsTab({ extractionId, onError, onMsg }) {
   const [sellInput, setSellInput] = useState("");
   const [sellBusy, setSellBusy] = useState(false);
   const [sellStatus, setSellStatus] = useState("sold"); // sold | available
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   async function load() {
     try {
@@ -346,6 +348,17 @@ function TicketsTab({ extractionId, onError, onMsg }) {
   }
 
   useEffect(() => { load(); }, [extractionId, status]);
+
+  async function deleteAllTickets() {
+    setDeleteBusy(true);
+    try {
+      const json = await apiRequest(`/api/lottery/extractions/${extractionId}/tickets`, { method: "DELETE" });
+      onMsg(`Eliminati ${json.data?.deletedTickets ?? 0} biglietti e ${json.data?.deletedBooklets ?? 0} blocchetti`);
+      setTickets([]);
+      load();
+    } catch (e) { onError(e); }
+    finally { setDeleteBusy(false); setConfirmOpen(false); }
+  }
 
   async function markBooklet() {
     if (!bookletNo.trim()) { onError(new Error("Inserisci un numero di blocchetto")); return; }
@@ -374,6 +387,7 @@ function TicketsTab({ extractionId, onError, onMsg }) {
         <button className="btn-sm btn-ghost" onClick={load}>Aggiorna</button>
         <span className="tab-sub">Totale: {tickets.length}</span>
         <button className="btn-sm btn-accent" onClick={() => setSellModal(true)}>Gestisci vendite</button>
+        <button className="btn-sm btn-danger" onClick={() => setConfirmOpen(true)} disabled={deleteBusy}>Elimina tutti i biglietti</button>
       </div>
       <div className="admin-form">
         <label>
@@ -449,6 +463,14 @@ function TicketsTab({ extractionId, onError, onMsg }) {
           </div>
         </div>
       )}
+      <ConfirmModal
+        open={confirmOpen}
+        title="Elimina tutti i biglietti"
+        message="Eliminare tutti i biglietti e i blocchetti di questa estrazione? L'operazione non è reversibile."
+        danger
+        onConfirm={deleteAllTickets}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

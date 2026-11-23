@@ -3,7 +3,7 @@ import { apiRequest } from "../api.js";
 import GameManager from "./GameManager.jsx";
 import MediaUpload from "./MediaUpload.jsx";
 
-const ROLES = ["admin", "director", "video", "audio", "drawer", "actor"];
+const ROLES = ["admin", "director", "video", "audio", "drawer", "actor", "presenter"];
 
 export function AdminUsers() {
   const [users, setUsers] = useState([]);

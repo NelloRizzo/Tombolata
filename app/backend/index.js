@@ -13,6 +13,7 @@ import soundRoutes from "./routes/sounds.js";
 import uploadRoutes from "./routes/upload.js";
 import minigameRoutes from "./routes/games.js";
 import lotteryRoutes from "./routes/lottery.js";
+import chatRoutes from "./routes/chat.js";
 import { getGameState } from "./services/gameService.js";
 import { getNarrationState } from "./services/triggerService.js";
 import { getColorGameState } from "./services/colorGameService.js";
@@ -63,6 +64,7 @@ app.use("/api/sounds", soundRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/games", minigameRoutes);
 app.use("/api/lottery", lotteryRoutes);
+app.use("/api/chat", chatRoutes);
 
 const server = createServer(app);
 const wss = new WebSocketServer({ server, path: "/ws" });

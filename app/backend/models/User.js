@@ -7,7 +7,7 @@ const userSchema = new mongoose.Schema(
     displayName: { type: String, default: "" },
     roles: {
       type: [String],
-      enum: ["admin", "director", "video", "audio", "drawer", "actor"],
+      enum: ["admin", "director", "video", "audio", "drawer", "actor", "presenter"],
       default: []
     },
     active: { type: Boolean, default: true }

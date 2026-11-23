@@ -7,6 +7,7 @@ import DirectorPanel from "../components/DirectorPanel.jsx";
 import VideoPanel from "../components/VideoPanel.jsx";
 import AudioPanel from "../components/AudioPanel.jsx";
 import ActorPanel from "../components/ActorPanel.jsx";
+import PresenterPanel from "../components/PresenterPanel.jsx";
 import SpectatorPanel from "../components/SpectatorPanel.jsx";
 
 const ROLE_LABELS = {
@@ -14,13 +15,14 @@ const ROLE_LABELS = {
   director: "Regia",
   video: "Video",
   audio: "Audio",
-  actor: "Attore"
+  actor: "Attore",
+  presenter: "Presentatore"
 };
 
 // Ordine dei tab della console. Il ruolo "drawer" (Estrazione) non è più un
 // tab separato: l'estrazione è entrata nella Regia, quindi chi ha il ruolo
 // drawer accede al tab "director" (dove vede solo la sezione Estrazione).
-const ROLE_ORDER = ["director", "video", "audio", "actor"];
+const ROLE_ORDER = ["director", "video", "audio", "actor", "presenter"];
 
 export default function ConsoleHome() {
   const { user, hasRole } = useAuth();
@@ -83,6 +85,7 @@ export default function ConsoleHome() {
         {activeTab === "video" && <VideoPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "audio" && <AudioPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "actor" && <ActorPanel ws={ws} gameId={currentGameId} />}
+        {activeTab === "presenter" && <PresenterPanel ws={ws} gameId={currentGameId} />}
       </main>
     </div>
   );

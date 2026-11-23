@@ -1044,7 +1044,33 @@ h3 {
   margin-top: 16px;
 }
 
-/* ---------- Phase buttons ---------- */
+/* ---------- Chat panel (presentatore <-> regista) ---------- */
+.chat-panel { display: flex; flex-direction: column; gap: 8px; }
+.chat-messages {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: rgba(15, 26, 51, 0.4);
+  border: 1px solid #3a3a5a;
+  border-radius: 8px;
+}
+.chat-msg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: baseline;
+  font-size: 0.9rem;
+}
+.chat-sender { font-weight: 700; color: var(--gold, #ffd700); }
+.chat-role { font-size: 0.75rem; color: var(--muted); }
+.chat-text { flex: 1 1 100%; }
+.chat-time { font-size: 0.7rem; color: var(--muted); margin-left: auto; }
+.chat-input { display: flex; gap: 6px; }
+.chat-input input { flex: 1; }
+.presenter-panel { display: flex; flex-direction: column; gap: 16px; }
 .phase-buttons {
   display: flex;
   flex-wrap: wrap;

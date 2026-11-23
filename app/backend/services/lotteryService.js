@@ -218,6 +218,7 @@ export async function seedSymbols(extractionId, count = 40) {
   const existing = await LotterySymbol.countDocuments({ extractionId });
   if (existing > 0 && existing === count) return { seeded: false, count: existing };
   if (existing > 0) await LotterySymbol.deleteMany({ extractionId });
+  const symbols = [];
   for (let i = 1; i <= count; i++) {
     symbols.push({ extractionId, id: i, code: `S${String(i).padStart(2, "0")}`, name: `Simbolo ${i}` });
   }

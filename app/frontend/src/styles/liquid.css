@@ -122,6 +122,7 @@ button,
 .phase-btn,
 .sound-card-btn {
   font-family: var(--font-ui);
+  color: var(--text);
   transition: transform var(--dur-fast) var(--ease-liquid),
               box-shadow var(--dur-fast) var(--ease-liquid),
               background var(--dur-med) var(--ease-liquid),
@@ -170,6 +171,7 @@ button:not(:disabled):active,
   transform: translateX(-120%);
   transition: transform 0.7s var(--ease-liquid);
   pointer-events: none;
+  z-index: -1;
 }
 .btn-extract:hover:not(:disabled)::before {
   transform: translateX(120%);
@@ -415,6 +417,7 @@ textarea:focus {
   transform: translateX(-120%);
   transition: transform 0.6s var(--ease-liquid);
   pointer-events: none;
+  z-index: -1;
 }
 .liquid-btn:hover::before { transform: translateX(120%); }
 .liquid-btn:hover { transform: translateY(-2px) scale(1.03); }

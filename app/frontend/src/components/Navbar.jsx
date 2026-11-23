@@ -9,7 +9,8 @@ const ROLE_SEZIONI = [
   { key: "director", label: "Regia", icon: "🎬", to: "/console?tab=director" },
   { key: "video", label: "Video", icon: "📽️", to: "/console?tab=video" },
   { key: "audio", label: "Audio", icon: "🎧", to: "/console?tab=audio" },
-  { key: "actor", label: "Attore", icon: "🎭", to: "/console?tab=actor" }
+  { key: "actor", label: "Attore", icon: "🎭", to: "/console?tab=actor" },
+  { key: "presenter", label: "Presentatore", icon: "🎤", to: "/console?tab=presenter" }
 ];
 
 function GameSelector() {

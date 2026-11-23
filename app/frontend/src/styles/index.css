@@ -1111,7 +1111,7 @@ h3 {
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 36% 64%;
   gap: 8px;
   overflow: hidden;
 }
@@ -1163,15 +1163,31 @@ h3 {
 .presenter-bottom {
   flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: 8px;
   max-height: 40%;
   overflow: hidden;
 }
-.presenter-sounds { flex: 0 0 auto; }
-.presenter-sounds .quick-sounds { grid-template-columns: repeat(2, 1fr); }
+.presenter-sounds {
+  flex: 0 0 96px;
+  width: 96px;
+  display: flex;
+  align-items: stretch;
+}
+.presenter-sounds .quick-sounds {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+}
+.presenter-sounds .quick-sound {
+  aspect-ratio: 1 / 1;
+  padding: 6px;
+  width: 100%;
+}
 .presenter-chat {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   overflow: hidden;
   display: flex;

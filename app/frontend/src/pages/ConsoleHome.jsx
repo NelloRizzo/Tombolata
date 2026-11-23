@@ -85,7 +85,11 @@ export default function ConsoleHome() {
         {activeTab === "video" && <VideoPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "audio" && <AudioPanel ws={ws} gameId={currentGameId} />}
         {activeTab === "actor" && <ActorPanel ws={ws} gameId={currentGameId} />}
-        {activeTab === "presenter" && <PresenterPanel ws={ws} gameId={currentGameId} />}
+        {activeTab === "presenter" && (
+          <div className="presenter-inline">
+            <PresenterPanel ws={ws} gameId={currentGameId} />
+          </div>
+        )}
       </main>
     </div>
   );

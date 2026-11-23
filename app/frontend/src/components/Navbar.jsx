@@ -10,7 +10,7 @@ const ROLE_SEZIONI = [
   { key: "video", label: "Video", icon: "📽️", to: "/console?tab=video" },
   { key: "audio", label: "Audio", icon: "🎧", to: "/console?tab=audio" },
   { key: "actor", label: "Attore", icon: "🎭", to: "/console?tab=actor" },
-  { key: "presenter", label: "Presentatore", icon: "🎤", to: "/console?tab=presenter" }
+  { key: "presenter", label: "Presentatore", icon: "🎤", to: "/presenter" }
 ];
 
 function GameSelector() {
@@ -117,7 +117,7 @@ export default function Sidebar() {
               <Link
                 key={s.key}
                 to={s.to}
-                className={`nav-link ${activeTab === s.key ? "active" : ""}`}
+                className={`nav-link ${(activeTab === s.key || (s.key === "presenter" && location.pathname === "/presenter")) ? "active" : ""}`}
                 title={s.label}
               >
                 <span className="nav-icon">{s.icon}</span>

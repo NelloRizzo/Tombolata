@@ -1,9 +1,10 @@
-import { Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import { CurrentGameProvider } from "./context/GameContext.jsx";
 import Home from "./pages/Home.jsx";
 import Board from "./pages/Board.jsx";
 import Monitor from "./pages/Monitor.jsx";
+import PresenterPage from "./pages/PresenterPage.jsx";
 import Login from "./pages/Login.jsx";
 import ConsoleHome from "./pages/ConsoleHome.jsx";
 import BoardsPage from "./pages/BoardsPage.jsx";
@@ -13,8 +14,9 @@ import AppLayout from "./components/AppLayout.jsx";
 
 function ProtectedRoute() {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <div className="loading">Caricamento...</div>;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={`/login?next=${encodeURIComponent(location.pathname + location.search)}`} replace />;
   return <Outlet />;
 }
 
@@ -32,6 +34,9 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/board" element={<Board />} />
           <Route path="/monitor" element={<Monitor />} />
+          <Route path="/presenter" element={<ProtectedRoute />}>
+            <Route index element={<PresenterPage />} />
+          </Route>
 
           {/* Con navbar */}
           <Route element={<ManagementLayout />}>

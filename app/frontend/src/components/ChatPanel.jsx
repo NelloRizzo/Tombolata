@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiRequest } from "../api.js";
 import { useWebSocket } from "../hooks/useWebSocket.js";
 
-export default function ChatPanel({ gameId }) {
+export default function ChatPanel({ gameId, quickReplies = [] }) {
   const { on } = useWebSocket(gameId);
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
@@ -41,9 +41,9 @@ export default function ChatPanel({ gameId }) {
     if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
   }, [messages]);
 
-  async function send(e) {
+  async function send(e, overrideText) {
     e?.preventDefault?.();
-    const t = text.trim();
+    const t = (overrideText != null ? overrideText : text).trim();
     if (!t) return;
     setSending(true);
     setError(null);
@@ -82,6 +82,21 @@ export default function ChatPanel({ gameId }) {
           </div>
         ))}
       </div>
+      {quickReplies.length > 0 && (
+        <div className="chat-quick-replies">
+          {quickReplies.map((r) => (
+            <button
+              key={r}
+              type="button"
+              className="btn-sm"
+              disabled={sending}
+              onClick={() => send(null, r)}
+            >
+              {r}
+            </button>
+          ))}
+        </div>
+      )}
       <form className="chat-input" onSubmit={send}>
         <input
           value={text}

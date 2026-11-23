@@ -1,8 +1,11 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 export default function Login() {
   const { login } = useAuth();
+  const [searchParams] = useSearchParams();
+  const next = searchParams.get("next") || "/console";
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
@@ -14,7 +17,7 @@ export default function Login() {
     setError(null);
     try {
       await login(username, password);
-      window.location.href = "/console";
+      window.location.href = next;
     } catch (err) {
       setError(err.message);
     } finally {

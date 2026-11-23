@@ -132,6 +132,18 @@ export async function buildCardsPdf(group1, group2) {
 
   const count = Math.min(cards1.length, cards2.length);
 
+  const CM_TO_PT = 28.34645669;
+  const xStart = 3.5 * CM_TO_PT;
+  const xEnd = 18 * CM_TO_PT;
+  const yStart = 5.5 * CM_TO_PT;
+  const yEnd = 23.5 * CM_TO_PT;
+  const gapCm = 0.5 * CM_TO_PT;
+  const areaW = xEnd - xStart;
+  const areaH = yEnd - yStart;
+  const cardH = (areaH - gapCm) / 2;
+  const card1Y = yStart;
+  const card2Y = yStart + cardH + gapCm;
+
   const doc = new PDFDocument({ size: "A4", layout: "portrait", margin: 0 });
   const chunks = [];
   doc.on("data", (c) => chunks.push(c));
@@ -139,29 +151,36 @@ export async function buildCardsPdf(group1, group2) {
   const pageW = doc.page.width;
   const pageH = doc.page.height;
 
-  const cellSize = 9 * MM_TO_PT; // ~9mm
-  const cardWidth = cellSize * 9;
-  const cardHeight = cellSize * 3;
-  const gap = 8 * MM_TO_PT;
-  const blockHeight = cardHeight * 2 + gap;
-  const startY = (pageH - blockHeight) / 2;
-  const x = (pageW - cardWidth) / 2;
-
   function drawCard(card, y) {
     const rows = normalizeRows(card.rows);
+    const cellW = areaW / 9;
+    const cellH = cardH / 3;
     const label = [card.title, card.setNumber != null ? `S.${card.setNumber}` : null, card.cardNumber != null ? `n.${card.cardNumber}` : null].filter(Boolean).join(" · ");
+    // nome della cartella in grande e grassetto, sopra l'area
     if (label) {
-      doc.font("Helvetica-Bold").fontSize(10).fillColor("#000").text(label, x, y - 14, { width: cardWidth, align: "center" });
+      doc.font("Helvetica-Bold").fontSize(16).fillColor("#000")
+        .text(label, xStart, y - 1.0 * CM_TO_PT, { width: areaW, align: "center" });
     }
+    // bordo doppio
+    doc.save();
+    doc.strokeColor("#000").lineWidth(2.5).rect(xStart, y, areaW, cardH).stroke();
+    doc.strokeColor("#000").lineWidth(0.8).rect(xStart + 3, y + 3, areaW - 6, cardH - 6).stroke();
+    doc.restore();
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 9; c++) {
-        const cx = x + c * cellSize;
-        const cy = y + r * cellSize;
-        doc.rect(cx, cy, cellSize, cellSize).strokeColor("#333").lineWidth(0.6).stroke();
+        const cx = xStart + c * cellW;
+        const cy = y + r * cellH;
         const n = rows[r]?.[c];
+        if (n == null) {
+          // celle vuote con sfondo grigio
+          doc.save();
+          doc.fillColor("#d9d9d9").rect(cx, cy, cellW, cellH).fill();
+          doc.restore();
+        }
+        doc.rect(cx, cy, cellW, cellH).strokeColor("#333").lineWidth(0.5).stroke();
         if (n != null) {
-          doc.font("Helvetica-Bold").fontSize(cellSize * 0.45).fillColor("#000")
-            .text(String(n), cx, cy + cellSize * 0.25, { width: cellSize, align: "center" });
+          doc.font("Helvetica-Bold").fontSize(Math.min(cellW, cellH) * 0.42).fillColor("#000")
+            .text(String(n), cx, cy + cellH * 0.3, { width: cellW, align: "center" });
         }
       }
     }
@@ -176,8 +195,8 @@ export async function buildCardsPdf(group1, group2) {
       if (bgPath) {
         try { doc.image(bgPath, 0, 0, { width: pageW, height: pageH }); } catch {}
       }
-      drawCard(cards1[i], startY);
-      drawCard(cards2[i], startY + cardHeight + gap);
+      drawCard(cards1[i], card1Y);
+      drawCard(cards2[i], card2Y);
     }
 
     if (count === 0) {

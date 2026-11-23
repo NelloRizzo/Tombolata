@@ -587,7 +587,7 @@ export async function drawLotteryBatch() {
   const batchSize = doc.batchSize || 5;
   const remaining = pool.slice(doc.drawn.length);
   const next = remaining.slice(0, batchSize);
-  // Lascia gli ultimi 3 simbodo come finalisti: si estraggono tutti gli altri.
+  // Lascia gli ultimi 3 simbolo come finalisti: si estraggono tutti gli altri.
   const targetDrawn = Math.max(0, pool.length - 3);
   const cap = Math.max(0, targetDrawn - doc.drawn.length);
   const cappedNext = next.slice(0, cap);

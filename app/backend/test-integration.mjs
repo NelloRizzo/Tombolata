@@ -459,7 +459,7 @@ async function run() {
   assert(seed.ok, "seed simbolo");
   const syms = await req(`/api/lottery/extractions/${extId}/symbols`, "GET", null, adminToken);
 
-  assert(syms.ok && syms.data.length === 40, "40 simbodo presenti");
+  assert(syms.ok && syms.data.length === 40, "40 simbolo presenti");
 
   // genera biglietti (piccola tiratura)
   const gen = await req(`/api/lottery/extractions/${extId}/generate`, "POST", { count: 100, symbolsCount: 40, bookletSize: 10 }, adminToken);

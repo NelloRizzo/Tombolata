@@ -19,6 +19,31 @@ export default function LotteryPanel({ mode = "all" }) {
 
   const selected = extractions.find((e) => String(e._id) === String(selectedId));
 
+  const prevSelectedRef = useRef(selectedId);
+  // Cambiando estrazione dall'elenco "Estrazione attiva", aggiorna anche
+  // la presentazione sul tabellone (prepara la nuova estrazione).
+  useEffect(() => {
+    if (selectedId && prevSelectedRef.current && selectedId !== prevSelectedRef.current) {
+      (async () => {
+        try {
+          const sess = await apiRequest("/api/lottery/draw/sessions", {
+            method: "POST",
+            body: JSON.stringify({ extractionId: selectedId })
+          });
+          if (sess.ok && sess.data?._id) {
+            await apiRequest("/api/lottery/display/prepare", {
+              method: "POST",
+              body: JSON.stringify({ sessionId: sess.data._id, batchSize: 5 })
+            });
+          }
+        } catch (e) {
+          // non bloccare il cambio estrazione per errori di preparazione
+        }
+      })();
+    }
+    prevSelectedRef.current = selectedId;
+  }, [selectedId]);
+
   async function loadExtractions() {
     try {
       const json = await apiRequest("/api/lottery/extractions");
@@ -523,15 +548,8 @@ function DrawTab({ extractionId, onError, onMsg }) {
     } catch (e) { onError(e); }
   }
   useEffect(() => { loadPrizes(); loadDisplay(); }, [extractionId]);
-  const prevExtractionRef = useRef(extractionId);
-  // Cambiando estrazione dalla combo (non al primo mount), prepara/attiva quella estrazione sul tabellone
-  useEffect(() => {
-    if (extractionId && prevExtractionRef.current && extractionId !== prevExtractionRef.current) {
-      prepare();
-    }
-    prevExtractionRef.current = extractionId;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extractionId]);
+  // Cambiando estrazione dalla combo: ricarica premi e stato del tabellone.
+  // La preparazione della nuova estrazione è gestita a livello di LotteryPanel.
   useEffect(() => {
     if (display?.winnerSerial && !revealSerial) setRevealSerial(display.winnerSerial);
     // eslint-disable-next-line react-hooks/exhaustive-deps

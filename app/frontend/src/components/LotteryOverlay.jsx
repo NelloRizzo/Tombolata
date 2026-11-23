@@ -34,7 +34,7 @@ export default function LotteryOverlay({ lottery }) {
 
   const pool = Array.isArray(lottery.pool) && lottery.pool.length ? lottery.pool : [];
   // Visualizzazione in ordine crescente dei simboli, evidenziando quelli estratti
-  // In fase finalisti/reveal/vincitore mostra solo i simbodo rimasti, contornati di rosso
+  // In fase finalisti/reveal/vincitore mostra solo i simbolo rimasti, contornati di rosso
   const showOnlyRemaining = lottery.status !== "drawing" && Array.isArray(finalists) && finalists.length > 0;
   const allCards = pool.length
     ? (showOnlyRemaining ? [...finalists].sort((a, b) => a - b) : [...pool].sort((a, b) => a - b))
@@ -53,7 +53,7 @@ export default function LotteryOverlay({ lottery }) {
       {lottery.validTickets != null && <div style={{ fontSize: "1.2rem", color: "#00ff88" }}>{lottery.validTickets} biglietti in concorso!</div>}
 
       <div style={{ fontSize: "1.2rem", color: "#aaa", marginBottom: 8 }}>
-        {lottery.status === "drawing" && `Estrazione in corso: ${drawn.length}/${(lottery.pool || []).length || 40} simbodo`}
+        {lottery.status === "drawing" && `Estrazione in corso: ${drawn.length}/${(lottery.pool || []).length || 40} simbolo`}
 
         {lottery.status === "reveal" && "REVEAL IN CORSO"}
         {lottery.status === "winner" && "BIGLIETTO VINCENTE"}

@@ -153,23 +153,26 @@ export async function buildCardsPdf(group1, group2) {
 
   function drawCard(card, y) {
     const rows = normalizeRows(card.rows);
+    const titleH = 1.2 * CM_TO_PT;
+    const gridY = y + titleH;
+    const gridH = cardH - titleH;
     const cellW = areaW / 9;
-    const cellH = cardH / 3;
+    const cellH = gridH / 3;
     const label = [card.title, card.setNumber != null ? `S.${card.setNumber}` : null, card.cardNumber != null ? `n.${card.cardNumber}` : null].filter(Boolean).join(" · ");
-    // nome della cartella in grande e grassetto, sopra l'area
+    // nome della cartella in grande e grassetto, dentro l'area (in alto)
     if (label) {
       doc.font("Helvetica-Bold").fontSize(16).fillColor("#000")
-        .text(label, xStart, y - 1.0 * CM_TO_PT, { width: areaW, align: "center" });
+        .text(label, xStart, y + 0.15 * CM_TO_PT, { width: areaW, align: "center" });
     }
-    // bordo doppio
+    // bordo doppio attorno alla griglia
     doc.save();
-    doc.strokeColor("#000").lineWidth(2.5).rect(xStart, y, areaW, cardH).stroke();
-    doc.strokeColor("#000").lineWidth(0.8).rect(xStart + 3, y + 3, areaW - 6, cardH - 6).stroke();
+    doc.strokeColor("#000").lineWidth(2.5).rect(xStart, gridY, areaW, gridH).stroke();
+    doc.strokeColor("#000").lineWidth(0.8).rect(xStart + 3, gridY + 3, areaW - 6, gridH - 6).stroke();
     doc.restore();
     for (let r = 0; r < 3; r++) {
       for (let c = 0; c < 9; c++) {
         const cx = xStart + c * cellW;
-        const cy = y + r * cellH;
+        const cy = gridY + r * cellH;
         const n = rows[r]?.[c];
         if (n == null) {
           // celle vuote con sfondo grigio

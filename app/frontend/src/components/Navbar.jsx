@@ -67,7 +67,7 @@ export default function Sidebar() {
     <aside className="app-sidebar">
       <div className="sidebar-brand">
         <Link to="/" className="navbar-logo">
-          🎄 Tombolata
+          <img src="/brand.png" alt="Tombolata" className="navbar-logo-img" /> Tombolata
         </Link>
       </div>
 

@@ -130,7 +130,7 @@ export default function CardInventory({ game }) {
         body: JSON.stringify({ xml: text })
       });
       setMsg(
-        `Importate ${json.summary.imported} cartelle nell'archivio · saltate ${json.summary.skipped}`
+        `Importate ${json.summary.imported} nuove · aggiornate ${json.summary.updated || 0} · saltate ${json.summary.skipped}`
       );
       await refresh();
     } catch (err) {

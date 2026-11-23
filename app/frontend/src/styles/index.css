@@ -1170,15 +1170,17 @@ h3 {
   overflow: hidden;
 }
 .presenter-sounds {
-  flex: 0 0 96px;
-  width: 96px;
+  flex: 0 0 50%;
+  width: 50%;
+  min-width: 0;
   display: flex;
   align-items: stretch;
 }
 .presenter-sounds .quick-sounds {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   width: 100%;
+  align-content: start;
 }
 .presenter-sounds .quick-sound {
   aspect-ratio: 1 / 1;
@@ -1186,12 +1188,20 @@ h3 {
   width: 100%;
 }
 .presenter-chat {
-  flex: 1;
+  flex: 0 0 50%;
+  width: 50%;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+/* Numeri del tabellone presentatore più piccoli dei bussolotti */
+.presenter-right .cell-num {
+  font-size: clamp(0.6rem, 2.6vmin, 1.5rem);
+}
+.presenter-right .grid-cell {
+  min-height: 24px;
 }
 .presenter-chat .chat-panel { flex: 1; min-height: 0; overflow: hidden; }
 .presenter-chat .chat-messages { flex: 1; min-height: 0; max-height: none; overflow-y: auto; }
